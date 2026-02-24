@@ -1,0 +1,263 @@
+{% extends 'tickets/base_admin.html' %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Board</h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Click a ticket to view details and edit its status.</p>
+</div>
+
+<div class="flex-1 overflow-x-auto kanban-scroll pb-4">
+    <div class="flex gap-6 h-full min-w-max">
+
+        <div class="w-80 flex flex-col">
+            <div class="flex items-center justify-between mb-4 px-1">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                    <h3 class="font-semibold text-gray-700 dark:text-gray-200">Open</h3>
+                </div>
+            </div>
+            <div class="flex-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700 border-dashed overflow-y-auto space-y-3 kanban-zone" data-status="PENDING">
+                {% for ticket in tickets %}
+                    {% if ticket.status == 'PENDING' or ticket.status == 'TODO' %}
+                        {% include 'tickets/includes/ticket_card.html' with ticket=ticket %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="w-80 flex flex-col">
+            <div class="flex items-center justify-between mb-4 px-1">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                    <h3 class="font-semibold text-gray-700 dark:text-gray-200">In Progress</h3>
+                </div>
+            </div>
+            <div class="flex-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700 border-dashed overflow-y-auto space-y-3 kanban-zone" data-status="IN_PROGRESS">
+                {% for ticket in tickets %}
+                    {% if ticket.status == 'IN_PROGRESS' %}
+                        {% include 'tickets/includes/ticket_card.html' with ticket=ticket %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="w-80 flex flex-col">
+            <div class="flex items-center justify-between mb-4 px-1">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+                    <h3 class="font-semibold text-gray-700 dark:text-gray-200">Resolved</h3>
+                </div>
+            </div>
+            <div class="flex-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700 border-dashed overflow-y-auto space-y-3 kanban-zone" data-status="DONE">
+                {% for ticket in tickets %}
+                    {% if ticket.status == 'REVIEW' or ticket.status == 'DONE' %}
+                        {% include 'tickets/includes/ticket_card.html' with ticket=ticket %}
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="ticketModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] transition-colors duration-200">
+
+        <div class="px-8 py-5 flex justify-between items-center bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex items-center gap-3">
+                <h2 id="modalTicketNumber" class="text-lg font-bold text-[#0056b3] dark:text-blue-400">TKT-0000</h2>
+                <span id="modalStatusBadge" class="px-3 py-1 bg-orange-50 text-orange-600 text-xs font-bold rounded-full border border-orange-100">In Progress</span>
+                <span id="modalPriorityBadge" class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full border border-gray-200 uppercase">Low</span>
+
+                <span id="modalPredictionBadge" class="px-3 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-bold rounded-full border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+                    🤖 Est: 0h
+                </span>
+
+            </div>
+            <button id="closeModalBtn" class="text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+
+        <div class="p-8 overflow-y-auto flex-1 text-sm bg-white dark:bg-gray-800">
+
+            <div class="grid grid-cols-2 gap-y-6 gap-x-8 mb-8">
+                <div>
+                    <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Requester</span>
+                    <span id="modalRequester" class="text-gray-800 dark:text-gray-200 font-medium">Name</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Email</span>
+                    <span id="modalEmail" class="text-gray-800 dark:text-gray-200 font-medium">Email</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contact</span>
+                    <span id="modalContact" class="text-gray-800 dark:text-gray-200 font-medium">Contact</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">District</span>
+                    <span id="modalDistrict" class="text-gray-800 dark:text-gray-200 font-medium">District</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">School</span>
+                    <span id="modalSchool" class="text-gray-800 dark:text-gray-200 font-medium">School</span>
+                </div>
+                <div>
+                    <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Support Type</span>
+                    <span id="modalSupportType" class="text-gray-800 dark:text-gray-200 font-medium">Support Type</span>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <span class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Request Details</span>
+                <div id="modalDescription" class="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700 whitespace-pre-wrap">Description goes here...</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8 mb-6">
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Change Status</label>
+                    <select id="modalStatusSelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white font-medium">
+                        <option value="BACKLOG">Backlog (Needs Review)</option>
+                        <option value="TODO">Open (To Do)</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="DONE">Resolved (Done)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Change Priority</label>
+                    <select id="modalPrioritySelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white font-medium">
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+                        <option value="URGENT">Urgent</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Admin Notes</label>
+                <textarea id="modalAdminNotes" rows="3" placeholder="Add notes about this ticket..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white"></textarea>
+            </div>
+        </div>
+
+        <div class="px-8 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
+            <div class="flex gap-4 text-xs text-gray-400 dark:text-gray-500">
+                <span>Created: <span id="modalCreatedDate" class="text-gray-500 dark:text-gray-400">Date</span></span>
+                <span>Updated: <span id="modalUpdatedDate" class="text-gray-500 dark:text-gray-400">Date</span></span>
+            </div>
+            <div class="flex gap-3">
+                <button id="cancelModalBtn" class="px-5 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Cancel</button>
+                <button id="saveModalBtn" class="px-5 py-2 bg-[#0078d4] hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-colors">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const cards = document.querySelectorAll('.ticket-card');
+        const modal = document.getElementById('ticketModal');
+        const closeBtns = [document.getElementById('closeModalBtn'), document.getElementById('cancelModalBtn')];
+        const saveBtn = document.getElementById('saveModalBtn');
+        let currentTicketId = null;
+
+        // 1. Open Modal & Populate ALL Data
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                currentTicketId = card.getAttribute('data-id');
+
+                // Header
+                document.getElementById('modalTicketNumber').innerText = card.getAttribute('data-number');
+                document.getElementById('modalStatusBadge').innerText = card.getAttribute('data-status').replace('_', ' ');
+                document.getElementById('modalPriorityBadge').innerText = card.getAttribute('data-priority');
+
+                // POPULATE AI BADGE
+                document.getElementById('modalPredictionBadge').innerHTML = `🤖 Est: ${card.getAttribute('data-predicted')}h`;
+
+                // Grid Info
+                document.getElementById('modalRequester').innerText = card.getAttribute('data-requester');
+                document.getElementById('modalEmail').innerText = card.getAttribute('data-email');
+                document.getElementById('modalContact').innerText = card.getAttribute('data-contact');
+                document.getElementById('modalDistrict').innerText = card.getAttribute('data-district');
+                document.getElementById('modalSchool').innerText = card.getAttribute('data-school');
+                document.getElementById('modalSupportType').innerText = card.getAttribute('data-support-type');
+
+                // Text Areas
+                document.getElementById('modalDescription').innerText = card.getAttribute('data-description');
+                document.getElementById('modalAdminNotes').value = card.getAttribute('data-notes');
+
+                // Footer Dates
+                document.getElementById('modalCreatedDate').innerText = card.getAttribute('data-created');
+                document.getElementById('modalUpdatedDate').innerText = card.getAttribute('data-updated');
+
+                // Select Dropdowns
+                document.getElementById('modalStatusSelect').value = card.getAttribute('data-status');
+                document.getElementById('modalPrioritySelect').value = card.getAttribute('data-priority');
+
+                // Show Modal
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+        });
+
+        // 2. Close Modal
+        closeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                currentTicketId = null;
+            });
+        });
+
+        // 3. Save Changes via AJAX
+        saveBtn.addEventListener('click', () => {
+            if (!currentTicketId) return;
+
+            const newStatus = document.getElementById('modalStatusSelect').value;
+            const newPriority = document.getElementById('modalPrioritySelect').value;
+            const newNotes = document.getElementById('modalAdminNotes').value;
+
+            const getCookie = (name) => {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            };
+
+            saveBtn.innerText = "Saving...";
+            saveBtn.disabled = true;
+
+            fetch(`/admin-dashboard/ticket/update/${currentTicketId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    status: newStatus,
+                    priority: newPriority,
+                    admin_notes: newNotes
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert("Error saving ticket: " + data.message);
+                    saveBtn.innerText = "Save Changes";
+                    saveBtn.disabled = false;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

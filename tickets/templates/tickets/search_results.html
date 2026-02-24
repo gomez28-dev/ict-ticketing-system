@@ -1,0 +1,57 @@
+{% extends 'tickets/base_admin.html' %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Search Results</h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Showing matches for: "<span class="font-bold text-gray-800 dark:text-gray-200">{{ query }}</span>"</p>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 flex flex-col transition-colors">
+    {% if results %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                        <th class="p-4 font-medium">Ticket / Status</th>
+                        <th class="p-4 font-medium">Details</th>
+                        <th class="p-4 font-medium">Requester / School</th>
+                        <th class="p-4 font-medium">Priority</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                    {% for ticket in results %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="p-4">
+                            <div class="font-bold text-[#0078d4] dark:text-blue-400">{{ ticket.ticket_number|default:"TKT-NEW" }}</div>
+                            <div class="text-xs font-bold mt-1 text-gray-600 dark:text-gray-400">{{ ticket.get_status_display }}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="font-medium text-gray-800 dark:text-gray-200">{{ ticket.title }}</div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 truncate w-64">{{ ticket.get_support_type_display|default:ticket.description }}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="font-medium text-gray-800 dark:text-gray-200">{{ ticket.first_name }} {{ ticket.last_name }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.school_name|default:"Not specified" }}</div>
+                        </td>
+                        <td class="p-4">
+                            <span class="inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded
+                                {% if ticket.priority == 'URGENT' or ticket.priority == 'HIGH' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400
+                                {% elif ticket.priority == 'MEDIUM' %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400
+                                {% else %}bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400{% endif %}">
+                                {{ ticket.priority }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="flex flex-col items-center justify-center h-full py-24 text-gray-400 dark:text-gray-500">
+            <svg class="w-16 h-16 mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <p class="text-lg font-medium">No tickets found matching your search.</p>
+            <p class="text-sm">Try searching by ticket number, name, or school.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

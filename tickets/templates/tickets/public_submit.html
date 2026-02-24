@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT Unit Online Helpdesk Support</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+
+    <header class="bg-[#0078d4] text-white py-10 px-6 shadow-md">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div>
+                <p class="text-sm font-light mb-1">Department of Education — Schools Division Office — Valenzuela City</p>
+                <h1 class="text-3xl font-bold">ICT Unit Online Helpdesk Support</h1>
+                <p class="text-sm font-light mt-1">Office of the Schools Division Superintendent</p>
+            </div>
+            <div class="hidden md:block bg-blue-600/50 px-4 py-2 rounded-lg border border-blue-400">
+                <span class="font-bold tracking-wide">ICTU-OHS</span>
+                <span class="text-xs block text-blue-200">Helpdesk Support</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto mt-8 px-4 pb-12">
+
+        {% if success_ticket %}
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-8 rounded shadow-sm" role="alert">
+            <p class="font-bold">Request Submitted Successfully!</p>
+            <p>Your tracking number is: <strong class="text-lg">{{ success_ticket.ticket_number }}</strong></p>
+            <p class="text-sm mt-2">Please save this number to track your request status.</p>
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-8">
+            {% csrf_token %} <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-[#0078d4] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">1</span>
+                    <h2 class="text-xl font-semibold text-gray-800">School District</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">School District *</label>
+                        <select name="school_district" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                            <option value="">Select a district</option>
+                            <option value="DISTRICT_I">District I - Arkong Bato</option>
+                            <option value="DISTRICT_II">District II - Balangkas</option>
+                            <option value="DISTRICT_III">District III - Karuhatan</option>
+                            <option value="DISTRICT_IV">District IV - Malinta</option>
+                            <option value="DISTRICT_V">District V - Marulas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">School Name</label>
+                        <input type="text" name="school_name" placeholder="e.g. Gen. T. De Leon Elementary School" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-[#0078d4] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">2</span>
+                    <h2 class="text-xl font-semibold text-gray-800">Technical Support Needed</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Support Type *</label>
+                        <select name="support_type" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                            <option value="">-- Select support type --</option>
+                            <option value="MS_ACCOUNT">Creation of Microsoft Account</option>
+                            <option value="GOOGLE_ACCOUNT">Creation of Google Account</option>
+                            <option value="PASSWORD_RESET">Password Reset for Microsoft/Google Account</option>
+                            <option value="PC_MAINTENANCE">Computer Maintenance/Check-Up or Repair</option>
+                            <option value="NETWORK_MAINTENANCE">Network Maintenance/Check-Up or Repair</option>
+                            <option value="SOFTWARE_APP">Software Application Assessment/Installation</option>
+                            <option value="DIGITAL_AUTO">Digital Automation Assessment and Request</option>
+                            <option value="CCTV">CCTV Maintenance/Check-Up or Repair</option>
+                            <option value="OTHER">Other Support</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Request Details</label>
+                        <textarea name="description" rows="4" placeholder="Describe your issue or request in detail..." required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="bg-[#0078d4] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">3</span>
+                    <h2 class="text-xl font-semibold text-gray-800">Requester Details</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                        <input type="text" name="last_name" placeholder="e.g., Penduko" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                        <input type="text" name="first_name" placeholder="e.g., Pedro" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
+                        <input type="text" name="middle_name" placeholder="e.g., Flores" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                        <input type="text" name="contact_number" placeholder="09XXXXXXXXX" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                        <input type="email" name="email" placeholder="name@email.com" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-xl text-sm text-gray-500 text-center mb-4">
+                4) Ticket number & subject will be generated after submission.
+            </div>
+
+            <div class="flex gap-4">
+                <button type="reset" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors">
+                    ↺ Clear Form
+                </button>
+                <button type="submit" class="flex-1 bg-[#0088cc] hover:bg-[#0078d4] text-white rounded-lg py-3 font-semibold text-lg transition-colors shadow-md">
+                    ➤ Submit Request
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center text-gray-400 text-xs mt-8">
+            © 2026 ICT Unit - SDO Valenzuela City. All rights reserved.
+        </div>
+    </main>
+</body>
+</html>

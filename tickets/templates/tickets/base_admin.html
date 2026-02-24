@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT Unit Work Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // TAILWIND CONFIG: Enable class-based dark mode
+        tailwind.config = {
+            darkMode: 'class',
+        }
+
+        // DARK MODE LOGIC: Check localStorage immediately to prevent white flash
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        // Global function to toggle dark mode
+        function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 font-sans flex h-screen overflow-hidden transition-colors duration-200">
+
+    <aside class="w-64 bg-[#1e293b] dark:bg-black text-white flex flex-col justify-between h-full shadow-xl z-20">
+        <div>
+            <div class="p-6 flex items-center gap-3 border-b border-gray-700 dark:border-gray-800">
+                <div class="bg-blue-500 p-2 rounded-lg text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </div>
+                <div>
+                    <h2 class="font-bold text-sm leading-tight uppercase tracking-wider">ICT Unit</h2>
+                    <p class="text-[10px] text-gray-400">Work Management</p>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-2">
+                {% with url_name=request.resolver_match.url_name %}
+
+                <a href="{% url 'analytics' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'analytics' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                    Dashboard
+                </a>
+
+                <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'dashboard' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                    Board
+                </a>
+
+                <a href="{% url 'requests' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'requests' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                    Requests
+                </a>
+
+                <a href="{% url 'backlog' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'backlog' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                    Backlog
+                </a>
+
+                <a href="{% url 'settings' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'settings' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                    Settings
+                </a>
+
+                {% endwith %}
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-gray-700 dark:border-gray-800">
+            <div class="flex items-center gap-3 px-4 py-2">
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs uppercase">
+                    {{ request.user.username|make_list|first|default:"A" }}
+                </div>
+                <div class="overflow-hidden">
+                    <p class="text-xs font-bold truncate">{{ request.user.username|default:"Admin" }}</p>
+                    <p class="text-[10px] text-gray-500">System Administrator</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc] dark:bg-gray-900 transition-colors duration-200">
+        <header class="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-end px-8 shadow-sm">
+            <form method="GET" action="{% url 'search_tickets' %}" class="relative">
+                <input type="text" name="q" placeholder="Search tickets..." class="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 transition-all">
+                <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
+            </form>
+        </header>
+
+        <div class="flex-1 overflow-hidden p-8 flex flex-col">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
