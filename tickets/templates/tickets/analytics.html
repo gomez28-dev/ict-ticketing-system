@@ -1,100 +1,154 @@
 {% extends 'tickets/base_admin.html' %}
 
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400">Overview of ticket analytics, employee performance, and deadlines.</p>
+<div class="mb-6 flex justify-between items-end">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">System overview, metrics, and team performance.</p>
+    </div>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl">
-            🎫
+        <div class="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[#0078d4] dark:text-blue-400 flex items-center justify-center text-2xl">
+            📊
         </div>
         <div>
             <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ total_tickets }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Tickets</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold">Total Tickets</div>
         </div>
     </div>
+
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-cyan-50 dark:bg-cyan-900/30 text-cyan-500 dark:text-cyan-400 flex items-center justify-center font-bold text-xl">
-            ⚠️
-        </div>
-        <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ open_tickets }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Open</div>
-        </div>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/30 text-orange-500 dark:text-orange-400 flex items-center justify-center font-bold text-xl">
-            ⏱️
-        </div>
-        <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ in_progress_tickets }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">In Progress</div>
-        </div>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-500 dark:text-green-400 flex items-center justify-center font-bold text-xl">
+        <div class="w-12 h-12 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center text-2xl">
             ✅
         </div>
         <div>
             <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ resolved_tickets }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Resolved</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold">Resolved Tickets</div>
         </div>
     </div>
+
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
+        <div class="w-12 h-12 rounded-lg bg-orange-50 dark:bg-orange-900/30 text-orange-500 dark:text-orange-400 flex items-center justify-center text-2xl">
+            📥
+        </div>
+        <div>
+            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ pending_requests }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold">Pending Requests</div>
+        </div>
+    </div>
+
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
 
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
-            📊 Requests by Type
-        </h3>
-        <div class="space-y-4">
-            {% for item in chart_data %}
-            <div>
-                <div class="flex justify-between text-xs mb-1 text-gray-600 dark:text-gray-400">
-                    <span>{{ item.name }}</span>
-                    <span class="font-bold text-gray-900 dark:text-white">{{ item.count }}</span>
+    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col transition-colors">
+        <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 uppercase tracking-wider flex items-center gap-2">📈 System Activity (7-Day Trend)</h3>
+        <div class="flex-1 relative w-full h-64">
+            <canvas id="activityChart"></canvas>
+        </div>
+    </div>
+
+    <div class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 transition-colors flex flex-col">
+        <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 uppercase tracking-wider flex items-center gap-2">🏆 Top Performers</h3>
+
+        <div class="space-y-3 flex-1">
+            {% for staff in staff_data %}
+            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-[#0078d4] text-white flex items-center justify-center text-sm font-bold shadow-sm">
+                        {{ staff.name|make_list|first }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ staff.name }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ staff.role }}</p>
+                    </div>
                 </div>
-                <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
-                    <div class="bg-[#0078d4] h-2 rounded-full" style="width: {{ item.width }}%"></div>
+                <div class="text-right">
+                    <p class="text-sm font-bold text-[#0078d4] dark:text-blue-400">{{ staff.resolved_tickets }} <span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Resolved</span></p>
+                    <p class="text-xs text-green-600 dark:text-green-400 font-bold flex items-center justify-end gap-1">⭐ {{ staff.rating }}</p>
                 </div>
             </div>
-            {% empty %}
-            <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No data available yet.</p>
             {% endfor %}
         </div>
+
+        <a href="{% url 'teams' %}" class="block text-center text-xs text-[#0078d4] dark:text-blue-400 mt-4 hover:underline font-bold bg-blue-50 dark:bg-blue-900/20 py-2 rounded-lg transition-colors">View All Employees &rarr;</a>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col transition-colors">
-        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
-            📈 Employee Performance
-        </h3>
-        <div class="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
-            No assigned tickets yet
-        </div>
-    </div>
 </div>
+{% endblock %}
 
-<div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
-    <div class="flex justify-between items-center mb-2">
-        <h3 class="text-sm font-bold text-green-600 dark:text-green-400 flex items-center gap-2">
-            ✅ Resolution Summary
-        </h3>
-        <span class="font-bold text-lg text-gray-800 dark:text-white">{{ resolution_rate }}%</span>
-    </div>
-    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
-        <span>Overall Resolution Rate</span>
-        <div class="flex gap-4">
-            <span><strong class="text-gray-700 dark:text-gray-300">{{ open_tickets }}</strong> Open</span>
-            <span><strong class="text-gray-700 dark:text-gray-300">{{ in_progress_tickets }}</strong> In Progress</span>
-            <span><strong class="text-green-600 dark:text-green-400">{{ resolved_tickets }}</strong> Resolved</span>
-        </div>
-    </div>
-    <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3">
-        <div class="bg-[#0078d4] h-3 rounded-full transition-all duration-500" style="width: {{ resolution_rate }}%"></div>
-    </div>
-</div>
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+
+        // Grab the data safely from Django
+        const labels = {{ chart_labels|safe }};
+        const receivedData = {{ chart_received|safe }};
+        const resolvedData = {{ chart_resolved|safe }};
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Tickets Received',
+                        data: receivedData,
+                        borderColor: '#0078d4', // Blue
+                        backgroundColor: 'rgba(0, 120, 212, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4, // Smooth curves
+                        fill: true
+                    },
+                    {
+                        label: 'Tickets Resolved',
+                        data: resolvedData,
+                        borderColor: '#22c55e', // Green
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4, // Smooth curves
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#9ca3af' // Gray-400 for dark mode compatibility
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(156, 163, 175, 0.1)' // Very faint grid lines
+                        },
+                        ticks: {
+                            color: '#9ca3af'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false // Hide vertical grid lines
+                        },
+                        ticks: {
+                            color: '#9ca3af'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}

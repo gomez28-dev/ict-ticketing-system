@@ -1,7 +1,6 @@
-from .ml_service import predict_ticket_duration
+from .ml_service import predict_ticket_duration, recommend_staff, predict_risk
 from django.utils import timezone
 from django.db.models import Count
-from django.shortcuts import render
 from .models import Ticket
 from .forms import PublicTicketForm
 from django.shortcuts import render, redirect, get_object_or_404
@@ -90,41 +89,61 @@ def delete_request(request, ticket_id):
 
 
 def analytics_dashboard(request):
-    # We exclude 'PENDING' because those haven't been approved to the main board yet
-    active_tickets = Ticket.objects.exclude(status='PENDING')
+    """Main dashboard view with metrics, chart, and top performers."""
+    total_tickets = Ticket.objects.count()
+    resolved_tickets = Ticket.objects.filter(status__in=['REVIEW', 'DONE']).count()
+    pending_requests = Ticket.objects.filter(status='PENDING').count()
 
-    # 1. Calculate Top Card Metrics
-    total = active_tickets.count()
-    open_count = active_tickets.filter(status__in=['BACKLOG', 'TODO']).count()
-    in_progress = active_tickets.filter(status='IN_PROGRESS').count()
-    resolved = active_tickets.filter(status__in=['REVIEW', 'DONE']).count()
-
-    # 2. Calculate Overall Resolution Rate for the progress bar
-    resolution_rate = 0
-    if total > 0:
-        resolution_rate = int((resolved / total) * 100)
-
-    # 3. Get data for "Requests by Type"
-    type_counts = active_tickets.values('support_type').annotate(count=Count('id'))
-    support_dict = dict(Ticket.SUPPORT_CHOICES)
-
-    chart_data = []
-    for item in type_counts:
-        if item['support_type']:  # Ignore empty ones
-            name = support_dict.get(item['support_type'], 'Other')
-            # Calculate a percentage width for the visual bar chart
-            width = int((item['count'] / total) * 100) if total > 0 else 0
-            chart_data.append({'name': name, 'count': item['count'], 'width': width})
+    staff_data = get_mock_staff_data()
+    chart_data = get_mock_chart_data()  # Fetch the chart data
 
     context = {
-        'total_tickets': total,
-        'open_tickets': open_count,
-        'in_progress_tickets': in_progress,
-        'resolved_tickets': resolved,
-        'resolution_rate': resolution_rate,
-        'chart_data': chart_data,
+        'total_tickets': total_tickets,
+        'resolved_tickets': resolved_tickets,
+        'pending_requests': pending_requests,
+        'staff_data': staff_data,
+        'chart_labels': chart_data['labels'],  # Send labels to JS
+        'chart_received': chart_data['received'],  # Send received line to JS
+        'chart_resolved': chart_data['resolved'],  # Send resolved line to JS
     }
     return render(request, 'tickets/analytics.html', context)
+
+
+def get_mock_staff_data():
+    """Centralized mock data for Staff & Teams.
+    Eventually, this will be replaced by querying a custom User database."""
+    return [
+        {
+            "name": "Mark Reyes",
+            "role": "Hardware & Network Specialist",
+            "skills": ["HARDWARE", "NETWORK", "CCTV"],
+            "active_tickets": 3,
+            "resolved_tickets": 42,
+            "rating": 4.8
+        },
+        {
+            "name": "Sarah Cruz",
+            "role": "Software Support Lead",
+            "skills": ["SOFTWARE", "ACCOUNT"],
+            "active_tickets": 1,
+            "resolved_tickets": 56,
+            "rating": 4.9
+        },
+        {
+            "name": "Alex Santos",
+            "role": "General IT Technician",
+            "skills": ["OTHER", "NETWORK"],
+            "active_tickets": 2,
+            "resolved_tickets": 31,
+            "rating": 4.5
+        }
+    ]
+
+
+def teams_view(request):
+    """View for the Teams & Staff Management page."""
+    staff_data = get_mock_staff_data()
+    return render(request, 'tickets/teams.html', {'staff_data': staff_data})
 
 
 def backlog_view(request):
@@ -212,3 +231,85 @@ def update_ticket_ajax(request, ticket_id):
 
 def settings_view(request):
     return render(request, 'tickets/settings.html')
+
+
+def ticket_triage_view(request, ticket_id):
+    """Loads the AI Triage Screen for a pending request."""
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    # 1. Run the AI Models
+    predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
+    staff_rec = recommend_staff(ticket.school_name, ticket.support_type)
+    risk_assessment = predict_risk(ticket.support_type, ticket.priority)
+
+    return render(request, 'tickets/ticket_creation.html', {
+        'ticket': ticket,
+        'predicted_hours': predicted_hours,
+        'staff_rec': staff_rec,
+        'risk_assessment': risk_assessment
+    })
+
+
+def approve_request(request, ticket_id):
+    """Saves the finalized triage data and moves ticket to the board."""
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    if request.method == 'POST':
+        # Grab the finalized data from the Triage Screen
+        ticket.status = request.POST.get('status', 'TODO')
+        ticket.priority = request.POST.get('priority', ticket.priority)
+
+        # We append the assigned staff to the admin notes so we don't have to alter the database!
+        assigned_staff = request.POST.get('assigned_staff', 'Unassigned')
+        existing_notes = ticket.admin_notes or ""
+        ticket.admin_notes = f"Assigned to: {assigned_staff}\n{existing_notes}"
+
+        # Save the AI predicted hours
+        ticket.predicted_hours = request.POST.get('predicted_hours', 1)
+
+        ticket.save()
+
+    return redirect('dashboard')
+
+def get_mock_staff_data():
+    """Centralized mock data for Staff & Teams.
+    Eventually, this will be replaced by querying a custom User or Staff profile model."""
+    return [
+        {
+            "name": "Mark Reyes",
+            "role": "Hardware & Network Specialist",
+            "skills": ["HARDWARE", "NETWORK", "CCTV"],
+            "active_tickets": 3,
+            "resolved_tickets": 42,
+            "rating": 4.8
+        },
+        {
+            "name": "Sarah Cruz",
+            "role": "Software Support Lead",
+            "skills": ["SOFTWARE", "ACCOUNT"],
+            "active_tickets": 1,
+            "resolved_tickets": 56,
+            "rating": 4.9
+        },
+        {
+            "name": "Alex Santos",
+            "role": "General IT Technician",
+            "skills": ["OTHER", "NETWORK"],
+            "active_tickets": 2,
+            "resolved_tickets": 31,
+            "rating": 4.5
+        }
+    ]
+
+def teams_view(request):
+    """View for the Teams & Staff Management page."""
+    staff_data = get_mock_staff_data()
+    return render(request, 'tickets/teams.html', {'staff_data': staff_data})
+
+def get_mock_chart_data():
+    """Generates 7-day mock trend data for the System Activity chart."""
+    return {
+        'labels': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        'received': [8, 12, 15, 9, 14, 5, 3],
+        'resolved': [6, 10, 18, 12, 11, 8, 4]
+    }

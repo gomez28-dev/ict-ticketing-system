@@ -19,4 +19,6 @@ urlpatterns = [
     path('admin-dashboard/ticket/update/<int:ticket_id>/', views.update_ticket_ajax, name='update_ticket_ajax'),
     path('admin-dashboard/search/', views.search_tickets, name='search_tickets'),
     path('admin-dashboard/settings/', views.settings_view, name='settings'),
+    path('admin-dashboard/request/<int:ticket_id>/triage/', views.ticket_triage_view, name='ticket_triage'),
+    path('admin-dashboard/teams/', views.teams_view, name='teams'),
 ]

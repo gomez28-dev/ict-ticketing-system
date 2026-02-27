@@ -1,0 +1,51 @@
+{% extends 'tickets/base_admin.html' %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Employees Performance</h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Manage ICT Unit employees, track active workloads, and monitor resolution metrics.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    {% for staff in staff_data %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col transition-colors hover:shadow-md hover:border-[#0078d4] dark:hover:border-blue-500 group">
+        
+        <div class="flex justify-between items-start mb-5">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#0078d4] dark:text-blue-400 flex items-center justify-center text-xl font-bold border border-blue-100 dark:border-blue-800 group-hover:bg-[#0078d4] group-hover:text-white transition-colors">
+                    {{ staff.name|make_list|first }}
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">{{ staff.name }}</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ staff.role }}</p>
+                </div>
+            </div>
+            <div class="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-md text-xs font-bold border border-green-200 dark:border-green-800 flex items-center gap-1">
+                ⭐ {{ staff.rating }}
+            </div>
+        </div>
+
+        <div class="mb-6 flex-1">
+            <span class="block text-[10px] text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider font-bold">Specialized Skills</span>
+            <div class="flex flex-wrap gap-2">
+                {% for skill in staff.skills %}
+                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-semibold rounded uppercase tracking-wider border border-gray-200 dark:border-gray-600">{{ skill }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-center border border-blue-100 dark:border-blue-800/50">
+                <span class="block text-2xl font-bold text-[#0078d4] dark:text-blue-400">{{ staff.active_tickets }}</span>
+                <span class="block text-[10px] text-blue-600 dark:text-blue-500 uppercase tracking-wider font-bold">Active Tasks</span>
+            </div>
+            <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg text-center border border-green-100 dark:border-green-800/50">
+                <span class="block text-2xl font-bold text-green-600 dark:text-green-400">{{ staff.resolved_tickets }}</span>
+                <span class="block text-[10px] text-green-600 dark:text-green-500 uppercase tracking-wider font-bold">Resolved</span>
+            </div>
+        </div>
+        
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
