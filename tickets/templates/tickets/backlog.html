@@ -3,128 +3,107 @@
 {% block content %}
 <div class="mb-6 flex justify-between items-end">
     <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Backlog & History</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Unresolved tickets (oldest first) and archived history (newest first).</p>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Audit Trail & History</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">A complete log of resolved tickets and recent system activities.</p>
     </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/30 text-orange-500 dark:text-orange-400 flex items-center justify-center text-xl">⏱️</div>
+        <div class="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[#0078d4] dark:text-blue-400 flex items-center justify-center text-xl">✅</div>
         <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ in_backlog }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">In Backlog</div>
+            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ history_tickets.count }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Total Resolved</div>
         </div>
     </div>
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center text-xl">⚠️</div>
+        <div class="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-500 dark:text-green-400 flex items-center justify-center text-xl">⚡</div>
         <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ high_urgent }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">High/Urgent Priority</div>
+            <div class="text-2xl font-bold text-gray-800 dark:text-white">3</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Activities Today</div>
         </div>
     </div>
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center justify-center text-xl">🕒</div>
+        <div class="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-500 dark:text-purple-400 flex items-center justify-center text-xl">🤖</div>
         <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ oldest_age }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Oldest Ticket Age</div>
+            <div class="text-2xl font-bold text-gray-800 dark:text-white">12</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">AI Triages Completed</div>
         </div>
     </div>
 </div>
 
-<h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">📂 Pending Backlog</h2>
-<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8 transition-colors">
-    {% if backlog_tickets %}
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
-                        <th class="p-4 font-medium">Ticket / Age</th>
-                        <th class="p-4 font-medium">Details</th>
-                        <th class="p-4 font-medium">Priority</th>
-                        <th class="p-4 font-medium text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                    {% for ticket in backlog_tickets %}
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td class="p-4">
-                            <div class="font-bold text-gray-800 dark:text-gray-200">{{ ticket.ticket_number|default:"TKT-NEW" }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">Created: {{ ticket.created_at|date:'M d, Y' }}</div>
-                        </td>
-                        <td class="p-4">
-                            <div class="font-medium text-gray-800 dark:text-gray-200">{{ ticket.title }}</div>
-                            <div class="text-xs text-gray-600 dark:text-gray-400 truncate w-64">{{ ticket.get_support_type_display|default:ticket.description }}</div>
-                        </td>
-                        <td class="p-4">
-                            <span class="inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded
-                                {% if ticket.priority == 'URGENT' or ticket.priority == 'HIGH' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400
-                                {% elif ticket.priority == 'MEDIUM' %}bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400
-                                {% else %}bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400{% endif %}">
-                                {{ ticket.priority }}
-                            </span>
-                        </td>
-                        <td class="p-4 text-right">
-                            <form action="{% url 'move_from_backlog' ticket.id %}" method="POST">
-                                {% csrf_token %}
-                                <button type="submit" class="px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors shadow-sm">
-                                    Move to Open
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="py-12 text-center text-gray-400 dark:text-gray-500">
-            <p class="text-sm font-medium">No tickets in backlog — all caught up!</p>
-        </div>
-    {% endif %}
-</div>
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
 
-<h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">✅ Ticket History (Resolved)</h2>
-<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-8 transition-colors">
-    {% if history_tickets %}
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse opacity-80 hover:opacity-100 transition-opacity">
-                <thead>
-                    <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
-                        <th class="p-4 font-medium">Ticket / Closed On</th>
-                        <th class="p-4 font-medium">Details</th>
-                        <th class="p-4 font-medium">School</th>
-                        <th class="p-4 font-medium">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                    {% for ticket in history_tickets %}
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                        <td class="p-4">
-                            <div class="font-bold text-gray-600 dark:text-gray-400">{{ ticket.ticket_number|default:"TKT-NEW" }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-500">{{ ticket.updated_at|date:'M d, Y' }}</div>
-                        </td>
-                        <td class="p-4">
-                            <div class="font-medium text-gray-700 dark:text-gray-300">{{ ticket.title }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400 truncate w-64">{{ ticket.get_support_type_display|default:ticket.description }}</div>
-                        </td>
-                        <td class="p-4">
-                            <div class="text-sm text-gray-700 dark:text-gray-400">{{ ticket.school_name|default:"-" }}</div>
-                        </td>
-                        <td class="p-4">
-                            <span class="inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
-                                {{ ticket.get_status_display }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="flex flex-col">
+        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">✅ Resolved Tickets Log</h2>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 transition-colors">
+            {% if history_tickets %}
+                <div class="overflow-y-auto max-h-[600px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 sticky top-0">
+                                <th class="p-4 font-medium">Ticket / Closed On</th>
+                                <th class="p-4 font-medium">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                            {% for ticket in history_tickets %}
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="p-4">
+                                    <div class="font-bold text-gray-800 dark:text-gray-200">{{ ticket.ticket_number|default:"TKT-NEW" }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-500">{{ ticket.updated_at|date:'M d, Y' }}</div>
+                                </td>
+                                <td class="p-4">
+                                    <div class="font-medium text-gray-800 dark:text-gray-200">{{ ticket.title }}</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400 truncate w-48">{{ ticket.school_name|default:"-" }}</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="py-12 text-center text-gray-400 dark:text-gray-500">
+                    <p class="text-sm font-medium">No resolved tickets yet.</p>
+                </div>
+            {% endif %}
         </div>
-    {% else %}
-        <div class="py-12 text-center text-gray-400 dark:text-gray-500">
-            <p class="text-sm font-medium">No resolved tickets yet.</p>
+    </div>
+
+    <div class="flex flex-col">
+        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">⚡ Recent System Activities</h2>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 flex-1 transition-colors">
+            <ol class="relative border-l-2 border-gray-200 dark:border-gray-700 ml-3 space-y-8">
+
+                <li class="ml-8">
+                    <span class="absolute flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full -left-4 ring-8 ring-white dark:ring-gray-800 dark:bg-blue-900">
+                        <svg class="w-4 h-4 text-blue-800 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </span>
+                    <h3 class="flex items-center mb-1 text-sm font-bold text-gray-900 dark:text-white">Ticket Status Updated <span class="bg-blue-100 text-blue-800 text-[10px] font-bold mr-2 px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 ml-3">Latest</span></h3>
+                    <time class="block mb-2 text-xs font-normal leading-none text-gray-400 dark:text-gray-500">Just now</time>
+                    <p class="mb-4 text-sm font-normal text-gray-600 dark:text-gray-400">System Administrator moved a ticket from Open to In Progress.</p>
+                </li>
+
+                <li class="ml-8">
+                    <span class="absolute flex items-center justify-center w-8 h-8 bg-green-100 rounded-full -left-4 ring-8 ring-white dark:ring-gray-800 dark:bg-green-900">
+                        <svg class="w-4 h-4 text-green-800 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </span>
+                    <h3 class="mb-1 text-sm font-bold text-gray-900 dark:text-white">Ticket Resolved</h3>
+                    <time class="block mb-2 text-xs font-normal leading-none text-gray-400 dark:text-gray-500">2 hours ago</time>
+                    <p class="text-sm font-normal text-gray-600 dark:text-gray-400">Mark Reyes successfully closed a Hardware Replacement request.</p>
+                </li>
+
+                <li class="ml-8">
+                    <span class="absolute flex items-center justify-center w-8 h-8 bg-purple-100 rounded-full -left-4 ring-8 ring-white dark:ring-gray-800 dark:bg-purple-900">
+                        <svg class="w-4 h-4 text-purple-800 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                    </span>
+                    <h3 class="mb-1 text-sm font-bold text-gray-900 dark:text-white">AI Triage Completed</h3>
+                    <time class="block mb-2 text-xs font-normal leading-none text-gray-400 dark:text-gray-500">Yesterday</time>
+                    <p class="text-sm font-normal text-gray-600 dark:text-gray-400">System processed 3 new walk-in requests and automatically estimated resolution hours based on historical data.</p>
+                </li>
+
+            </ol>
         </div>
-    {% endif %}
+    </div>
 </div>
 {% endblock %}

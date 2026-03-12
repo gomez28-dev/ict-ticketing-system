@@ -1,4 +1,7 @@
-<div class="ticket-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500 transition-all"
+<div class="ticket-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border-y border-r border-l-4 border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-all
+     {% if ticket.priority == 'HIGH' or ticket.priority == 'URGENT' %}border-l-red-500 hover:border-red-300 dark:hover:border-red-500
+     {% elif ticket.priority == 'MEDIUM' %}border-l-yellow-500 hover:border-yellow-300 dark:hover:border-yellow-500
+     {% else %}border-l-green-500 hover:border-green-300 dark:hover:border-green-500{% endif %}"
      data-id="{{ ticket.id }}"
      data-number="{{ ticket.ticket_number|default:'TKT-NEW' }}"
      data-title="{{ ticket.title }}"
@@ -18,24 +21,30 @@
 
     <div class="flex justify-between items-start mb-2">
         <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ ticket.ticket_number|default:"TKT-NEW" }}</span>
-        <span class="w-2 h-2 rounded-full {% if ticket.priority == 'HIGH' or ticket.priority == 'URGENT' %}bg-red-500{% elif ticket.priority == 'MEDIUM' %}bg-yellow-500{% else %}bg-green-500{% endif %}"></span>
     </div>
 
     <h4 class="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1 leading-tight">{{ ticket.title|default:"Untitled Task" }}</h4>
     <p class="text-xs text-gray-500 dark:text-gray-400 mb-4 truncate">{{ ticket.get_support_type_display|default:ticket.description }}</p>
 
-    <div class="flex items-center justify-between mt-auto">
-        <div class="flex gap-2 items-center">
-            <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-semibold rounded uppercase tracking-wider">{{ ticket.priority }}</span>
+    <div class="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-3">
 
-            <span class="px-2 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-[10px] font-bold rounded flex items-center gap-1 border border-purple-100 dark:border-purple-800" title="AI Predicted Resolution Time">
-                🤖 {{ ticket.predicted_hours|default:'1' }}h
-            </span>
-
+        <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider
+            {% if ticket.priority == 'URGENT' or ticket.priority == 'HIGH' %}text-red-600 dark:text-red-400
+            {% elif ticket.priority == 'MEDIUM' %}text-yellow-600 dark:text-yellow-400
+            {% else %}text-green-600 dark:text-green-400{% endif %}">
+            🕒 Deadline: {% if ticket.due_date %}{{ ticket.due_date|date:'M d, Y' }}{% else %}Auto-Tracked by AI{% endif %}
         </div>
 
-        <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold" title="{{ ticket.school_district }}">
-            {{ ticket.school_district|make_list|last|default:"--" }}
+        <div class="flex items-center justify-between">
+            <div class="flex gap-2 items-center">
+                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-semibold rounded uppercase tracking-wider">{{ ticket.priority }}</span>
+                <span class="px-2 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-[10px] font-bold rounded flex items-center gap-1 border border-purple-100 dark:border-purple-800" title="AI Predicted Resolution Time">
+                    🤖 {{ ticket.predicted_hours|default:'1' }}h
+                </span>
+            </div>
+            <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold" title="{{ ticket.school_district }}">
+                {{ ticket.school_district|make_list|last|default:"--" }}
+            </div>
         </div>
     </div>
 </div>

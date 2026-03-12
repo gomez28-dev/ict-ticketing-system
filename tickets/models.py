@@ -63,14 +63,12 @@ class Ticket(models.Model):
     )
 
     SUPPORT_CHOICES = (
-        ('MS_ACCOUNT', 'Creation of Microsoft Account'),
-        ('GOOGLE_ACCOUNT', 'Creation of Google Account'),
-        ('PASSWORD_RESET', 'Password Reset for Microsoft or Google Account'),
+        ('CCTV', 'CCTV Maintenance/Check-Up or Repair Request'),
         ('PC_MAINTENANCE', 'Computer Maintenance/Check-Up or Repair Request'),
         ('NETWORK_MAINTENANCE', 'Computer Network Maintenance/Check-Up or Repair Request'),
-        ('SOFTWARE_APP', 'Software Application Assessment/Installation Request'),
-        ('DIGITAL_AUTO', 'Digital Automation Assessment and Request'),
-        ('CCTV', 'CCTV Maintenance/Check-Up or Repair Request'),
+        ('GOOGLE_ACCOUNT', 'Creation of Google Account'),
+        ('MS_ACCOUNT', 'Creation of Microsoft Account'),
+        ('PASSWORD_RESET', 'Password Reset for Microsoft or Google Account'),
         ('OTHER', 'Other Support'),
     )
 

@@ -1,9 +1,23 @@
 {% extends 'tickets/base_admin.html' %}
 
 {% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Board</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400">Click a ticket to view details and edit its status.</p>
+<div class="mb-6 flex justify-between items-end">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Board</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Click a ticket to view details and edit its status.</p>
+    </div>
+
+    <a href="{% url 'public_submit' %}" target="_blank" class="px-5 py-2.5 bg-[#0078d4] hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition-all flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Create Ticket
+    </a>
+</div>
+
+<div class="mb-6 inline-flex items-center gap-6 text-xs font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+    <span class="uppercase tracking-wider text-gray-400 dark:text-gray-500 mr-2">Deadline Legend:</span>
+    <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500 shadow-sm border border-red-200 dark:border-red-900"></span> Urgent / Overdue</span>
+    <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-500 shadow-sm border border-yellow-200 dark:border-yellow-900"></span> Medium / Due Soon</span>
+    <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500 shadow-sm border border-green-200 dark:border-green-900"></span> Low / On Track</span>
 </div>
 
 <div class="flex-1 overflow-x-auto kanban-scroll pb-4">
@@ -16,9 +30,9 @@
                     <h3 class="font-semibold text-gray-700 dark:text-gray-200">Open</h3>
                 </div>
             </div>
-            <div class="flex-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700 border-dashed overflow-y-auto space-y-3 kanban-zone" data-status="PENDING">
+            <div class="flex-1 bg-gray-100/50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-200 dark:border-gray-700 border-dashed overflow-y-auto space-y-3 kanban-zone" data-status="TODO">
                 {% for ticket in tickets %}
-                    {% if ticket.status == 'PENDING' or ticket.status == 'TODO' %}
+                    {% if ticket.status == 'TODO' %}
                         {% include 'tickets/includes/ticket_card.html' with ticket=ticket %}
                     {% endif %}
                 {% endfor %}
@@ -115,7 +129,6 @@
                 <div>
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Change Status</label>
                     <select id="modalStatusSelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white font-medium">
-                        <option value="BACKLOG">Backlog (Needs Review)</option>
                         <option value="TODO">Open (To Do)</option>
                         <option value="IN_PROGRESS">In Progress</option>
                         <option value="DONE">Resolved (Done)</option>
