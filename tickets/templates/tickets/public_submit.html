@@ -33,27 +33,34 @@
         {% endif %}
 
         <form method="POST" class="space-y-8">
-            {% csrf_token %} <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+            {% csrf_token %}
+
+            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
                 <div class="flex items-center gap-3 mb-6">
                     <span class="bg-[#0078d4] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">1</span>
                     <h2 class="text-xl font-semibold text-gray-800">School District</h2>
                 </div>
 
-                <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">School District *</label>
-                        <select name="school_district" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                        <select id="district-select" name="school_district" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
                             <option value="">Select a district</option>
-                            <option value="DISTRICT_I">District I - Arkong Bato</option>
-                            <option value="DISTRICT_II">District II - Balangkas</option>
-                            <option value="DISTRICT_III">District III - Karuhatan</option>
-                            <option value="DISTRICT_IV">District IV - Malinta</option>
-                            <option value="DISTRICT_V">District V - Marulas</option>
+                            <option value="DISTRICT_I">District 1</option>
+                            <option value="DISTRICT_II">District 2</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">School Name</label>
-                        <input type="text" name="school_name" placeholder="e.g. Gen. T. De Leon Elementary School" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Barangay *</label>
+                        <select id="barangay-select" name="barangay" required disabled class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-gray-50 text-gray-400 cursor-not-allowed">
+                            <option value="">Select a district first</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">School Name *</label>
+                        <select id="school-select" name="school_name" required disabled class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-gray-50 text-gray-400 cursor-not-allowed">
+                            <option value="">Select a barangay first</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -79,7 +86,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Request Details</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Request Details *</label>
                         <textarea name="description" rows="4" placeholder="Describe your issue or request in detail..." required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none"></textarea>
                     </div>
                 </div>
@@ -120,7 +127,7 @@
             </div>
 
             <div class="flex gap-4">
-                <button type="reset" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors">
+                <button type="reset" onclick="resetDropdowns()" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors">
                     ↺ Clear Form
                 </button>
                 <button type="submit" class="flex-1 bg-[#0088cc] hover:bg-[#0078d4] text-white rounded-lg py-3 font-semibold text-lg transition-colors shadow-md">
@@ -133,5 +140,119 @@
             © 2026 ICT Unit - SDO Valenzuela City. All rights reserved.
         </div>
     </main>
+
+    <script>
+        // FIXED KEYS TO MATCH DATABASE
+        const locationData = {
+            "DISTRICT_I": {
+                "Bignay": [
+                    "Disiplina Village Bignay National High School"
+                ],
+                "Lawang Bato": [
+                    "Charis Christian School of Valenzuela",
+                    "Lawang Bato National High School"
+                ],
+                "Lingunan": [
+                    "Lingunan National High School"
+                ],
+                "Malanday": [
+                    "Electron College of Technical Education \u2013 Malanday Branch",
+                    "Malanday National High School"
+                ],
+                "Malinta": [
+                    "Bethel Kiddie Learning Center of Valenzuela",
+                    "Malinta National High School",
+                    "Valenzuela City School of Mathematics and Science"
+                ],
+                "Punturin": [
+                    "Punturin Senior High School",
+                    "St. Gregory College of Valenzuela"
+                ],
+                "Wawang Pulo": [
+                    "Globe Brent Secondary Maritime Academy",
+                    "Wawang Pulo National High School"
+                ]
+            },
+            "DISTRICT_II": {
+                "Bagbaguin": [
+                    "Bagbaguin National High School"
+                ],
+                "Gen. T. De Leon": [
+                    "Gen. T. De Leon National High School",
+                    "Maranatha Christian Academy of Karuhatan"
+                ],
+                "Karuhatan": [
+                    "Caruhatan National High School",
+                    "St. Judel Institute of Technology"
+                ],
+                "Marulas": [
+                    "Datamex College of Saint Adeline",
+                    "Valenzuela National High School"
+                ],
+                "Maysan": [
+                    "Colegio Sto. Ni\u00f1o de Valenzuela",
+                    "Maysan National High School"
+                ],
+                "Parada": [
+                    "CEC Christian Academy of Valenzuela",
+                    "Parada National High School"
+                ],
+                "Paso de Blas": [
+                    "Paso de Blas National High School",
+                    "Paso de Blas Senior High School"
+                ],
+                "Ugong": [
+                    "Sitero Francisco Memorial National High School",
+                    "Ugong Senior High School"
+                ]
+            }
+        };
+
+        const districtSelect = document.getElementById('district-select');
+        const barangaySelect = document.getElementById('barangay-select');
+        const schoolSelect   = document.getElementById('school-select');
+
+        function resetSelect(el, placeholder) {
+            el.innerHTML = `<option value="">${placeholder}</option>`;
+            el.disabled = true;
+            el.classList.add('bg-gray-50', 'text-gray-400', 'cursor-not-allowed');
+            el.classList.remove('bg-white', 'text-gray-800');
+        }
+
+        function enableSelect(el) {
+            el.disabled = false;
+            el.classList.remove('bg-gray-50', 'text-gray-400', 'cursor-not-allowed');
+            el.classList.add('bg-white', 'text-gray-800');
+        }
+
+        districtSelect.addEventListener('change', function () {
+            resetSelect(barangaySelect, 'Select a barangay');
+            resetSelect(schoolSelect,   'Select a barangay first');
+
+            const d = this.value;
+            if (d && locationData[d]) {
+                enableSelect(barangaySelect);
+                Object.keys(locationData[d]).forEach(brgy => {
+                    barangaySelect.add(new Option(brgy, brgy));
+                });
+            }
+        });
+
+        barangaySelect.addEventListener('change', function () {
+            resetSelect(schoolSelect, 'Select a school');
+
+            const d = districtSelect.value;
+            const b = this.value;
+            if (d && b && locationData[d][b]) {
+                enableSelect(schoolSelect);
+                locationData[d][b].forEach(s => schoolSelect.add(new Option(s, s)));
+            }
+        });
+
+        function resetDropdowns() {
+            resetSelect(barangaySelect, 'Select a district first');
+            resetSelect(schoolSelect,   'Select a barangay first');
+        }
+    </script>
 </body>
 </html>

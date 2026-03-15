@@ -8,111 +8,225 @@
 </div>
 
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-    
-    <div class="xl:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col h-full transition-colors">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">📄 User Request Details</h2>
-        
-        <div class="space-y-4 flex-1">
+
+    <div class="xl:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col transition-colors">
+        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">📄 User Request Details</h2>
+
+        <div class="grid grid-cols-2 gap-y-6 gap-x-4 mb-8">
             <div>
-                <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Requester</span>
-                <span class="text-gray-800 dark:text-gray-200 font-bold">{{ ticket.first_name }} {{ ticket.last_name }}</span>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contact</span>
-                    <span class="text-gray-800 dark:text-gray-200 text-sm">{{ ticket.contact_number|default:"N/A" }}</span>
-                </div>
-                <div>
-                    <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Email</span>
-                    <span class="text-gray-800 dark:text-gray-200 text-sm">{{ ticket.email|default:"N/A" }}</span>
-                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Requester</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.first_name }} {{ ticket.last_name }}</p>
             </div>
             <div>
-                <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Location</span>
-                <span class="text-gray-800 dark:text-gray-200 text-sm">{{ ticket.school_name|default:"Not specified" }} ({{ ticket.get_school_district_display }})</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">School</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.school_name|default:"Not Provided" }}</p>
             </div>
             <div>
-                <span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Support Category</span>
-                <span class="inline-block px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-semibold">
-                    {{ ticket.get_support_type_display|default:"General Inquiry" }}
-                </span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contact</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.contact_number|default:"Not Provided" }}</p>
             </div>
             <div>
-                <span class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Issue Description</span>
-                <div class="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700 text-sm whitespace-pre-wrap">{{ ticket.description }}</div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Email</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.email|default:"Not Provided" }}</p>
             </div>
+            <div class="col-span-2">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Location</p>
+                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.school_name }} ({{ ticket.get_school_district_display }})</p>
+            </div>
+            <div class="col-span-2">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Support Category</p>
+                <span class="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-md font-medium border border-gray-200 dark:border-gray-600">{{ ticket.get_support_type_display }}</span>
+            </div>
+        </div>
+
+        <div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Issue Description</p>
+            <div class="p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-800 dark:text-gray-200 min-h-[120px] whitespace-pre-wrap leading-relaxed">{{ ticket.description }}</div>
         </div>
     </div>
 
-    <div class="xl:col-span-2 flex flex-col gap-6">
-        
+    <div class="xl:col-span-1 flex flex-col gap-6">
+
         <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">✨ AI Analysis</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
-            <div class="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl border border-blue-100 dark:border-blue-800 transition-colors">
-                <div class="text-blue-600 dark:text-blue-400 text-xl mb-2">👤</div>
-                <h3 class="font-bold text-blue-900 dark:text-blue-300 text-sm mb-1">Recommended Staff</h3>
-                <p class="font-bold text-gray-800 dark:text-gray-100">{{ staff_rec.recommended_name }}</p>
-                <p class="text-xs text-blue-700 dark:text-blue-400 mt-2 leading-relaxed">{{ staff_rec.reason }}</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-4">
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 flex gap-4 transition-colors">
+                <div class="text-blue-500 mt-1">👤</div>
+                <div>
+                    <h3 class="text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">Recommended Staff</h3>
+                    <p class="text-base font-bold text-gray-900 dark:text-white mb-2">{{ staff_rec.recommended_name }}</p>
+                    <p class="text-xs text-blue-700 dark:text-blue-400">{{ staff_rec.reason }}</p>
+                </div>
             </div>
 
-            <div class="bg-{{ risk_assessment.color }}-50 dark:bg-{{ risk_assessment.color }}-900/20 p-5 rounded-xl border border-{{ risk_assessment.color }}-100 dark:border-{{ risk_assessment.color }}-800 transition-colors">
-                <div class="text-{{ risk_assessment.color }}-600 dark:text-{{ risk_assessment.color }}-400 text-xl mb-2">⚠️</div>
-                <h3 class="font-bold text-{{ risk_assessment.color }}-900 dark:text-{{ risk_assessment.color }}-300 text-sm mb-1">Risk Prediction: {{ risk_assessment.level }}</h3>
-                <p class="text-xs text-{{ risk_assessment.color }}-700 dark:text-{{ risk_assessment.color }}-400 mt-2 leading-relaxed">{{ risk_assessment.blockers }}</p>
+            <div class="{% if risk_assessment.level == 'High' %}bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50{% elif risk_assessment.level == 'Medium' %}bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50{% else %}bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50{% endif %} border rounded-xl p-4 flex gap-4 transition-colors">
+                <div class="mt-1 {% if risk_assessment.level == 'High' %}text-red-500{% elif risk_assessment.level == 'Medium' %}text-yellow-500{% else %}text-green-500{% endif %}">⚠️</div>
+                <div>
+                    <h3 class="text-sm font-bold {% if risk_assessment.level == 'High' %}text-red-900 dark:text-red-300{% elif risk_assessment.level == 'Medium' %}text-yellow-900 dark:text-yellow-300{% else %}text-green-900 dark:text-green-300{% endif %} mb-1">Risk Prediction: {{ risk_assessment.level }}</h3>
+                    <p class="text-xs {% if risk_assessment.level == 'High' %}text-red-700 dark:text-red-400{% elif risk_assessment.level == 'Medium' %}text-yellow-700 dark:text-yellow-400{% else %}text-green-700 dark:text-green-400{% endif %}">{{ risk_assessment.reason }}</p>
+                </div>
             </div>
 
-            <div class="bg-purple-50 dark:bg-purple-900/20 p-5 rounded-xl border border-purple-100 dark:border-purple-800 transition-colors">
-                <div class="text-purple-600 dark:text-purple-400 text-xl mb-2">⏱️</div>
-                <h3 class="font-bold text-purple-900 dark:text-purple-300 text-sm mb-1">Estimated Scheduling</h3>
-                <p class="font-bold text-gray-800 dark:text-gray-100">{{ predicted_hours }} Hours</p>
-                <p class="text-xs text-purple-700 dark:text-purple-400 mt-2 leading-relaxed">Based on task complexity and selected priority weighting.</p>
+            <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/50 rounded-xl p-4 flex gap-4 transition-colors">
+                <div class="text-purple-500 mt-1">⏱️</div>
+                <div>
+                    <h3 class="text-sm font-bold text-purple-900 dark:text-purple-300 mb-1">Estimated Scheduling</h3>
+                    <p class="text-base font-bold text-gray-900 dark:text-white mb-2">{{ predicted_hours }} Hours</p>
+                    <p class="text-xs text-purple-700 dark:text-purple-400">Based on task complexity and selected priority.</p>
+                </div>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex-1 transition-colors">
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">🛠️ Finalize Ticket</h2>
-            
-            <form action="{% url 'approve_request' ticket.id %}" method="POST">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex-1 transition-colors mt-2">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">🛠️ Finalize Ticket</h2>
+
+            <form action="{% url 'approve_request' ticket.id %}" method="POST" class="space-y-6 flex flex-col h-full">
                 {% csrf_token %}
                 <input type="hidden" name="predicted_hours" value="{{ predicted_hours }}">
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+
+                <div class="space-y-4 flex-1">
+
                     <div>
                         <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Assign Staff</label>
-                        <select name="assigned_staff" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white">
-                            <option value="{{ staff_rec.recommended_name }}">⭐ {{ staff_rec.recommended_name }} (Recommended)</option>
-                            <option value="Mark Reyes">Mark Reyes</option>
-                            <option value="Sarah Cruz">Sarah Cruz</option>
-                            <option value="Alex Santos">Alex Santos</option>
-                        </select>
+                        <div id="staff-selector-container" class="relative">
+                            <div class="flex flex-wrap items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 min-h-[46px] cursor-text transition-all focus-within:ring-2 focus-within:ring-[#0078d4] focus-within:border-[#0078d4]" onclick="document.getElementById('staff-search-input').focus()">
+
+                                <div id="selected-staff-pills" class="flex flex-wrap gap-2"></div>
+
+                                <input type="text" id="staff-search-input" class="flex-1 bg-transparent outline-none min-w-[140px] text-sm text-gray-800 dark:text-white placeholder-gray-400" placeholder="Search for an employee..." autocomplete="off">
+                            </div>
+
+                            <div id="staff-dropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl hidden max-h-48 overflow-y-auto overflow-x-hidden">
+                            </div>
+                        </div>
+
+                        <div id="hidden-staff-inputs"></div>
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Confirm Priority</label>
-                        <select name="priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white">
-                            <option value="LOW" {% if ticket.priority == 'LOW' %}selected{% endif %}>Low</option>
-                            <option value="MEDIUM" {% if ticket.priority == 'MEDIUM' %}selected{% endif %}>Medium</option>
-                            <option value="HIGH" {% if ticket.priority == 'HIGH' %}selected{% endif %}>High</option>
-                            <option value="URGENT" {% if ticket.priority == 'URGENT' %}selected{% endif %}>Urgent</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Initial Status</label>
-                        <select name="status" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white">
-                            <option value="TODO">Open (To Do)</option>
-                            <option value="IN_PROGRESS">In Progress (Start Immediately)</option>
-                        </select>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Confirm Priority</label>
+                            <select name="priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white">
+                                <option value="LOW" {% if ticket.priority == 'LOW' %}selected{% endif %}>Low</option>
+                                <option value="MEDIUM" {% if ticket.priority == 'MEDIUM' %}selected{% endif %}>Medium</option>
+                                <option value="HIGH" {% if ticket.priority == 'HIGH' %}selected{% endif %}>High</option>
+                                <option value="URGENT" {% if ticket.priority == 'URGENT' %}selected{% endif %}>Urgent</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Initial Status</label>
+                            <select name="status" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white">
+                                <option value="TODO">Open (To Do)</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <a href="{% url 'requests' %}" class="px-6 py-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Cancel</a>
-                    <button type="submit" class="px-6 py-2.5 bg-[#0078d4] hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition-all">
-                        Create Ticket &rarr;
-                    </button>
+                <div class="pt-4 flex gap-3 border-t border-gray-100 dark:border-gray-700">
+                    <a href="{% url 'requests' %}" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-center">Cancel</a>
+                    <button type="submit" class="flex-1 px-4 py-2 text-sm font-bold text-white bg-[#0078d4] hover:bg-blue-700 rounded-lg shadow-sm transition-colors text-center">Push to Board &rarr;</button>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
+
+<script>
+    // Mock Database of available employees (Can connect to Django models later)
+    const availableStaff = [
+        "Mark Reyes",
+        "Sarah Cruz",
+        "Alex Santos",
+        "Juan Dela Cruz",
+        "Maria Clara",
+        "Crisostomo Ibarra",
+        "Pedro Penduko"
+    ];
+
+    // Automatically pre-load the AI's recommended staff
+    let selectedStaff = ["{{ staff_rec.recommended_name|default:'Unassigned' }}"];
+    // Remove 'Unassigned' if it ends up in the array
+    selectedStaff = selectedStaff.filter(name => name && name !== 'Unassigned');
+
+    const input = document.getElementById('staff-search-input');
+    const dropdown = document.getElementById('staff-dropdown');
+    const pillsContainer = document.getElementById('selected-staff-pills');
+    const hiddenInputsContainer = document.getElementById('hidden-staff-inputs');
+
+    function renderUI() {
+        // 1. Render the blue Facebook-style pills
+        pillsContainer.innerHTML = selectedStaff.map(name => `
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#0078d4] text-white shadow-sm transition-transform hover:scale-105">
+                ${name}
+                <button type="button" onclick="removeStaff('${name}')" class="text-blue-200 hover:text-white focus:outline-none ml-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </span>
+        `).join('');
+
+        // 2. Render invisible inputs so Django's getlist() works perfectly
+        hiddenInputsContainer.innerHTML = selectedStaff.map(name => `
+            <input type="hidden" name="assigned_staff" value="${name}">
+        `).join('');
+    }
+
+    function removeStaff(name) {
+        selectedStaff = selectedStaff.filter(n => n !== name);
+        renderUI();
+        updateDropdown();
+    }
+
+    function addStaff(name) {
+        if (!selectedStaff.includes(name)) {
+            selectedStaff.push(name);
+            renderUI();
+        }
+        input.value = '';
+        dropdown.classList.add('hidden');
+        updateDropdown();
+        input.focus();
+    }
+
+    function updateDropdown() {
+        const query = input.value.toLowerCase();
+        // Filter out people who are already selected, and match the search query
+        const unselected = availableStaff.filter(n => !selectedStaff.includes(n) && n.toLowerCase().includes(query));
+
+        if (unselected.length === 0) {
+            dropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center italic">No matching staff found</div>';
+        } else {
+            dropdown.innerHTML = unselected.map(name => `
+                <div onclick="addStaff('${name}')" class="px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-[#0078d4] hover:text-white cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full bg-blue-100 text-[#0078d4] flex items-center justify-center text-xs font-bold shadow-inner">
+                        ${name.charAt(0)}
+                    </div>
+                    ${name}
+                </div>
+            `).join('');
+        }
+    }
+
+    // Event Listeners for typing and clicking
+    input.addEventListener('input', () => {
+        dropdown.classList.remove('hidden');
+        updateDropdown();
+    });
+
+    input.addEventListener('focus', () => {
+        dropdown.classList.remove('hidden');
+        updateDropdown();
+    });
+
+    // Close dropdown when clicking outside the box
+    document.addEventListener('click', (e) => {
+        if (!document.getElementById('staff-selector-container').contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
+    // Run once on page load
+    renderUI();
+</script>
 {% endblock %}

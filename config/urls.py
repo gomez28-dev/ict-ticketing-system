@@ -11,6 +11,7 @@ urlpatterns = [
     path('admin-dashboard/analytics/', views.analytics_dashboard, name='analytics'),
     path('admin-dashboard/requests/', views.requests_view, name='requests'),
     path('admin-dashboard/backlog/', views.backlog_view, name='backlog'),  # <-- New Backlog Page
+    path('admin-dashboard/create/', views.admin_create_ticket, name='admin_create_ticket'),
 
     # Form Actions
     path('admin-dashboard/requests/approve/<int:ticket_id>/', views.approve_request, name='approve_request'),

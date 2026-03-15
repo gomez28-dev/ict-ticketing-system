@@ -82,6 +82,7 @@ class Ticket(models.Model):
 
     # --- Public Form Fields ---
     school_district = models.CharField(max_length=50, choices=DISTRICT_CHOICES, null=True, blank=True)
+    barangay = models.CharField(max_length=100, null=True, blank=True)  # <-- NEW FIELD
     school_name = models.CharField(max_length=255, null=True, blank=True)
     support_type = models.CharField(max_length=100, choices=SUPPORT_CHOICES, null=True, blank=True)
 
@@ -95,11 +96,8 @@ class Ticket(models.Model):
     predicted_hours = models.IntegerField(blank=True, null=True, help_text="AI estimated resolution time in hours")
 
     # --- Assignments ---
-    # Allowed to be blank/null now because public users submit without logging in
-    reporter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
-                                 related_name='reported_tickets')
-    assignee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
-                                 related_name='assigned_tickets')
+    reporter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reported_tickets')
+    assignee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tickets')
 
     # --- AI-Ready Data Fields ---
     complexity = models.IntegerField(default=1, help_text="Story points or complexity scale (e.g., 1-10)")
@@ -112,18 +110,14 @@ class Ticket(models.Model):
         # 1. Auto-generate the TKT-YYYY-XXXX number
         if not self.ticket_number:
             current_year = timezone.now().year
-            # Find the last ticket submitted this year
-            last_ticket = Ticket.objects.filter(ticket_number__startswith=f'TKT-{current_year}').order_by(
-                'ticket_number').last()
+            last_ticket = Ticket.objects.filter(ticket_number__startswith=f'TKT-{current_year}').order_by('ticket_number').last()
 
             if last_ticket:
-                # Extract the number part, turn it into an integer, and add 1
                 last_number = int(last_ticket.ticket_number.split('-')[2])
                 new_number = last_number + 1
             else:
                 new_number = 1
 
-            # Format with leading zeros (e.g., 0001, 0002)
             self.ticket_number = f'TKT-{current_year}-{new_number:04d}'
 
         # 2. Auto-generate a title if it's a public submission
@@ -141,6 +135,22 @@ class Ticket(models.Model):
     def __str__(self):
         return f"{self.ticket_number} - {self.title}"
 
+    @property
+    def get_assignee_initials(self):
+        """Extracts the first letter of each assigned staff member for the UI avatars."""
+        if self.admin_notes and 'Assigned to:' in self.admin_notes:
+            try:
+                # Find the exact line containing the names
+                assign_line = next((line for line in self.admin_notes.split('\n') if 'Assigned to:' in line), None)
+                if assign_line:
+                    names_string = assign_line.replace('Assigned to:', '').strip()
+                    if names_string and names_string != 'Unassigned':
+                        names = [name.strip() for name in names_string.split(',')]
+                        # Grab the first letter of each name
+                        return [name[0].upper() for name in names if name]
+            except Exception:
+                pass
+        return []
 
 class UserSettings(models.Model):
     # Handles the Dark/Light mode toggle preference per user

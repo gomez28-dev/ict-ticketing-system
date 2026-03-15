@@ -26,6 +26,12 @@
     <h4 class="text-sm font-bold text-gray-800 dark:text-gray-100 mb-1 leading-tight">{{ ticket.title|default:"Untitled Task" }}</h4>
     <p class="text-xs text-gray-500 dark:text-gray-400 mb-4 truncate">{{ ticket.get_support_type_display|default:ticket.description }}</p>
 
+    {% if ticket.admin_notes %}
+    <div class="mt-2 mb-3 text-[10px] text-blue-600 dark:text-blue-400 font-bold border-t border-gray-100 dark:border-gray-700 pt-2 line-clamp-2">
+        👥 {{ ticket.admin_notes|linebreaksbr }}
+    </div>
+    {% endif %}
+
     <div class="mt-auto pt-3 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-3">
 
         <div class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider
@@ -42,8 +48,17 @@
                     🤖 {{ ticket.predicted_hours|default:'1' }}h
                 </span>
             </div>
-            <div class="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-bold" title="{{ ticket.school_district }}">
-                {{ ticket.school_district|make_list|last|default:"--" }}
+
+            <div class="flex -space-x-1.5">
+                {% for initial in ticket.get_assignee_initials %}
+                <div class="w-6 h-6 rounded-full bg-[#0078d4] text-white flex items-center justify-center text-[10px] font-bold border-2 border-white dark:border-gray-800 shadow-sm" title="Assigned Staff">
+                    {{ initial }}
+                </div>
+                {% empty %}
+                <div class="w-6 h-6 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center text-[10px] font-bold border-2 border-white dark:border-gray-800 shadow-sm" title="Unassigned">
+                    ?
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>

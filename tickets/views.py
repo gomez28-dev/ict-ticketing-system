@@ -75,6 +75,7 @@ def ticket_triage_view(request, ticket_id):
         'risk_assessment': risk_assessment
     })
 
+
 def approve_request(request, ticket_id):
     """Saves the finalized triage data and moves ticket to the board."""
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -83,10 +84,19 @@ def approve_request(request, ticket_id):
         ticket.status = request.POST.get('status', 'TODO')
         ticket.priority = request.POST.get('priority', ticket.priority)
 
+        # Retrieve MULTIPLE assigned staff as a list using getlist()
+        assigned_staff_list = request.POST.getlist('assigned_staff')
+
+        if not assigned_staff_list:
+            assigned_staff_str = 'Unassigned'
+        else:
+            # Remove duplicates just in case
+            unique_staff = list(set(assigned_staff_list))
+            assigned_staff_str = ", ".join(unique_staff)
+
         # Append assigned staff to notes
-        assigned_staff = request.POST.get('assigned_staff', 'Unassigned')
         existing_notes = ticket.admin_notes or ""
-        ticket.admin_notes = f"Assigned to: {assigned_staff}\n{existing_notes}"
+        ticket.admin_notes = f"Assigned to: {assigned_staff_str}\n{existing_notes}"
 
         # Save AI predicted hours
         ticket.predicted_hours = request.POST.get('predicted_hours', 1)
@@ -203,3 +213,34 @@ def update_ticket_ajax(request, ticket_id):
 def settings_view(request):
     """Loads the settings UI."""
     return render(request, 'tickets/settings.html')
+
+
+def admin_create_ticket(request):
+    """Allows Admins to manually create a ticket from the dashboard."""
+    if request.method == 'POST':
+        ticket = Ticket.objects.create(
+            first_name=request.POST.get('first_name'),
+            last_name=request.POST.get('last_name'),
+            email=request.POST.get('email', ''),
+            contact_number=request.POST.get('contact_number', ''),
+            school_name=request.POST.get('school_name', 'Not Specified'),
+            barangay=request.POST.get('barangay', 'Not Specified'),  # <-- NEW LINE
+            school_district=request.POST.get('school_district', 'DISTRICT_I'),
+            support_type=request.POST.get('support_type', 'OTHER'),
+            description=request.POST.get('description', ''),
+            priority=request.POST.get('priority', 'MEDIUM'),
+            status=request.POST.get('status', 'TODO'),
+            predicted_hours=request.POST.get('predicted_hours', 1)
+        )
+
+        # Handle multiple assigned staff
+        assigned_staff_list = request.POST.getlist('assigned_staff')
+        if assigned_staff_list:
+            unique_staff = list(set(assigned_staff_list))
+            assigned_staff_str = ", ".join(unique_staff)
+            ticket.admin_notes = f"Assigned to: {assigned_staff_str}\n"
+            ticket.save()
+
+        return redirect('dashboard')
+
+    return render(request, 'tickets/admin_create_ticket.html')
