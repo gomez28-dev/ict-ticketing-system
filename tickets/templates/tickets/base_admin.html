@@ -71,18 +71,31 @@
                     Settings
                 </a>
 
+                <div class="pt-4 mt-4 border-t border-gray-700 dark:border-gray-800">
+                    <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all text-red-400 hover:bg-red-500/10 hover:text-red-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        Logout
+                    </a>
+                </div>
+
                 {% endwith %}
             </nav>
         </div>
 
-        <div class="p-4 border-t border-gray-700 dark:border-gray-800">
+       <div class="p-4 border-t border-gray-700 dark:border-gray-800">
             <div class="flex items-center gap-3 px-4 py-2">
-                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs uppercase">
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs uppercase text-white">
                     {{ request.user.username|make_list|first|default:"A" }}
                 </div>
                 <div class="overflow-hidden">
-                    <p class="text-xs font-bold truncate">{{ request.user.username|default:"Admin" }}</p>
-                    <p class="text-[10px] text-gray-500">System Administrator</p>
+                    <p class="text-xs font-bold truncate text-white">{{ request.user.username|default:"Admin" }}</p>
+
+                    {% if request.user.is_superuser %}
+                        <p class="text-[10px] font-bold text-green-400">Super Admin</p>
+                    {% else %}
+                        <p class="text-[10px] font-bold text-blue-400">Admin</p>
+                    {% endif %}
+
                 </div>
             </div>
         </div>

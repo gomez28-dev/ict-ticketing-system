@@ -15,10 +15,10 @@
                 <h1 class="text-3xl font-bold">ICT Unit Online Helpdesk Support</h1>
                 <p class="text-sm font-light mt-1">Office of the Schools Division Superintendent</p>
             </div>
-            <div class="hidden md:block bg-blue-600/50 px-4 py-2 rounded-lg border border-blue-400">
-                <span class="font-bold tracking-wide">ICTU-OHS</span>
-                <span class="text-xs block text-blue-200">Helpdesk Support</span>
-            </div>
+            <a href="{% url 'login' %}" class="hidden md:block bg-blue-600/50 hover:bg-blue-700 transition-colors duration-200 px-4 py-2 rounded-lg border border-blue-400 shadow-sm cursor-pointer group">
+                <span class="font-bold tracking-wide text-white group-hover:text-blue-50">ICTU-OHS</span>
+                <span class="text-xs block text-blue-200 group-hover:text-white transition-colors duration-200">Helpdesk Support &rarr;</span>
+            </a>
         </div>
     </header>
 

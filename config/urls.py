@@ -1,3 +1,4 @@
+# config/urls.py
 from django.contrib import admin
 from django.urls import path
 from tickets import views
@@ -6,11 +7,15 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.public_submit, name='public_submit'),
 
+    # Auth Links
+    path('login/', views.custom_login, name='login'),
+    path('logout/', views.custom_logout, name='logout'),
+
     # Dashboard Links
     path('admin-dashboard/', views.dashboard, name='dashboard'),
     path('admin-dashboard/analytics/', views.analytics_dashboard, name='analytics'),
     path('admin-dashboard/requests/', views.requests_view, name='requests'),
-    path('admin-dashboard/backlog/', views.backlog_view, name='backlog'),  # <-- New Backlog Page
+    path('admin-dashboard/backlog/', views.backlog_view, name='backlog'),
     path('admin-dashboard/create/', views.admin_create_ticket, name='admin_create_ticket'),
 
     # Form Actions
@@ -22,4 +27,5 @@ urlpatterns = [
     path('admin-dashboard/settings/', views.settings_view, name='settings'),
     path('admin-dashboard/request/<int:ticket_id>/triage/', views.ticket_triage_view, name='ticket_triage'),
     path('admin-dashboard/teams/', views.teams_view, name='teams'),
+    path('admin-dashboard/teams/add/', views.add_employee, name='add_employee'),
 ]

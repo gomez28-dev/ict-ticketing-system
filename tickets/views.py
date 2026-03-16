@@ -6,6 +6,111 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.db.models import Q
 import json
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import user_passes_test
+
+User = get_user_model()
+
+
+def is_superadmin(user):
+    """Check if the user is a superuser."""
+    return user.is_superuser
+
+
+@user_passes_test(is_superadmin, login_url='dashboard')
+def add_employee(request):
+    """Secure view to allow Super Admins to create new staff accounts."""
+    error = None
+
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        role = request.POST.get('role', 'MEMBER')
+        password = request.POST.get('password')
+
+        # Use email as the username for simplicity, or generate a username
+        username = email.split('@')[0] if email else f"{first_name.lower()}.{last_name.lower()}"
+
+        # Check if user already exists
+        if User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
+            error = "An employee with this email or username already exists."
+        else:
+            # Create the new user securely
+            new_user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                role=role
+            )
+
+            # If they are added as an ADMIN or MANAGER, grant them staff status
+            if role in ['ADMIN', 'MANAGER']:
+                new_user.is_staff = True
+                new_user.save()
+
+            return redirect('teams')
+
+    return render(request, 'tickets/add_employee.html', {'error': error})
+
+
+# ==========================================
+# AUTHENTICATION VIEWS
+# ==========================================
+
+def custom_login(request):
+    """Handles the custom dark-mode login page."""
+    # Redirect if already logged in
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        email_input = request.POST.get('email', '').strip()
+
+        # --- CONDITIONAL LOGIN BYPASS FOR DEVELOPMENT ---
+        if email_input == 'admin@test.com':
+            # 1. Log in as a regular Admin
+            # Get or create a hardcoded standard Admin account
+            user, created = User.objects.get_or_create(
+                username='testadmin',
+                defaults={
+                    'email': 'admin@test.com',
+                    'first_name': 'Test',
+                    'last_name': 'Admin',
+                    'role': 'ADMIN',
+                    'is_staff': True,
+                    'is_superuser': False
+                }
+            )
+            # If it just created the user, set a dummy password and save
+            if created:
+                user.set_password('AdminPass123!')
+                user.save()
+
+        else:
+            # 2. Log in as Super Admin
+            # Find the actual superuser in the database instead of just the first user
+            user = User.objects.filter(is_superuser=True).first()
+
+            # Fallback just in case no superuser exists yet
+            if not user:
+                user = User.objects.first()
+
+        # Log the selected user in and redirect
+        if user:
+            login(request, user)
+        return redirect('dashboard')
+
+    return render(request, 'tickets/login.html')
+
+
+def custom_logout(request):
+    """Logs the user out and redirects to the public submission page."""
+    logout(request)
+    return redirect('public_submit')
 
 # ==========================================
 # MAIN KANBAN & PUBLIC VIEWS
