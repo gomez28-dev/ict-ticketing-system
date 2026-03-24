@@ -6,19 +6,12 @@
     <title>ICT Unit Work Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // TAILWIND CONFIG: Enable class-based dark mode
-        tailwind.config = {
-            darkMode: 'class',
-        }
-
-        // DARK MODE LOGIC: Check localStorage immediately to prevent white flash
+        tailwind.config = { darkMode: 'class', }
         if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
-
-        // Global function to toggle dark mode
         function toggleDarkMode() {
             if (document.documentElement.classList.contains('dark')) {
                 document.documentElement.classList.remove('dark');
@@ -47,25 +40,39 @@
             <nav class="p-4 space-y-2">
                 {% with url_name=request.resolver_match.url_name %}
 
-                <a href="{% url 'analytics' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'analytics' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                    Dashboard
-                </a>
-
                 <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'dashboard' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
                     Board
                 </a>
 
-                <a href="{% url 'teams' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'teams' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                    Employees
-                </a>
+                {% if request.user.role == 'MEMBER' and not request.user.is_superuser %}
 
-                <a href="{% url 'requests' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'requests' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                    Requests
-                </a>
+                    <a href="{% url 'my_tickets' %}" class="flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'my_tickets' or url_name == 'employee_ticket_review' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <div class="flex items-center gap-3">
+                            My Tickets
+                        </div>
+                        {% if my_ticket_count and my_ticket_count > 0 %}
+                            <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ my_ticket_count }}</span>
+                        {% endif %}
+                    </a>
 
-                <a href="{% url 'backlog' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'backlog' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                    Audit Trail
-                </a>
+                {% else %}
+                    <a href="{% url 'teams' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'teams' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                        Employees
+                    </a>
+
+                    <a href="{% url 'requests' %}" class="flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'requests' or url_name == 'ticket_triage' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <div class="flex items-center gap-3">
+                            Requests
+                        </div>
+                        {% if pending_count and pending_count > 0 %}
+                            <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ pending_count }}</span>
+                        {% endif %}
+                    </a>
+
+                    <a href="{% url 'backlog' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'backlog' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                        Audit Trail
+                    </a>
+                {% endif %}
 
                 <a href="{% url 'settings' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'settings' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
                     Settings
@@ -88,12 +95,14 @@
                     {{ request.user.username|make_list|first|default:"A" }}
                 </div>
                 <div class="overflow-hidden">
-                    <p class="text-xs font-bold truncate text-white">{{ request.user.username|default:"Admin" }}</p>
+                    <p class="text-xs font-bold truncate text-white">{{ request.user.username|default:"User" }}</p>
 
                     {% if request.user.is_superuser %}
                         <p class="text-[10px] font-bold text-green-400">Super Admin</p>
-                    {% else %}
+                    {% elif request.user.role == 'ADMIN' %}
                         <p class="text-[10px] font-bold text-blue-400">Admin</p>
+                    {% else %}
+                        <p class="text-[10px] font-bold text-gray-400">Employee</p>
                     {% endif %}
 
                 </div>

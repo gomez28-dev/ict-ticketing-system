@@ -1,0 +1,118 @@
+{% extends 'tickets/base_admin.html' %}
+
+{% block title %}Review Ticket {{ ticket.ticket_number }} - Helpdesk{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Task Review</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Review the details of this assignment.</p>
+        </div>
+        <a href="{% url 'my_tickets' %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
+            &larr; Back to My Tickets
+        </a>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+        <div class="px-8 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+            <div class="flex flex-wrap items-center gap-3">
+                <h2 class="text-xl font-bold text-[#0056b3] dark:text-blue-400 m-0">{{ ticket.ticket_number }}</h2>
+
+                <span class="px-2.5 py-1 text-xs font-bold rounded uppercase tracking-wider
+                    {% if ticket.priority == 'URGENT' or ticket.priority == 'HIGH' %}bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400
+                    {% elif ticket.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400
+                    {% else %}bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400{% endif %}">
+                    {{ ticket.priority }}
+                </span>
+
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800">
+                    🤖 AI Estimate: {{ ticket.predicted_hours }}h
+                </span>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">{{ ticket.title }}</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
+                <div>
+                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Requester</span>
+                    <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.first_name }} {{ ticket.last_name }}</span>
+                    {% if ticket.email %}<span class="block text-sm text-gray-500 dark:text-gray-400">{{ ticket.email }}</span>{% endif %}
+                    {% if ticket.contact_number %}<span class="block text-sm text-gray-500 dark:text-gray-400">{{ ticket.contact_number }}</span>{% endif %}
+                </div>
+                <div>
+                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Location</span>
+                    <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.school_name }}</span>
+                    <span class="block text-sm text-gray-500 dark:text-gray-400">{{ ticket.get_school_district_display }}</span>
+                    {% if ticket.barangay %}<span class="block text-sm text-gray-500 dark:text-gray-400">{{ ticket.barangay }}</span>{% endif %}
+                </div>
+                <div>
+                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Support Category</span>
+                    <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.get_support_type_display }}</span>
+                </div>
+                <div>
+                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Submission Date</span>
+                    <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.created_at|date:"F d, Y h:i A" }}</span>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Issue Description</span>
+                <div class="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-5 rounded-lg border border-gray-100 dark:border-gray-700 whitespace-pre-wrap leading-relaxed">{{ ticket.description }}</div>
+            </div>
+
+            {% if ticket.admin_notes %}
+            <div class="mb-2">
+                <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Admin Notes & Assignment</span>
+                <div class="text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-900/10 p-5 rounded-lg border border-blue-100 dark:border-blue-800/30 whitespace-pre-wrap leading-relaxed">{{ ticket.admin_notes }}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="px-8 py-5 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 flex justify-end gap-4 items-center">
+
+            <a href="{% url 'my_tickets' %}" class="px-6 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg font-bold shadow-sm transition-colors cursor-pointer">
+                Back to List
+            </a>
+
+            {% if ticket.status == 'PENDING_ACCEPTANCE' %}
+                <form method="POST" action="{% url 'decline_assignment' ticket.id %}" class="m-0 p-0">
+                    {% csrf_token %}
+                    <button type="submit" class="px-6 py-2.5 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
+                        Decline Ticket
+                    </button>
+                </form>
+
+                <form method="POST" action="{% url 'accept_assignment' ticket.id %}" class="m-0 p-0">
+                    {% csrf_token %}
+                    <button type="submit" class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Accept Ticket
+                    </button>
+                </form>
+
+            {% elif ticket.status == 'IN_PROGRESS' or ticket.status == 'SCHEDULED' %}
+                <form method="POST" action="{% url 'unresolve_assignment' ticket.id %}" class="m-0 p-0">
+                    {% csrf_token %}
+                    <button type="submit" class="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
+                        Report Issue (Unresolved)
+                    </button>
+                </form>
+
+                <form method="POST" action="{% url 'resolve_assignment' ticket.id %}" class="m-0 p-0">
+                    {% csrf_token %}
+                    <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Mark as Resolved
+                    </button>
+                </form>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

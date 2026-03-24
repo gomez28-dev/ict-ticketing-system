@@ -1,232 +1,156 @@
 {% extends 'tickets/base_admin.html' %}
 
+{% block title %}Triage Request {{ ticket.ticket_number }}{% endblock %}
+
 {% block content %}
-<div class="mb-6">
-    <a href="{% url 'requests' %}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2 inline-block">&larr; Back to Requests</a>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Ticket Triage & Creation</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400">Review the user's request and utilize AI insights before pushing to the board.</p>
-</div>
-
-<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-
-    <div class="xl:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col transition-colors">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">📄 User Request Details</h2>
-
-        <div class="grid grid-cols-2 gap-y-6 gap-x-4 mb-8">
-            <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Requester</p>
-                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.first_name }} {{ ticket.last_name }}</p>
-            </div>
-            <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">School</p>
-                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.school_name|default:"Not Provided" }}</p>
-            </div>
-            <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contact</p>
-                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.contact_number|default:"Not Provided" }}</p>
-            </div>
-            <div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Email</p>
-                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.email|default:"Not Provided" }}</p>
-            </div>
-            <div class="col-span-2">
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Location</p>
-                <p class="font-medium text-gray-900 dark:text-white">{{ ticket.school_name }} ({{ ticket.get_school_district_display }})</p>
-            </div>
-            <div class="col-span-2">
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Support Category</p>
-                <span class="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-md font-medium border border-gray-200 dark:border-gray-600">{{ ticket.get_support_type_display }}</span>
-            </div>
-        </div>
-
+<div class="max-w-6xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
         <div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Issue Description</p>
-            <div class="p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-800 dark:text-gray-200 min-h-[120px] whitespace-pre-wrap leading-relaxed">{{ ticket.description }}</div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Triage Request: {{ ticket.ticket_number }}</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Review the public submission, check AI insights, and assign to the team.</p>
         </div>
+        <a href="{% url 'requests' %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
+            &larr; Back to Requests
+        </a>
     </div>
 
-    <div class="xl:col-span-1 flex flex-col gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">✨ AI Analysis</h2>
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Original Submission</h3>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-4">
-            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 flex gap-4 transition-colors">
-                <div class="text-blue-500 mt-1">👤</div>
-                <div>
-                    <h3 class="text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">Recommended Staff</h3>
-                    <p class="text-base font-bold text-gray-900 dark:text-white mb-2">{{ staff_rec.recommended_name }}</p>
-                    <p class="text-xs text-blue-700 dark:text-blue-400">{{ staff_rec.reason }}</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4 mb-6">
+                    <div>
+                        <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Requester</span>
+                        <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.first_name }} {{ ticket.last_name }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">School / Location</span>
+                        <span class="text-gray-800 dark:text-gray-200 font-medium break-words">{{ ticket.school_name }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Support Type</span>
+                        <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.get_support_type_display|default:"Not Specified" }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Contact Info</span>
+                        <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.contact_number|default:"Not Provided" }}</span>
+                    </div>
                 </div>
-            </div>
 
-            <div class="{% if risk_assessment.level == 'High' %}bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50{% elif risk_assessment.level == 'Medium' %}bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800/50{% else %}bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50{% endif %} border rounded-xl p-4 flex gap-4 transition-colors">
-                <div class="mt-1 {% if risk_assessment.level == 'High' %}text-red-500{% elif risk_assessment.level == 'Medium' %}text-yellow-500{% else %}text-green-500{% endif %}">⚠️</div>
                 <div>
-                    <h3 class="text-sm font-bold {% if risk_assessment.level == 'High' %}text-red-900 dark:text-red-300{% elif risk_assessment.level == 'Medium' %}text-yellow-900 dark:text-yellow-300{% else %}text-green-900 dark:text-green-300{% endif %} mb-1">Risk Prediction: {{ risk_assessment.level }}</h3>
-                    <p class="text-xs {% if risk_assessment.level == 'High' %}text-red-700 dark:text-red-400{% elif risk_assessment.level == 'Medium' %}text-yellow-700 dark:text-yellow-400{% else %}text-green-700 dark:text-green-400{% endif %}">{{ risk_assessment.reason }}</p>
-                </div>
-            </div>
-
-            <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/50 rounded-xl p-4 flex gap-4 transition-colors">
-                <div class="text-purple-500 mt-1">⏱️</div>
-                <div>
-                    <h3 class="text-sm font-bold text-purple-900 dark:text-purple-300 mb-1">Estimated Scheduling</h3>
-                    <p class="text-base font-bold text-gray-900 dark:text-white mb-2">{{ predicted_hours }} Hours</p>
-                    <p class="text-xs text-purple-700 dark:text-purple-400">Based on task complexity and selected priority.</p>
+                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Description</span>
+                    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap border border-gray-100 dark:border-gray-700 min-h-[100px]">{{ ticket.description|default:"No description provided." }}</div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex-1 flex flex-col transition-colors mt-2">
-            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-6 flex-none flex items-center gap-2">🛠️ Finalize Ticket</h2>
+        <div class="space-y-6">
 
-            <form action="{% url 'approve_request' ticket.id %}" method="POST" class="flex flex-col flex-1 gap-6">
+            <div class="bg-purple-50 dark:bg-purple-900/20 rounded-xl shadow-sm border border-purple-100 dark:border-purple-800/50 p-5">
+                <h3 class="text-sm font-bold text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2">
+                    <span>✨</span> AI Analysis
+                </h3>
+
+                <div class="space-y-3">
+                    <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-purple-100 dark:border-purple-800/50">
+                        <span class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Predicted Resolution Time</span>
+                        <span class="font-bold text-purple-700 dark:text-purple-400">{{ predicted_hours|default:1 }} hours</span>
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-purple-100 dark:border-purple-800/50">
+                        <span class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Staff Recommendation</span>
+                        <span class="font-bold text-gray-800 dark:text-gray-200 text-sm leading-tight">{{ staff_rec.recommended_name|default:"Any available staff" }}</span>
+                        {% if staff_rec.reason %}
+                        <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">{{ staff_rec.reason }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-purple-100 dark:border-purple-800/50">
+                        <span class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Risk Assessment</span>
+                        <span class="font-bold text-sm {% if risk_assessment.level == 'High' %}text-red-600 dark:text-red-400{% elif risk_assessment.level == 'Medium' %}text-yellow-600 dark:text-yellow-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                            {{ risk_assessment.level|default:"Low" }} Risk
+                        </span>
+                        {% if risk_assessment.blockers %}
+                        <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">{{ risk_assessment.blockers }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" action="{% url 'approve_request' ticket.id %}" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 {% csrf_token %}
-                <input type="hidden" name="predicted_hours" value="{{ predicted_hours }}">
 
-                <div class="space-y-4 flex-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Confirm Priority</label>
+                        <select name="priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                            <option value="LOW" {% if ticket.priority == 'LOW' %}selected{% endif %}>Low</option>
+                            <option value="MEDIUM" {% if ticket.priority == 'MEDIUM' %}selected{% endif %}>Medium</option>
+                            <option value="HIGH" {% if ticket.priority == 'HIGH' %}selected{% endif %}>High</option>
+                            <option value="URGENT" {% if ticket.priority == 'URGENT' %}selected{% endif %}>Urgent</option>
+                        </select>
+                    </div>
 
                     <div>
-                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Assign Staff</label>
-                        <div id="staff-selector-container" class="relative">
-                            <div class="flex flex-wrap items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 min-h-[46px] cursor-text transition-all focus-within:ring-2 focus-within:ring-[#0078d4] focus-within:border-[#0078d4]" onclick="document.getElementById('staff-search-input').focus()">
-
-                                <div id="selected-staff-pills" class="flex flex-wrap gap-2"></div>
-
-                                <input type="text" id="staff-search-input" class="flex-1 bg-transparent outline-none min-w-[140px] text-sm text-gray-800 dark:text-white placeholder-gray-400" placeholder="Search for an employee..." autocomplete="off">
-                            </div>
-
-                            <div id="staff-dropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl hidden max-h-48 overflow-y-auto overflow-x-hidden">
-                            </div>
-                        </div>
-
-                        <div id="hidden-staff-inputs"></div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Confirm Priority</label>
-                            <select name="priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white">
-                                <option value="LOW" {% if ticket.priority == 'LOW' %}selected{% endif %}>Low</option>
-                                <option value="MEDIUM" {% if ticket.priority == 'MEDIUM' %}selected{% endif %}>Medium</option>
-                                <option value="HIGH" {% if ticket.priority == 'HIGH' %}selected{% endif %}>High</option>
-                                <option value="URGENT" {% if ticket.priority == 'URGENT' %}selected{% endif %}>Urgent</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Initial Status</label>
-                            <select name="status" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white">
-                                <option value="TODO">Open (To Do)</option>
-                                <option value="IN_PROGRESS">In Progress</option>
-                            </select>
-                        </div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Scheduled Date</label>
+                        <input type="datetime-local" name="scheduled_date" step="any" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
                     </div>
                 </div>
 
-                <div class="pt-4 flex gap-3 border-t border-gray-100 dark:border-gray-700 mt-auto">
-                    <a href="{% url 'requests' %}" class="w-1/3 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors flex items-center justify-center">Cancel</a>
-                    <button type="submit" class="w-2/3 px-4 py-2 text-sm font-bold text-white bg-[#0078d4] hover:bg-blue-700 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2">Push to Board &rarr;</button>
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Assign Staff</label>
+
+                    <input type="text" id="staffSearchInput" onkeydown="if(event.key === 'Enter') { event.preventDefault(); return false; }" placeholder="Search by name..." class="w-full mb-2 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+
+                    <div id="staffListContainer" class="max-h-56 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800/50 space-y-1 custom-scrollbar">
+                        {% for staff in staff_data %}
+                        <label class="staff-item flex items-center gap-3 cursor-pointer p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
+                            <input type="checkbox" name="assigned_staff" value="{{ staff.name }}" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
+                            <span class="staff-name text-sm font-medium text-gray-800 dark:text-gray-200">{{ staff.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
                 </div>
+
+                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Approve & Send to Employee
+                </button>
             </form>
-
         </div>
+
     </div>
 </div>
 
+<style>
+/* Custom scrollbar for a polished look */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
+</style>
+
 <script>
-    // Mock Database of available employees (Can connect to Django models later)
-    const availableStaff = [
-        "Mark Reyes",
-        "Sarah Cruz",
-        "Alex Santos",
-        "Juan Dela Cruz",
-        "Maria Clara",
-        "Crisostomo Ibarra",
-        "Pedro Penduko"
-    ];
+    // Real-time search filter logic
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('staffSearchInput');
+        const staffItems = document.querySelectorAll('.staff-item');
 
-    // Automatically pre-load the AI's recommended staff
-    let selectedStaff = ["{{ staff_rec.recommended_name|default:'Unassigned' }}"];
-    // Remove 'Unassigned' if it ends up in the array
-    selectedStaff = selectedStaff.filter(name => name && name !== 'Unassigned');
-
-    const input = document.getElementById('staff-search-input');
-    const dropdown = document.getElementById('staff-dropdown');
-    const pillsContainer = document.getElementById('selected-staff-pills');
-    const hiddenInputsContainer = document.getElementById('hidden-staff-inputs');
-
-    function renderUI() {
-        // 1. Render the blue Facebook-style pills
-        pillsContainer.innerHTML = selectedStaff.map(name => `
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#0078d4] text-white shadow-sm transition-transform hover:scale-105">
-                ${name}
-                <button type="button" onclick="removeStaff('${name}')" class="text-blue-200 hover:text-white focus:outline-none ml-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </span>
-        `).join('');
-
-        // 2. Render invisible inputs so Django's getlist() works perfectly
-        hiddenInputsContainer.innerHTML = selectedStaff.map(name => `
-            <input type="hidden" name="assigned_staff" value="${name}">
-        `).join('');
-    }
-
-    function removeStaff(name) {
-        selectedStaff = selectedStaff.filter(n => n !== name);
-        renderUI();
-        updateDropdown();
-    }
-
-    function addStaff(name) {
-        if (!selectedStaff.includes(name)) {
-            selectedStaff.push(name);
-            renderUI();
-        }
-        input.value = '';
-        dropdown.classList.add('hidden');
-        updateDropdown();
-        input.focus();
-    }
-
-    function updateDropdown() {
-        const query = input.value.toLowerCase();
-        // Filter out people who are already selected, and match the search query
-        const unselected = availableStaff.filter(n => !selectedStaff.includes(n) && n.toLowerCase().includes(query));
-
-        if (unselected.length === 0) {
-            dropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center italic">No matching staff found</div>';
-        } else {
-            dropdown.innerHTML = unselected.map(name => `
-                <div onclick="addStaff('${name}')" class="px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-[#0078d4] hover:text-white cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-full bg-blue-100 text-[#0078d4] flex items-center justify-center text-xs font-bold shadow-inner">
-                        ${name.charAt(0)}
-                    </div>
-                    ${name}
-                </div>
-            `).join('');
-        }
-    }
-
-    // Event Listeners for typing and clicking
-    input.addEventListener('input', () => {
-        dropdown.classList.remove('hidden');
-        updateDropdown();
-    });
-
-    input.addEventListener('focus', () => {
-        dropdown.classList.remove('hidden');
-        updateDropdown();
-    });
-
-    // Close dropdown when clicking outside the box
-    document.addEventListener('click', (e) => {
-        if (!document.getElementById('staff-selector-container').contains(e.target)) {
-            dropdown.classList.add('hidden');
+        if(searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const term = e.target.value.toLowerCase();
+                staffItems.forEach(item => {
+                    const name = item.querySelector('.staff-name').textContent.toLowerCase();
+                    if (name.includes(term)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
         }
     });
-
-    // Run once on page load
-    renderUI();
 </script>
 {% endblock %}

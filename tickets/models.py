@@ -1,3 +1,5 @@
+# tickets/models.py
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
@@ -12,15 +14,18 @@ class Team(models.Model):
         return self.name
 
 
-# Extending the default Django user to add specific roles
 class User(AbstractUser):
     ROLE_CHOICES = (
         ('ADMIN', 'Admin'),
-        ('MANAGER', 'Manager'),
-        ('MEMBER', 'Team Member'),
+        ('MEMBER', 'Employee'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='MEMBER')
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name='members')
+    expertise = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Comma-separated skills (e.g., CCTV, NETWORK, PC_MAINTENANCE)"
+    )
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
@@ -36,15 +41,23 @@ class Project(models.Model):
         return self.name
 
 
+class School(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    school_id = models.CharField(max_length=50, unique=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.school_id})"
+
+
 class Ticket(models.Model):
-    # --- Choices for Dropdowns ---
     STATUS_CHOICES = (
-        ('PENDING', 'Pending Review'),  # New default for public submissions
-        ('BACKLOG', 'Backlog'),
-        ('TODO', 'To Do'),
+        ('PENDING', 'Pending Review'),
+        ('PENDING_ACCEPTANCE', 'Pending Acceptance'),  # --- NEW STATUS ---
+        ('SCHEDULED', 'Scheduled'),
         ('IN_PROGRESS', 'In Progress'),
-        ('REVIEW', 'In Review'),
-        ('DONE', 'Done'),
+        ('UNRESOLVED', 'Unresolved'),
+        ('RESOLVED', 'Resolved'),
     )
 
     PRIORITY_CHOICES = (
@@ -74,7 +87,7 @@ class Ticket(models.Model):
 
     # --- Core Ticket Data ---
     ticket_number = models.CharField(max_length=20, unique=True, blank=True)
-    title = models.CharField(max_length=255, blank=True)  # Will auto-generate if blank
+    title = models.CharField(max_length=255, blank=True)
     description = models.TextField(help_text="Request Details")
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tickets', null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
@@ -82,7 +95,7 @@ class Ticket(models.Model):
 
     # --- Public Form Fields ---
     school_district = models.CharField(max_length=50, choices=DISTRICT_CHOICES, null=True, blank=True)
-    barangay = models.CharField(max_length=100, null=True, blank=True)  # <-- NEW FIELD
+    barangay = models.CharField(max_length=100, null=True, blank=True)
     school_name = models.CharField(max_length=255, null=True, blank=True)
     support_type = models.CharField(max_length=100, choices=SUPPORT_CHOICES, null=True, blank=True)
 
@@ -96,38 +109,40 @@ class Ticket(models.Model):
     predicted_hours = models.IntegerField(blank=True, null=True, help_text="AI estimated resolution time in hours")
 
     # --- Assignments ---
-    reporter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reported_tickets')
-    assignee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tickets')
+    reporter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='reported_tickets')
+    assignee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='assigned_tickets')
 
     # --- AI-Ready Data Fields ---
     complexity = models.IntegerField(default=1, help_text="Story points or complexity scale (e.g., 1-10)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # --- NEW SCHEDULED DATE FIELD ---
+    scheduled_date = models.DateTimeField(null=True, blank=True, help_text="Date the ticket is scheduled for")
+
     due_date = models.DateTimeField(null=True, blank=True)
     actual_completion_date = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        # 1. Auto-generate the TKT-YYYY-XXXX number
         if not self.ticket_number:
             current_year = timezone.now().year
-            last_ticket = Ticket.objects.filter(ticket_number__startswith=f'TKT-{current_year}').order_by('ticket_number').last()
-
+            last_ticket = Ticket.objects.filter(ticket_number__startswith=f'TKT-{current_year}').order_by(
+                'ticket_number').last()
             if last_ticket:
                 last_number = int(last_ticket.ticket_number.split('-')[2])
                 new_number = last_number + 1
             else:
                 new_number = 1
-
             self.ticket_number = f'TKT-{current_year}-{new_number:04d}'
 
-        # 2. Auto-generate a title if it's a public submission
         if not self.title and self.support_type and self.school_name:
             self.title = f"{self.get_support_type_display()} - {self.school_name}"
 
-        # 3. Time tracking for AI
-        if self.status == 'DONE' and not self.actual_completion_date:
+        if self.status == 'RESOLVED' and not self.actual_completion_date:
             self.actual_completion_date = timezone.now()
-        elif self.status != 'DONE' and self.actual_completion_date:
+        elif self.status != 'RESOLVED' and self.actual_completion_date:
             self.actual_completion_date = None
 
         super().save(*args, **kwargs)
@@ -137,23 +152,20 @@ class Ticket(models.Model):
 
     @property
     def get_assignee_initials(self):
-        """Extracts the first letter of each assigned staff member for the UI avatars."""
         if self.admin_notes and 'Assigned to:' in self.admin_notes:
             try:
-                # Find the exact line containing the names
                 assign_line = next((line for line in self.admin_notes.split('\n') if 'Assigned to:' in line), None)
                 if assign_line:
                     names_string = assign_line.replace('Assigned to:', '').strip()
                     if names_string and names_string != 'Unassigned':
                         names = [name.strip() for name in names_string.split(',')]
-                        # Grab the first letter of each name
                         return [name[0].upper() for name in names if name]
             except Exception:
                 pass
         return []
 
+
 class UserSettings(models.Model):
-    # Handles the Dark/Light mode toggle preference per user
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')
     dark_mode_enabled = models.BooleanField(default=False)
     email_notifications = models.BooleanField(default=True)

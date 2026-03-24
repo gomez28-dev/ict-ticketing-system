@@ -1,294 +1,127 @@
 {% extends 'tickets/base_admin.html' %}
 
+{% block title %}Create Ticket - Helpdesk{% endblock %}
+
 {% block content %}
-<div class="mb-6">
-    <a href="{% url 'dashboard' %}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2 inline-block">&larr; Back to Board</a>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Manual Ticket Creation</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400">Log a walk-in or direct request and assign it immediately.</p>
-</div>
-
-<form method="POST" class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-    {% csrf_token %}
-    
-    <div class="xl:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col transition-colors">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">📝 Request Details</h2>
-        
-        <div class="grid grid-cols-2 gap-4 mb-4">
-            <div>
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-bold">First Name</label>
-                <input type="text" name="first_name" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white">
-            </div>
-            <div>
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-bold">Last Name</label>
-                <input type="text" name="last_name" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white">
-            </div>
-            <div>
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-bold">Contact Number</label>
-                <input type="text" name="contact_number" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white">
-            </div>
-
-            <div class="col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 border border-blue-100 dark:border-gray-700 p-4 rounded-lg bg-blue-50/50 dark:bg-gray-800/50 mt-2 mb-2">
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-bold">District *</label>
-                    <select id="district-select" name="school_district" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-white dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none transition-all">
-                        <option value="">-- Select District --</option>
-                        <option value="DISTRICT_I">District 1</option>
-                        <option value="DISTRICT_II">District 2</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-bold">Barangay *</label>
-                    <select id="barangay-select" name="barangay" required disabled class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-100 dark:bg-gray-800 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-[#0078d4] outline-none cursor-not-allowed">
-                        <option value="">-- Select District First --</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-bold">School Name *</label>
-                    <select id="school-select" name="school_name" required disabled class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-100 dark:bg-gray-800 dark:text-white disabled:opacity-60 transition-all focus:ring-2 focus:ring-[#0078d4] outline-none cursor-not-allowed">
-                        <option value="">-- Select Barangay First --</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="col-span-2">
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-bold">Support Category</label>
-                <select name="support_type" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white">
-                    <option value="MS_ACCOUNT">Creation of Microsoft Account</option>
-                    <option value="GOOGLE_ACCOUNT">Creation of Google Account</option>
-                    <option value="PASSWORD_RESET">Password Reset</option>
-                    <option value="PC_MAINTENANCE">Computer Maintenance</option>
-                    <option value="NETWORK_MAINTENANCE">Network Maintenance</option>
-                    <option value="CCTV">CCTV Maintenance</option>
-                    <option value="OTHER">Other Support</option>
-                </select>
-            </div>
-            <div class="col-span-2">
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1 font-bold">Issue Description</label>
-                <textarea name="description" rows="3" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white"></textarea>
-            </div>
+<div class="max-w-4xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Create New Ticket</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Manually generate a task and assign it to the board.</p>
         </div>
+        <a href="{% url 'dashboard' %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
+            &larr; Back to Dashboard
+        </a>
     </div>
 
-    <div class="xl:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-colors">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-6 flex items-center gap-2">🛠️ Finalize & Assign</h2>
+    <form method="POST" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {% csrf_token %}
+        <div class="p-8 space-y-6">
 
-        <div class="space-y-6">
-
-            <div>
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Assign Staff</label>
-                <div id="staff-selector-container" class="relative">
-                    <div class="flex flex-wrap items-center gap-2 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 min-h-[46px] cursor-text transition-all focus-within:ring-2 focus-within:ring-[#0078d4] focus-within:border-[#0078d4]" onclick="document.getElementById('staff-search-input').focus()">
-                        <div id="selected-staff-pills" class="flex flex-wrap gap-2"></div>
-                        <input type="text" id="staff-search-input" class="flex-1 bg-transparent outline-none min-w-[140px] text-sm text-gray-800 dark:text-white placeholder-gray-400" placeholder="Search for an employee..." autocomplete="off">
-                    </div>
-                    <div id="staff-dropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl hidden max-h-48 overflow-y-auto overflow-x-hidden"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">First Name</label>
+                    <input type="text" name="first_name" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                 </div>
-                <div id="hidden-staff-inputs"></div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
+                    <input type="text" name="last_name" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">School Name</label>
+                    <input type="text" name="school_name" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Support Type</label>
+                    <select name="support_type" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        <option value="CCTV">CCTV Maintenance/Repair</option>
+                        <option value="PC_MAINTENANCE">Computer Maintenance/Repair</option>
+                        <option value="NETWORK_MAINTENANCE">Network Maintenance</option>
+                        <option value="GOOGLE_ACCOUNT">Google Account Creation</option>
+                        <option value="MS_ACCOUNT">Microsoft Account Creation</option>
+                        <option value="PASSWORD_RESET">Password Reset</option>
+                        <option value="OTHER">Other Support</option>
+                    </select>
+                </div>
             </div>
 
             <div>
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Set Priority</label>
-                <select name="priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white">
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM" selected>Medium</option>
-                    <option value="HIGH">High</option>
-                    <option value="URGENT">Urgent</option>
-                </select>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Issue Description</label>
+                <textarea name="description" rows="4" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200"></textarea>
             </div>
 
-            <input type="hidden" name="status" value="TODO">
+            <hr class="border-gray-200 dark:border-gray-700">
 
-            <button type="submit" class="w-full py-3 bg-[#0078d4] hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition-all mt-4">
-                Add to Board &rarr;
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Set Priority</label>
+                    <select name="priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM" selected>Medium</option>
+                        <option value="HIGH">High</option>
+                        <option value="URGENT">Urgent</option>
+                    </select>
+
+                    <input type="hidden" name="predicted_hours" value="1">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Scheduled Date & Time</label>
+                    <input type="datetime-local" name="scheduled_date" step="any" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Assign to Employee</label>
+                <input type="text" id="manualStaffSearch" onkeydown="if(event.key === 'Enter') { event.preventDefault(); return false; }" placeholder="Search by name..." class="w-full mb-2 border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+
+                <div class="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800/50 space-y-1 custom-scrollbar">
+                    {% for staff in staff_data %}
+                    <label class="manual-staff-item flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
+                        <input type="checkbox" name="assigned_staff" value="{{ staff.name }}" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
+                        <span class="manual-staff-name text-sm font-medium text-gray-800 dark:text-gray-200">{{ staff.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <div class="px-8 py-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+            <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition-colors">
+                Create & Send to Employee
             </button>
         </div>
-    </div>
-</form>
+    </form>
+</div>
+
+<style>
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
+</style>
 
 <script>
-    // ==========================================
-    // 1. CASCADING DROPDOWN LOGIC (District -> Barangay -> School)
-    // ==========================================
-    const locationData = {
-        "DISTRICT_I": {
-            "Bignay": [
-                "Disiplina Village Bignay National High School"
-            ],
-            "Lawang Bato": [
-                "Charis Christian School of Valenzuela",
-                "Lawang Bato National High School"
-            ],
-            "Lingunan": [
-                "Lingunan National High School"
-            ],
-            "Malanday": [
-                "Electron College of Technical Education \u2013 Malanday Branch",
-                "Malanday National High School"
-            ],
-            "Malinta": [
-                "Bethel Kiddie Learning Center of Valenzuela",
-                "Malinta National High School",
-                "Valenzuela City School of Mathematics and Science"
-            ],
-            "Punturin": [
-                "Punturin Senior High School",
-                "St. Gregory College of Valenzuela"
-            ],
-            "Wawang Pulo": [
-                "Globe Brent Secondary Maritime Academy",
-                "Wawang Pulo National High School"
-            ]
-        },
-        "DISTRICT_II": {
-            "Bagbaguin": [
-                "Bagbaguin National High School"
-            ],
-            "Gen. T. De Leon": [
-                "Gen. T. De Leon National High School",
-                "Maranatha Christian Academy of Karuhatan"
-            ],
-            "Karuhatan": [
-                "Caruhatan National High School",
-                "St. Judel Institute of Technology"
-            ],
-            "Marulas": [
-                "Datamex College of Saint Adeline",
-                "Valenzuela National High School"
-            ],
-            "Maysan": [
-                "Colegio Sto. Ni\u00f1o de Valenzuela",
-                "Maysan National High School"
-            ],
-            "Parada": [
-                "CEC Christian Academy of Valenzuela",
-                "Parada National High School"
-            ],
-            "Paso de Blas": [
-                "Paso de Blas National High School",
-                "Paso de Blas Senior High School"
-            ],
-            "Ugong": [
-                "Sitero Francisco Memorial National High School",
-                "Ugong Senior High School"
-            ]
-        }
-    };
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('manualStaffSearch');
+        const staffItems = document.querySelectorAll('.manual-staff-item');
 
-    const districtSelect = document.getElementById('district-select');
-    const barangaySelect = document.getElementById('barangay-select');
-    const schoolSelect = document.getElementById('school-select');
-
-    districtSelect.addEventListener('change', function() {
-        const district = this.value;
-
-        barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
-        schoolSelect.innerHTML = '<option value="">-- Select Barangay First --</option>';
-        schoolSelect.disabled = true;
-        schoolSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
-        schoolSelect.classList.remove('bg-white');
-
-        if (district && locationData[district]) {
-            barangaySelect.disabled = false;
-            barangaySelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
-            barangaySelect.classList.add('bg-white');
-
-            const barangays = Object.keys(locationData[district]).sort();
-            barangays.forEach(brgy => {
-                barangaySelect.add(new Option(brgy, brgy));
+        if(searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const term = e.target.value.toLowerCase();
+                staffItems.forEach(item => {
+                    const name = item.querySelector('.manual-staff-name').textContent.toLowerCase();
+                    if (name.includes(term)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
             });
-        } else {
-            barangaySelect.disabled = true;
-            barangaySelect.classList.add('bg-gray-100', 'cursor-not-allowed');
-            barangaySelect.classList.remove('bg-white');
         }
     });
-
-    barangaySelect.addEventListener('change', function() {
-        const district = districtSelect.value;
-        const barangay = this.value;
-
-        schoolSelect.innerHTML = '<option value="">-- Select School --</option>';
-
-        if (district && barangay && locationData[district][barangay]) {
-            schoolSelect.disabled = false;
-            schoolSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
-            schoolSelect.classList.add('bg-white');
-
-            const schools = locationData[district][barangay].sort();
-            schools.forEach(school => {
-                schoolSelect.add(new Option(school, school));
-            });
-        } else {
-            schoolSelect.disabled = true;
-            schoolSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
-            schoolSelect.classList.remove('bg-white');
-        }
-    });
-
-    // ==========================================
-    // 2. FACEBOOK-STYLE STAFF TAGGING LOGIC
-    // ==========================================
-    const availableStaff = [
-        "Mark Reyes", "Sarah Cruz", "Alex Santos",
-        "Juan Dela Cruz", "Maria Clara", "Crisostomo Ibarra", "Pedro Penduko"
-    ];
-    let selectedStaff = [];
-
-    const input = document.getElementById('staff-search-input');
-    const dropdown = document.getElementById('staff-dropdown');
-    const pillsContainer = document.getElementById('selected-staff-pills');
-    const hiddenInputsContainer = document.getElementById('hidden-staff-inputs');
-
-    function renderUI() {
-        pillsContainer.innerHTML = selectedStaff.map(name => `
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#0078d4] text-white shadow-sm transition-transform hover:scale-105">
-                ${name}
-                <button type="button" onclick="removeStaff('${name}')" class="text-blue-200 hover:text-white focus:outline-none ml-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </span>
-        `).join('');
-
-        hiddenInputsContainer.innerHTML = selectedStaff.map(name => `
-            <input type="hidden" name="assigned_staff" value="${name}">
-        `).join('');
-    }
-
-    function removeStaff(name) {
-        selectedStaff = selectedStaff.filter(n => n !== name);
-        renderUI(); updateDropdown();
-    }
-
-    function addStaff(name) {
-        if (!selectedStaff.includes(name)) {
-            selectedStaff.push(name); renderUI();
-        }
-        input.value = ''; dropdown.classList.add('hidden');
-        updateDropdown(); input.focus();
-    }
-
-    function updateDropdown() {
-        const query = input.value.toLowerCase();
-        const unselected = availableStaff.filter(n => !selectedStaff.includes(n) && n.toLowerCase().includes(query));
-
-        if (unselected.length === 0) {
-            dropdown.innerHTML = '<div class="p-3 text-sm text-gray-500 text-center italic">No matching staff found</div>';
-        } else {
-            dropdown.innerHTML = unselected.map(name => `
-                <div onclick="addStaff('${name}')" class="px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-[#0078d4] hover:text-white cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-full bg-blue-100 text-[#0078d4] flex items-center justify-center text-xs font-bold shadow-inner">${name.charAt(0)}</div>
-                    ${name}
-                </div>
-            `).join('');
-        }
-    }
-
-    input.addEventListener('input', () => { dropdown.classList.remove('hidden'); updateDropdown(); });
-    input.addEventListener('focus', () => { dropdown.classList.remove('hidden'); updateDropdown(); });
-    document.addEventListener('click', (e) => {
-        if (!document.getElementById('staff-selector-container').contains(e.target)) dropdown.classList.add('hidden');
-    });
-
-    renderUI();
 </script>
 {% endblock %}
