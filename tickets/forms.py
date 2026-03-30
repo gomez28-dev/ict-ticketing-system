@@ -7,6 +7,6 @@ class PublicTicketForm(forms.ModelForm):
         fields = [
             'first_name', 'last_name', 'middle_name',
             'contact_number', 'email',
-            'school_district', 'barangay', 'school_name',
-            'support_type', 'description'
+            'school_district', 'school_name',
+            'support_type', 'work_type', 'description'
         ]

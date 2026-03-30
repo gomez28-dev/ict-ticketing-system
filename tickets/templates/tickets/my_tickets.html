@@ -3,97 +3,125 @@
 {% block title %}My Tickets - Helpdesk{% endblock %}
 
 {% block content %}
-<div class="mb-6 flex justify-between items-end">
+<div class="max-w-7xl mx-auto space-y-10">
+
     <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Assigned Tickets</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Review and accept your pending task assignments.</p>
-    </div>
-</div>
-
-{% if not assigned_tickets %}
-    <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm mt-4">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-gray-700 text-blue-500 mb-4">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    My Active Tickets
+                </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tasks currently assigned to you that require action.</p>
+            </div>
         </div>
-        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">You're all caught up!</h3>
-        <p class="text-gray-500 dark:text-gray-400">You currently have no pending tickets assigned to you.</p>
-    </div>
-{% else %}
-    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-900/50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ticket</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Details</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">School</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Est. Time</th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {% for ticket in assigned_tickets %}
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
 
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-bold text-gray-900 dark:text-white">{{ ticket.ticket_number }}</span><br>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.created_at|date:"M d, Y" }}</span>
-                        </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-xs font-bold px-2.5 py-1 rounded uppercase tracking-wider
-                                {% if ticket.priority == 'URGENT' or ticket.priority == 'HIGH' %}bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400
-                                {% elif ticket.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400
-                                {% else %}bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400{% endif %}">
-                                {{ ticket.priority }}
-                            </span>
-                        </td>
-
-                        <td class="px-6 py-4">
-                            <div class="text-sm font-bold text-gray-900 dark:text-white mb-1">{{ ticket.title }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">{{ ticket.get_support_type_display }}</div>
-                        </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900 dark:text-white">{{ ticket.school_name }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.get_school_district_display }}</div>
-                        </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800">
-                                🤖 {{ ticket.predicted_hours }}h
-                            </span>
-                        </td>
-
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex justify-end gap-2">
-
-                                {% if ticket.status == 'PENDING_ACCEPTANCE' %}
-                                <form method="POST" action="{% url 'decline_assignment' ticket.id %}" class="inline m-0 p-0">
-                                    {% csrf_token %}
-                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-red-200 dark:border-red-800 text-xs font-bold rounded-md text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors cursor-pointer">
-                                        Decline
-                                    </button>
-                                </form>
-                                {% else %}
-                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-md dark:bg-gray-700 dark:text-gray-400 mr-2">
-                                    Accepted
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {% if assigned_tickets %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 font-bold">Ticket ID</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Priority</th>
+                            <th scope="col" class="px-6 py-4 font-bold">School</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Work Type</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Status</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for ticket in assigned_tickets %}
+                        <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ ticket.ticket_number }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 rounded text-xs font-bold
+                                    {% if ticket.priority == 'URGENT' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                                    {% elif ticket.priority == 'HIGH' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400
+                                    {% elif ticket.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
+                                    {% else %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% endif %}">
+                                    {{ ticket.priority }}
                                 </span>
-                                {% endif %}
-
-                                <a href="{% url 'employee_ticket_review' ticket.id %}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-bold rounded-md text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors">
-                                    Review
-                                </a>
-
-                            </div>
-                        </td>
-
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ ticket.school_name }}</td>
+                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300 font-medium">{{ ticket.work_type|default:"N/A" }}</td>
+                            <td class="px-6 py-4 font-medium text-blue-600 dark:text-blue-400">{{ ticket.get_status_display }}</td>
+                            <td class="px-6 py-4 text-right">
+                                <a href="{% url 'employee_ticket_review' ticket.id %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">Review & Action &rarr;</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center p-12 text-center">
+                <p class="text-gray-500 dark:text-gray-400 font-medium">You have no active tasks at the moment! 🎉</p>
+            </div>
+            {% endif %}
         </div>
     </div>
-{% endif %}
+
+    <div>
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Completed Tasks / History
+                </h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Review and print receipts for tasks you have successfully resolved.</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {% if resolved_tickets %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 font-bold">Ticket ID</th>
+                            <th scope="col" class="px-6 py-4 font-bold">School</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Support Type</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Date Resolved</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for ticket in resolved_tickets %}
+                        <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ ticket.ticket_number }}</td>
+                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ ticket.school_name }}</td>
+                            <td class="px-6 py-4">
+                                <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
+                                    {{ ticket.get_support_type_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-500">{{ ticket.actual_completion_date|date:"M d, Y"|default:ticket.updated_at|date:"M d, Y" }}</td>
+                            <td class="px-6 py-4 text-right flex justify-end gap-3 items-center">
+                                <form method="POST" action="{% url 'unresolve_assignment' ticket.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-orange-600 hover:text-orange-800 text-xs font-bold transition-colors">Reopen Task</button>
+                                </form>
+
+                                <span class="text-gray-300 dark:text-gray-600">|</span>
+
+                                <a href="{% url 'employee_receipt' ticket.id %}" class="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-colors border border-blue-100 dark:border-blue-800">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Print Receipt
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center p-12 text-center">
+                <p class="text-gray-500 dark:text-gray-400 font-medium">Your completed tasks will appear here.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
 {% endblock %}

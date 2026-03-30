@@ -69,6 +69,10 @@
                         {% endif %}
                     </a>
 
+                    <a href="{% url 'documents' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'documents' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                        Documents
+                    </a>
+
                     <a href="{% url 'backlog' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'backlog' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
                         Audit Trail
                     </a>

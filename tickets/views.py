@@ -31,15 +31,11 @@ def is_admin_or_superuser(user):
 def get_global_context(request):
     context = {}
     if request and request.user.is_authenticated:
-        # 1. Admin Notification Count
         context['pending_count'] = Ticket.objects.filter(status='PENDING').count()
-
-        # 2. Employee Notification Count
         user_name = f"{request.user.first_name} {request.user.last_name}".strip()
         context['my_ticket_count'] = Ticket.objects.filter(
             admin_notes__icontains=user_name
         ).exclude(status='RESOLVED').count()
-
     return context
 
 
@@ -103,7 +99,6 @@ def custom_login(request):
             if created:
                 user.set_password('EmployeePass123!')
                 user.save()
-
         else:
             user = User.objects.filter(is_superuser=True).first()
             if not user:
@@ -118,21 +113,19 @@ def custom_login(request):
 
 def custom_logout(request):
     logout(request)
-    return redirect('public_submit')
+    return redirect('login')
 
 
 def school_login(request):
     if request.method == 'POST':
         school_name = request.POST.get('school_name')
         school_id = request.POST.get('school_id')
-
         try:
             school = School.objects.get(name=school_name, school_id=school_id)
             request.session['school_name'] = school.name
             request.session['school_district'] = school.district
             request.session['is_school_authenticated'] = True
             return redirect('public_submit')
-
         except School.DoesNotExist:
             messages.error(request, 'Invalid School Name or School ID. Please try again.')
 
@@ -166,8 +159,6 @@ def public_submit(request):
     success_ticket = None
     if request.method == 'POST':
         try:
-            # We extract the data directly from the POST request to bypass
-            # the strict choice validation that was failing silently.
             ticket = Ticket.objects.create(
                 first_name=request.POST.get('first_name'),
                 last_name=request.POST.get('last_name'),
@@ -175,24 +166,23 @@ def public_submit(request):
                 contact_number=request.POST.get('contact_number', ''),
                 email=request.POST.get('email', ''),
                 school_district=request.POST.get('school_district', 'Not Specified'),
-                barangay=request.POST.get('barangay', 'Not Specified'),
                 school_name=request.POST.get('school_name', 'Not Specified'),
                 support_type=request.POST.get('support_type', 'OTHER'),
                 description=request.POST.get('description', ''),
                 status='PENDING',
                 priority='MEDIUM'
             )
-
-            # Predict resolution time using AI
             ticket.predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
             ticket.save()
-
             success_ticket = ticket
+            messages.success(request,
+                             f"Ticket {ticket.ticket_number} has been successfully submitted and placed in the queue.")
         except Exception as e:
-            # If any other database error occurs, print it to the console for debugging
             print(f"Submission Error: {e}")
+            messages.error(request, "There was an error processing your request. Please try again.")
 
     return render(request, 'tickets/public_submit.html', {'success_ticket': success_ticket})
+
 
 def requests_view(request):
     pending_requests = Ticket.objects.filter(status='PENDING').order_by('-created_at')
@@ -208,13 +198,20 @@ def delete_request(request, ticket_id):
     return redirect('requests')
 
 
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def documents_view(request):
+    resolved_tickets = Ticket.objects.filter(status='RESOLVED').order_by('-updated_at')
+    context = {'resolved_tickets': resolved_tickets}
+    context.update(get_global_context(request))
+    return render(request, 'tickets/documents.html', context)
+
+
 # ==========================================
 # AI TRIAGE WORKFLOW
 # ==========================================
 
 def ticket_triage_view(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-
     predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
     staff_rec = recommend_staff(ticket.school_name, ticket.support_type)
     risk_assessment = predict_risk(ticket.support_type, ticket.priority)
@@ -233,17 +230,16 @@ def ticket_triage_view(request, ticket_id):
 @login_required
 def approve_request(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-
     if request.method == 'POST':
         ticket.status = 'PENDING_ACCEPTANCE'
         ticket.priority = request.POST.get('priority', ticket.priority)
+        ticket.work_type = request.POST.get('work_type', ticket.work_type)
 
         scheduled_date_str = request.POST.get('scheduled_date')
         if scheduled_date_str:
             ticket.scheduled_date = scheduled_date_str
 
         assigned_staff_list = request.POST.getlist('assigned_staff')
-
         if not assigned_staff_list:
             assigned_staff_str = 'Unassigned'
         else:
@@ -252,9 +248,7 @@ def approve_request(request, ticket_id):
 
         existing_notes = ticket.admin_notes or ""
         ticket.admin_notes = f"Assigned to: {assigned_staff_str}\n{existing_notes}"
-
         ticket.save()
-
     return redirect('dashboard')
 
 
@@ -295,13 +289,11 @@ def get_staff_data():
         {'id': 29, 'name': 'Alvin John Villaseñor', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
         {'id': 30, 'name': 'Test Employee', 'expertise': ['SYSTEM TESTING']},
     ]
-
     for staff in staff_list:
         active_count = Ticket.objects.filter(
             admin_notes__icontains=staff['name']
         ).exclude(status='RESOLVED').count()
         staff['active_tickets'] = active_count
-
     return sorted(staff_list, key=lambda x: x['active_tickets'], reverse=True)
 
 
@@ -329,7 +321,6 @@ def teams_view(request):
 def backlog_view(request):
     backlog_tickets = Ticket.objects.filter(status='BACKLOG').order_by('created_at')
     history_tickets = Ticket.objects.filter(status='RESOLVED').order_by('-updated_at')
-
     oldest_age = "0d"
     if backlog_tickets.exists():
         oldest_age = f"{(timezone.now() - backlog_tickets.first().created_at).days}d"
@@ -399,15 +390,12 @@ def admin_create_ticket(request):
 
         ticket = Ticket.objects.create(
             first_name=request.POST.get('first_name'), last_name=request.POST.get('last_name'),
-            email=request.POST.get('email', ''),
-            contact_number=request.POST.get('contact_number', ''),
+            email=request.POST.get('email', ''), contact_number=request.POST.get('contact_number', ''),
+            school_district=request.POST.get('school_district', 'Not Specified'),
             school_name=request.POST.get('school_name', 'Not Specified'),
-            barangay=request.POST.get('barangay', 'Not Specified'),
-            school_district=request.POST.get('school_district', 'DISTRICT_I'),
             support_type=request.POST.get('support_type', 'OTHER'), description=request.POST.get('description', ''),
-            priority=request.POST.get('priority', 'MEDIUM'),
-            status='PENDING_ACCEPTANCE',
-            predicted_hours=predicted_hours,
+            priority=request.POST.get('priority', 'MEDIUM'), work_type=request.POST.get('work_type', 'REMOTE WORK'),
+            status='PENDING_ACCEPTANCE', predicted_hours=predicted_hours,
             scheduled_date=scheduled_date_str if scheduled_date_str else None
         )
         assigned_staff_list = request.POST.getlist('assigned_staff')
@@ -430,18 +418,37 @@ def admin_create_ticket(request):
 @login_required
 def my_tickets(request):
     user_name = f"{request.user.first_name} {request.user.last_name}".strip()
-    assigned_tickets = Ticket.objects.filter(admin_notes__icontains=user_name).exclude(status='RESOLVED').order_by(
-        '-created_at')
 
-    context = {'assigned_tickets': assigned_tickets}
+    # 1. Fetch Active Tickets
+    assigned_tickets = Ticket.objects.filter(
+        admin_notes__icontains=user_name
+    ).exclude(status='RESOLVED').order_by('-created_at')
+
+    # 2. Fetch Resolved / History Tickets
+    resolved_tickets = Ticket.objects.filter(
+        admin_notes__icontains=user_name,
+        status='RESOLVED'
+    ).order_by('-actual_completion_date', '-updated_at')
+
+    context = {
+        'assigned_tickets': assigned_tickets,
+        'resolved_tickets': resolved_tickets
+    }
     context.update(get_global_context(request))
     return render(request, 'tickets/my_tickets.html', context)
 
 
 @login_required
+def employee_receipt_view(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    context = {'ticket': ticket}
+    context.update(get_global_context(request))
+    return render(request, 'tickets/employee_receipt.html', context)
+
+
+@login_required
 def employee_ticket_review(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-
     context = {'ticket': ticket}
     context.update(get_global_context(request))
     return render(request, 'tickets/employee_ticket_review.html', context)

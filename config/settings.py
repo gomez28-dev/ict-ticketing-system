@@ -118,3 +118,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 AUTH_USER_MODEL = 'tickets.User'
+
+# Redirect to custom login page after logout
+LOGOUT_REDIRECT_URL = 'login'

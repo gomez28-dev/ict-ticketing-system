@@ -3,136 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ICT Unit Online Helpdesk Support</title>
+    <title>Submit Support Ticket - ICT Unit</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Print Styles to ensure a clean PDF receipt */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-receipt, #printable-receipt * {
+                visibility: visible;
+            }
+            #printable-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+                background-color: white !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            body { background: white !important; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen">
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10 px-4">
 
-    <header class="bg-[#0078d4] text-white py-10 px-6 shadow-md">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <div>
-                <p class="text-sm font-light mb-1">Department of Education — Schools Division Office — Valenzuela City</p>
-                <h1 class="text-3xl font-bold">ICT Unit Online Helpdesk Support</h1>
-                <p class="text-sm font-light mt-1">Office of the Schools Division Superintendent</p>
-            </div>
-            <a href="{% url 'login' %}" class="hidden md:block bg-blue-600/50 hover:bg-blue-700 transition-colors duration-200 px-4 py-2 rounded-lg border border-blue-400 shadow-sm cursor-pointer group">
-                <span class="font-bold tracking-wide text-white group-hover:text-blue-50">ICTU-OHS</span>
-                <span class="text-xs block text-blue-200 group-hover:text-white transition-colors duration-200">Helpdesk Support &rarr;</span>
-            </a>
-        </div>
-    </header>
-
-    <main class="max-w-4xl mx-auto mt-8 px-4 pb-12">
+    <div class="max-w-4xl w-full">
 
         {% if success_ticket %}
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-8 rounded shadow-sm" role="alert">
-            <p class="font-bold">Request Submitted Successfully!</p>
-            <p>Your tracking number is: <strong class="text-lg">{{ success_ticket.ticket_number }}</strong></p>
-            <p class="text-sm mt-2">Please save this number to track your request status.</p>
+
+        {% if messages %}
+            <div class="mb-6 space-y-2 no-print">
+                {% for message in messages %}
+                <div class="p-4 rounded-lg bg-green-100 text-green-800 border border-green-200 shadow-sm flex items-center gap-3">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="font-medium">{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div id="printable-receipt" class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div class="p-8 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Official Ticket Receipt</h2>
+                    <p class="text-sm text-gray-500 mt-1">Please save this document for your records.</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-400 uppercase tracking-wider">Ticket ID</p>
+                    <p class="text-2xl font-black text-blue-600">{{ success_ticket.ticket_number }}</p>
+                </div>
+            </div>
+
+            <div class="p-8 space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Requester Name</p>
+                        <p class="font-medium text-gray-900">{{ success_ticket.first_name }} {{ success_ticket.last_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Date Submitted</p>
+                        <p class="font-medium text-gray-900">{{ success_ticket.created_at|date:"F d, Y h:i A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">School / Location</p>
+                        <p class="font-medium text-gray-900">{{ success_ticket.school_name }} <br><span class="text-sm text-gray-500">{{ success_ticket.school_district }}</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Contact Details</p>
+                        <p class="font-medium text-gray-900">{{ success_ticket.contact_number }} <br> <span class="text-sm text-gray-500">{{ success_ticket.email }}</span></p>
+                    </div>
+                </div>
+
+                <hr class="border-gray-200">
+
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Support Type Needed</p>
+                    <span class="inline-block bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded">
+                        {{ success_ticket.get_support_type_display }}
+                    </span>
+                </div>
+
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Issue Description</p>
+                    <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">{{ success_ticket.description }}</div>
+                </div>
+            </div>
+
+            <div class="p-6 bg-gray-50 border-t border-gray-200 flex justify-end gap-4 no-print">
+                <a href="{% url 'public_submit' %}" class="px-5 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-200 rounded-lg transition-colors border border-gray-300 bg-white shadow-sm">
+                    Submit Another Ticket
+                </a>
+                <button onclick="window.print()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Print / Download PDF
+                </button>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200">
+
+            <div class="bg-[#1e3a8a] text-white p-8 text-center border-b-4 border-yellow-500">
+                <h1 class="text-3xl font-black tracking-wide uppercase">Ticketing Support System</h1>
+                <p class="text-blue-200 mt-1 font-medium tracking-wider">DepEd Division of Valenzuela - ICT Unit</p>
+            </div>
+
+            <form method="POST" action="{% url 'public_submit' %}" class="p-8 md:p-10 space-y-8">
+                {% csrf_token %}
+
+                <div>
+                    <h3 class="text-lg font-bold text-[#1e3a8a] border-b-2 border-[#1e3a8a] pb-2 mb-5 uppercase tracking-wide">Personal Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">First Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="first_name" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Middle Name</label>
+                            <input type="text" name="middle_name" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Last Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="last_name" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 shadow-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Contact Number <span class="text-red-500">*</span></label>
+                            <input type="text" name="contact_number" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 shadow-sm" placeholder="e.g. 09123456789">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Email Address <span class="text-red-500">*</span></label>
+                            <input type="email" name="email" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 shadow-sm" placeholder="your.email@deped.gov.ph">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-[#1e3a8a] border-b-2 border-[#1e3a8a] pb-2 mb-5 uppercase tracking-wide">School Information</h3>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
+                        <p class="text-sm text-blue-800">Your school details are automatically populated based on your authorized login session.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">School District</label>
+                            <input type="text" name="school_district" value="{{ request.session.school_district|default:'' }}" readonly class="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-200 text-gray-600 cursor-not-allowed font-semibold shadow-inner focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">School Name</label>
+                            <input type="text" name="school_name" value="{{ request.session.school_name|default:'' }}" readonly class="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-200 text-gray-600 cursor-not-allowed font-semibold shadow-inner focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-[#1e3a8a] border-b-2 border-[#1e3a8a] pb-2 mb-5 uppercase tracking-wide">Support Request Details</h3>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Support Type <span class="text-red-500">*</span></label>
+                            <select name="support_type" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 shadow-sm">
+                                <option value="" disabled selected>-- Select an issue type --</option>
+                                <option value="CCTV">CCTV Maintenance/Check-up or Repair Request</option>
+                                <option value="PC_MAINTENANCE">Computer Maintenance/Check-up or Repair Request</option>
+                                <option value="NETWORK_MAINTENANCE">Computer Network Maintenance/Check-up or Repair Request</option>
+                                <option value="GOOGLE_ACCOUNT">Creation of Google Account</option>
+                                <option value="MS_ACCOUNT">Creation of Microsoft Account</option>
+                                <option value="PASSWORD_RESET">Password Reset for Microsoft or Google Account</option>
+                                <option value="OTHER">Other Support</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Issue Description <span class="text-red-500">*</span></label>
+                            <textarea name="description" rows="5" required class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-900 shadow-sm" placeholder="Please describe your issue in detail..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-gray-200 flex justify-end">
+                    <button type="submit" class="px-10 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                        Submit Ticket Request
+                    </button>
+                </div>
+            </form>
         </div>
         {% endif %}
 
-        <form method="POST" class="space-y-8">
-            {% csrf_token %}
-
-            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="bg-[#0078d4] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">1</span>
-                    <h2 class="text-xl font-semibold text-gray-800">School Information</h2>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">School District</label>
-                        <input type="text" value="{% if request.session.school_district == 'DISTRICT_I' %}District I{% elif request.session.school_district == 'DISTRICT_II' %}District II{% elif request.session.school_district == 'DISTRICT_III' %}District III{% elif request.session.school_district == 'DISTRICT_IV' %}District IV{% elif request.session.school_district == 'DISTRICT_V' %}District V{% else %}{{ request.session.school_district }}{% endif %}" readonly class="w-full border border-gray-200 rounded-lg p-2.5 bg-gray-100 text-gray-600 outline-none cursor-not-allowed font-medium">
-
-                        <input type="hidden" name="school_district" value="{{ request.session.school_district }}">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">School Name</label>
-                        <input type="text" value="{{ request.session.school_name }}" readonly class="w-full border border-gray-200 rounded-lg p-2.5 bg-gray-100 text-gray-600 outline-none cursor-not-allowed font-medium">
-
-                        <input type="hidden" name="school_name" value="{{ request.session.school_name }}">
-                        <input type="hidden" name="barangay" value="Not Specified">
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="bg-[#0078d4] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">2</span>
-                    <h2 class="text-xl font-semibold text-gray-800">Technical Support Needed</h2>
-                </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Support Type *</label>
-                        <select name="support_type" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
-                            <option value="">-- Select support type --</option>
-                            <option value="CCTV">CCTV Maintenance/Check-Up or Repair Request</option>
-                            <option value="PC_MAINTENANCE">Computer Maintenance/Check-Up or Repair Request</option>
-                            <option value="NETWORK_MAINTENANCE">Computer Network Maintenance/Check-Up or Repair Request</option>
-                            <option value="GOOGLE_ACCOUNT">Creation of Google Account</option>
-                            <option value="MS_ACCOUNT">Creation of Microsoft Account</option>
-                            <option value="PASSWORD_RESET">Password Reset for Microsoft/Google Account</option>
-                            <option value="OTHER">Other Support</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Request Details *</label>
-                        <textarea name="description" rows="4" placeholder="Describe your issue or request in detail..." required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="bg-[#0078d4] text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">3</span>
-                    <h2 class="text-xl font-semibold text-gray-800">Requester Details</h2>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                        <input type="text" name="last_name" placeholder="e.g., Penduko" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                        <input type="text" name="first_name" placeholder="e.g., Pedro" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
-                        <input type="text" name="middle_name" placeholder="e.g., Flores" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-                        <input type="text" name="contact_number" placeholder="09XXXXXXXXX" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                        <input type="email" name="email" placeholder="name@email.com" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none">
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gray-50 p-4 rounded-xl text-sm text-gray-500 text-center mb-4">
-                4) Ticket number & subject will be generated after submission.
-            </div>
-
-            <div class="flex gap-4">
-                <button type="reset" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors">
-                    ↺ Clear Form
-                </button>
-                <button type="submit" class="flex-1 bg-[#0088cc] hover:bg-[#0078d4] text-white rounded-lg py-3 font-semibold text-lg transition-colors shadow-md">
-                    ➤ Submit Request
-                </button>
-            </div>
-        </form>
-
-        <div class="text-center text-gray-400 text-xs mt-8">
-            © 2026 ICT Unit - SDO Valenzuela City. All rights reserved.
-        </div>
-    </main>
-
+    </div>
 </body>
 </html>

@@ -1,5 +1,3 @@
-# tickets/models.py
-
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
@@ -53,7 +51,7 @@ class School(models.Model):
 class Ticket(models.Model):
     STATUS_CHOICES = (
         ('PENDING', 'Pending Review'),
-        ('PENDING_ACCEPTANCE', 'Pending Acceptance'),  # --- NEW STATUS ---
+        ('PENDING_ACCEPTANCE', 'Pending Acceptance'),
         ('SCHEDULED', 'Scheduled'),
         ('IN_PROGRESS', 'In Progress'),
         ('UNRESOLVED', 'Unresolved'),
@@ -67,14 +65,6 @@ class Ticket(models.Model):
         ('URGENT', 'Urgent'),
     )
 
-    DISTRICT_CHOICES = (
-        ('DISTRICT_I', 'District I - Arkong Bato'),
-        ('DISTRICT_II', 'District II - Balangkas'),
-        ('DISTRICT_III', 'District III - Karuhatan'),
-        ('DISTRICT_IV', 'District IV - Malinta'),
-        ('DISTRICT_V', 'District V - Marulas'),
-    )
-
     SUPPORT_CHOICES = (
         ('CCTV', 'CCTV Maintenance/Check-Up or Repair Request'),
         ('PC_MAINTENANCE', 'Computer Maintenance/Check-Up or Repair Request'),
@@ -85,6 +75,11 @@ class Ticket(models.Model):
         ('OTHER', 'Other Support'),
     )
 
+    WORK_TYPE_CHOICES = (
+        ('REMOTE WORK', 'REMOTE WORK (Can be done online or from home)'),
+        ('FIELD WORK', 'FIELD WORK (Outside job/on-site task)'),
+    )
+
     # --- Core Ticket Data ---
     ticket_number = models.CharField(max_length=20, unique=True, blank=True)
     title = models.CharField(max_length=255, blank=True)
@@ -93,9 +88,12 @@ class Ticket(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='MEDIUM')
 
+    # --- Work Type Field ---
+    work_type = models.CharField(max_length=20, choices=WORK_TYPE_CHOICES, null=True, blank=True,
+                                 help_text="Category of task assignment")
+
     # --- Public Form Fields ---
-    school_district = models.CharField(max_length=50, choices=DISTRICT_CHOICES, null=True, blank=True)
-    barangay = models.CharField(max_length=100, null=True, blank=True)
+    school_district = models.CharField(max_length=100, null=True, blank=True)
     school_name = models.CharField(max_length=255, null=True, blank=True)
     support_type = models.CharField(max_length=100, choices=SUPPORT_CHOICES, null=True, blank=True)
 
@@ -119,8 +117,9 @@ class Ticket(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # --- NEW SCHEDULED DATE FIELD ---
-    scheduled_date = models.DateTimeField(null=True, blank=True, help_text="Date the ticket is scheduled for")
+    # --- SCHEDULED DATE FIELD ---
+    # Changed from DateTimeField to DateField
+    scheduled_date = models.DateField(null=True, blank=True, help_text="Date the ticket is scheduled for")
 
     due_date = models.DateTimeField(null=True, blank=True)
     actual_completion_date = models.DateTimeField(null=True, blank=True)

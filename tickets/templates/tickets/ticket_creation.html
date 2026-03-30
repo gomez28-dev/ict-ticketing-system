@@ -83,8 +83,16 @@
                 {% csrf_token %}
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Work Type</label>
+                        <select name="work_type" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                            <option value="REMOTE WORK" {% if ticket.work_type == 'REMOTE WORK' %}selected{% endif %}>Remote Work (Online/Home)</option>
+                            <option value="FIELD WORK" {% if ticket.work_type == 'FIELD WORK' %}selected{% endif %}>Field Work (Outside/On-site)</option>
+                        </select>
+                    </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Confirm Priority</label>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Priority</label>
                         <select name="priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
                             <option value="LOW" {% if ticket.priority == 'LOW' %}selected{% endif %}>Low</option>
                             <option value="MEDIUM" {% if ticket.priority == 'MEDIUM' %}selected{% endif %}>Medium</option>
@@ -95,7 +103,7 @@
 
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Scheduled Date</label>
-                        <input type="datetime-local" name="scheduled_date" step="any" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                        <input type="date" name="scheduled_date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
                     </div>
                 </div>
 

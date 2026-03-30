@@ -55,7 +55,14 @@
 
             <hr class="border-gray-200 dark:border-gray-700">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Work Type</label>
+                    <select name="work_type" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                        <option value="REMOTE WORK" selected>Remote Work</option>
+                        <option value="FIELD WORK">Field Work</option>
+                    </select>
+                </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Set Priority</label>
                     <select name="priority" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
@@ -68,8 +75,8 @@
                     <input type="hidden" name="predicted_hours" value="1">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Scheduled Date & Time</label>
-                    <input type="datetime-local" name="scheduled_date" step="any" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Scheduled Date</label>
+                    <input type="date" name="scheduled_date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                 </div>
             </div>
 

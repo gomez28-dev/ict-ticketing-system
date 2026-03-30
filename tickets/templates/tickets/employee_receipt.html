@@ -1,0 +1,135 @@
+{% extends 'tickets/base_admin.html' %}
+
+{% block title %}Task Receipt - {{ ticket.ticket_number }}{% endblock %}
+
+{% block content %}
+<style>
+    @media print {
+        /* Hide the base_admin sidebar, header, and search bar */
+        aside, header, nav {
+            display: none !important;
+        }
+        
+        /* Hide everything by default... */
+        body * {
+            visibility: hidden;
+        }
+        
+        /* ...except the printable receipt container */
+        #printable-receipt, #printable-receipt * {
+            visibility: visible;
+        }
+        
+        #printable-receipt {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 20px;
+            background-color: white !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .no-print {
+            display: none !important;
+        }
+        
+        body { background: white !important; }
+    }
+</style>
+
+<div class="max-w-4xl mx-auto mt-4 mb-10">
+    <div class="mb-6 flex items-center justify-between no-print">
+        <a href="{% url 'my_tickets' %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Back to My Tickets
+        </a>
+        
+        <button onclick="window.print()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            Print PDF Evidence
+        </button>
+    </div>
+
+    <div id="printable-receipt" class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        
+        <div class="p-8 border-b-4 border-green-500 bg-gray-50 flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 uppercase tracking-wide">Task Resolution Receipt</h2>
+                <p class="text-sm font-semibold text-green-600 mt-1 flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Task Successfully Completed
+                </p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm font-bold text-gray-400 uppercase tracking-wider">Ticket ID</p>
+                <p class="text-2xl font-black text-gray-900">{{ ticket.ticket_number }}</p>
+            </div>
+        </div>
+
+        <div class="p-8 space-y-8">
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Served By (Employee)</p>
+                    <p class="font-bold text-lg text-gray-900">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+                    <p class="text-sm text-gray-500">{{ request.user.email }}</p>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Date Resolved</p>
+                    <p class="font-bold text-lg text-gray-900">{{ ticket.actual_completion_date|date:"F d, Y h:i A"|default:ticket.updated_at|date:"F d, Y h:i A" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">School / Location</p>
+                    <p class="font-bold text-gray-900">{{ ticket.school_name }}</p>
+                    {% if ticket.school_district %}<p class="text-sm text-gray-500">{{ ticket.school_district }}</p>{% endif %}
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Work Category</p>
+                    <p class="font-bold text-gray-900">{{ ticket.work_type|default:"Not Specified" }}</p>
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <div>
+                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Original Request Details</h3>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Requested By</p>
+                        <p class="font-medium text-gray-900">{{ ticket.first_name }} {{ ticket.last_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Number</p>
+                        <p class="font-medium text-gray-900">{{ ticket.contact_number }}</p>
+                    </div>
+                </div>
+
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Support Type</p>
+                <span class="inline-block bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded mb-4">
+                    {{ ticket.get_support_type_display }}
+                </span>
+
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Problem Description</p>
+                <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">{{ ticket.description }}</div>
+            </div>
+
+            <div class="pt-16 grid grid-cols-2 gap-12 text-center">
+                <div>
+                    <div class="border-b border-gray-400 mb-2 w-3/4 mx-auto"></div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Employee Signature</p>
+                </div>
+                <div>
+                    <div class="border-b border-gray-400 mb-2 w-3/4 mx-auto"></div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Client / Requestor Signature</p>
+                </div>
+            </div>
+
+            <div class="text-center pt-10">
+                <p class="text-[10px] text-gray-400 uppercase tracking-wider">Generated by DepEd Valenzuela ICT Unit Ticketing System</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
