@@ -3,6 +3,8 @@
 {% block title %}Documents Archive - Helpdesk{% endblock %}
 
 {% block content %}
+{% csrf_token %}
+
 <div class="max-w-7xl mx-auto">
     <div class="mb-6 flex items-center justify-between">
         <div>
@@ -10,12 +12,12 @@
                 <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Documents Archive
             </h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Review all successfully resolved and completed tickets.</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Review resolved tickets and archive them as completed.</p>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        
+    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Resolved Documents (Action Required)</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-10">
         {% if resolved_tickets %}
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -31,7 +33,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     {% for ticket in resolved_tickets %}
-                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <tr id="ticket-row-{{ ticket.id }}" class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
                             {{ ticket.ticket_number }}
                         </td>
@@ -43,6 +45,64 @@
                         </td>
                         <td class="px-6 py-4">
                             <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded dark:bg-blue-900/30 dark:text-blue-300">
+                                {{ ticket.get_support_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">
+                            {{ ticket.actual_completion_date|date:"M d, Y"|default:ticket.updated_at|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 flex items-center justify-end gap-3">
+                            <button onclick="alert('Print/View details functionality coming soon!')" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                View
+                            </button>
+                            <button onclick="markAsCompleted({{ ticket.id }})" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-medium text-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                Complete
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center p-8 text-center">
+            <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h3 class="text-md font-bold text-gray-900 dark:text-white">No pending resolved tickets</h3>
+        </div>
+        {% endif %}
+    </div>
+
+    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Completed Documents (Archived)</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {% if completed_tickets %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 font-bold">Ticket ID</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Requester</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Location</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Support Type</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Date Completed</th>
+                        <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for ticket in completed_tickets %}
+                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                            {{ ticket.ticket_number }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ ticket.first_name }} {{ ticket.last_name }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
+                            {{ ticket.school_name }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded dark:bg-green-900/30 dark:text-green-300">
                                 {{ ticket.get_support_type_display }}
                             </span>
                         </td>
@@ -63,11 +123,59 @@
         {% else %}
         <div class="flex flex-col items-center justify-center p-12 text-center">
             <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">No Resolved Tickets Yet</h3>
-            <p class="text-gray-500 dark:text-gray-400 max-w-sm">When tickets are marked as resolved, they will be safely archived and displayed here.</p>
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">No Completed Documents Yet</h3>
+            <p class="text-gray-500 dark:text-gray-400 max-w-sm">When tickets are fully completed, they will be safely archived here.</p>
         </div>
         {% endif %}
-        
     </div>
 </div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function markAsCompleted(ticketId) {
+        const url = `/admin-dashboard/documents/complete/${ticketId}/`;
+        const csrftoken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the row dynamically
+                const row = document.getElementById(`ticket-row-${ticketId}`);
+                if (row) {
+                    row.style.display = 'none';
+                }
+                // Optionally reload to easily move it to the Completed table immediately:
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An unexpected error occurred.');
+        });
+    }
+</script>
 {% endblock %}

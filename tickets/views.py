@@ -13,7 +13,6 @@ from django.contrib import messages
 
 User = get_user_model()
 
-
 # ==========================================
 # ROLE-BASED ACCESS CONTROL (RBAC) TESTS
 # ==========================================
@@ -21,23 +20,10 @@ User = get_user_model()
 def is_superadmin(user):
     return user.is_superuser
 
-
 def is_admin_or_superuser(user):
     if not user.is_authenticated:
         return False
     return user.is_superuser or user.role == 'ADMIN'
-
-
-def get_global_context(request):
-    context = {}
-    if request and request.user.is_authenticated:
-        context['pending_count'] = Ticket.objects.filter(status='PENDING').count()
-        user_name = f"{request.user.first_name} {request.user.last_name}".strip()
-        context['my_ticket_count'] = Ticket.objects.filter(
-            admin_notes__icontains=user_name
-        ).exclude(status='RESOLVED').count()
-    return context
-
 
 @user_passes_test(is_superadmin, login_url='dashboard')
 def add_employee(request):
@@ -64,10 +50,7 @@ def add_employee(request):
                 new_user.save()
             return redirect('teams')
 
-    context = {'error': error}
-    context.update(get_global_context(request))
-    return render(request, 'tickets/add_employee.html', context)
-
+    return render(request, 'tickets/add_employee.html', {'error': error})
 
 # ==========================================
 # AUTHENTICATION VIEWS
@@ -110,11 +93,9 @@ def custom_login(request):
 
     return render(request, 'tickets/login.html')
 
-
 def custom_logout(request):
     logout(request)
     return redirect('login')
-
 
 def school_login(request):
     if request.method == 'POST':
@@ -132,7 +113,6 @@ def school_login(request):
     schools = School.objects.all().order_by('name')
     return render(request, 'tickets/school_login.html', {'schools': schools})
 
-
 # ==========================================
 # MAIN KANBAN & PUBLIC VIEWS
 # ==========================================
@@ -148,9 +128,7 @@ def dashboard(request):
         'chart_received': get_mock_chart_data()['received'],
         'chart_resolved': get_mock_chart_data()['resolved'],
     }
-    context.update(get_global_context(request))
     return render(request, 'tickets/dashboard.html', context)
-
 
 def public_submit(request):
     if not request.session.get('is_school_authenticated'):
@@ -175,21 +153,16 @@ def public_submit(request):
             ticket.predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
             ticket.save()
             success_ticket = ticket
-            messages.success(request,
-                             f"Ticket {ticket.ticket_number} has been successfully submitted and placed in the queue.")
+            messages.success(request, f"Ticket {ticket.ticket_number} has been successfully submitted and placed in the queue.")
         except Exception as e:
             print(f"Submission Error: {e}")
             messages.error(request, "There was an error processing your request. Please try again.")
 
     return render(request, 'tickets/public_submit.html', {'success_ticket': success_ticket})
 
-
 def requests_view(request):
     pending_requests = Ticket.objects.filter(status='PENDING').order_by('-created_at')
-    context = {'pending_requests': pending_requests}
-    context.update(get_global_context(request))
-    return render(request, 'tickets/requests.html', context)
-
+    return render(request, 'tickets/requests.html', {'pending_requests': pending_requests})
 
 def delete_request(request, ticket_id):
     if request.method == 'POST':
@@ -197,14 +170,24 @@ def delete_request(request, ticket_id):
         ticket.delete()
     return redirect('requests')
 
-
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def documents_view(request):
     resolved_tickets = Ticket.objects.filter(status='RESOLVED').order_by('-updated_at')
-    context = {'resolved_tickets': resolved_tickets}
-    context.update(get_global_context(request))
+    completed_tickets = Ticket.objects.filter(status='COMPLETED').order_by('-updated_at')
+    context = {
+        'resolved_tickets': resolved_tickets,
+        'completed_tickets': completed_tickets
+    }
     return render(request, 'tickets/documents.html', context)
 
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def complete_ticket_ajax(request, ticket_id):
+    if request.method == 'POST':
+        ticket = get_object_or_404(Ticket, id=ticket_id)
+        ticket.status = 'COMPLETED'
+        ticket.save()
+        return JsonResponse({'success': True, 'message': 'Ticket moved to Completed Documents.'})
+    return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
 
 # ==========================================
 # AI TRIAGE WORKFLOW
@@ -216,16 +199,19 @@ def ticket_triage_view(request, ticket_id):
     staff_rec = recommend_staff(ticket.school_name, ticket.support_type)
     risk_assessment = predict_risk(ticket.support_type, ticket.priority)
 
+    recent_school_tickets = Ticket.objects.filter(
+        school_name=ticket.school_name
+    ).exclude(id=ticket.id).order_by('-created_at')[:5]
+
     context = {
         'ticket': ticket,
         'predicted_hours': predicted_hours,
         'staff_rec': staff_rec,
         'risk_assessment': risk_assessment,
-        'staff_data': get_staff_data()
+        'staff_data': get_staff_data(),
+        'recent_school_tickets': recent_school_tickets
     }
-    context.update(get_global_context(request))
     return render(request, 'tickets/ticket_creation.html', context)
-
 
 @login_required
 def approve_request(request, ticket_id):
@@ -239,6 +225,10 @@ def approve_request(request, ticket_id):
         if scheduled_date_str:
             ticket.scheduled_date = scheduled_date_str
 
+        scheduled_time_str = request.POST.get('scheduled_time')
+        if scheduled_time_str:
+            ticket.scheduled_time = scheduled_time_str
+
         assigned_staff_list = request.POST.getlist('assigned_staff')
         if not assigned_staff_list:
             assigned_staff_str = 'Unassigned'
@@ -250,7 +240,6 @@ def approve_request(request, ticket_id):
         ticket.admin_notes = f"Assigned to: {assigned_staff_str}\n{existing_notes}"
         ticket.save()
     return redirect('dashboard')
-
 
 # ==========================================
 # ANALYTICS & TEAMS
@@ -296,23 +285,15 @@ def get_staff_data():
         staff['active_tickets'] = active_count
     return sorted(staff_list, key=lambda x: x['active_tickets'], reverse=True)
 
-
 def get_mock_chart_data():
     return {'labels': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
             'received': [8, 12, 15, 9, 14, 5, 3], 'resolved': [6, 10, 18, 12, 11, 8, 4]}
 
-
 def analytics_dashboard(request):
-    context = {}
-    context.update(get_global_context(request))
-    return render(request, 'tickets/analytics.html', context)
-
+    return render(request, 'tickets/analytics.html')
 
 def teams_view(request):
-    context = {'staff_data': get_staff_data()}
-    context.update(get_global_context(request))
-    return render(request, 'tickets/teams.html', context)
-
+    return render(request, 'tickets/teams.html', {'staff_data': get_staff_data()})
 
 # ==========================================
 # UTILITY VIEWS
@@ -332,9 +313,7 @@ def backlog_view(request):
         'high_urgent': backlog_tickets.filter(priority__in=['HIGH', 'URGENT']).count(),
         'oldest_age': oldest_age,
     }
-    context.update(get_global_context(request))
     return render(request, 'tickets/backlog.html', context)
-
 
 def move_from_backlog(request, ticket_id):
     if request.method == 'POST':
@@ -342,7 +321,6 @@ def move_from_backlog(request, ticket_id):
         ticket.status = 'SCHEDULED'
         ticket.save()
     return redirect('backlog')
-
 
 def search_tickets(request):
     query = request.GET.get('q', '')
@@ -352,10 +330,7 @@ def search_tickets(request):
             Q(ticket_number__icontains=query) | Q(title__icontains=query) | Q(first_name__icontains=query) | Q(
                 last_name__icontains=query) | Q(school_name__icontains=query)).order_by('-created_at')
 
-    context = {'query': query, 'results': results}
-    context.update(get_global_context(request))
-    return render(request, 'tickets/search_results.html', context)
-
+    return render(request, 'tickets/search_results.html', {'query': query, 'results': results})
 
 def update_ticket_ajax(request, ticket_id):
     if request.method == 'POST':
@@ -371,12 +346,8 @@ def update_ticket_ajax(request, ticket_id):
             return JsonResponse({'success': False, 'message': str(e)}, status=400)
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
 
-
 def settings_view(request):
-    context = {}
-    context.update(get_global_context(request))
-    return render(request, 'tickets/settings.html', context)
-
+    return render(request, 'tickets/settings.html')
 
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def admin_create_ticket(request):
@@ -387,6 +358,7 @@ def admin_create_ticket(request):
             predicted_hours = 1
 
         scheduled_date_str = request.POST.get('scheduled_date')
+        scheduled_time_str = request.POST.get('scheduled_time')
 
         ticket = Ticket.objects.create(
             first_name=request.POST.get('first_name'), last_name=request.POST.get('last_name'),
@@ -396,7 +368,8 @@ def admin_create_ticket(request):
             support_type=request.POST.get('support_type', 'OTHER'), description=request.POST.get('description', ''),
             priority=request.POST.get('priority', 'MEDIUM'), work_type=request.POST.get('work_type', 'REMOTE WORK'),
             status='PENDING_ACCEPTANCE', predicted_hours=predicted_hours,
-            scheduled_date=scheduled_date_str if scheduled_date_str else None
+            scheduled_date=scheduled_date_str if scheduled_date_str else None,
+            scheduled_time=scheduled_time_str if scheduled_time_str else None
         )
         assigned_staff_list = request.POST.getlist('assigned_staff')
         if assigned_staff_list:
@@ -406,10 +379,7 @@ def admin_create_ticket(request):
             ticket.save()
         return redirect('dashboard')
 
-    context = {'staff_data': get_staff_data()}
-    context.update(get_global_context(request))
-    return render(request, 'tickets/admin_create_ticket.html', context)
-
+    return render(request, 'tickets/admin_create_ticket.html', {'staff_data': get_staff_data()})
 
 # ==========================================
 # EMPLOYEE SPECIFIC VIEWS
@@ -419,40 +389,36 @@ def admin_create_ticket(request):
 def my_tickets(request):
     user_name = f"{request.user.first_name} {request.user.last_name}".strip()
 
-    # 1. Fetch Active Tickets
+    pending_acceptance_tickets = Ticket.objects.filter(
+        admin_notes__icontains=user_name,
+        status='PENDING_ACCEPTANCE'
+    ).order_by('-created_at')
+
     assigned_tickets = Ticket.objects.filter(
         admin_notes__icontains=user_name
-    ).exclude(status='RESOLVED').order_by('-created_at')
+    ).exclude(status__in=['RESOLVED', 'PENDING_ACCEPTANCE', 'COMPLETED']).order_by('-created_at')
 
-    # 2. Fetch Resolved / History Tickets
     resolved_tickets = Ticket.objects.filter(
         admin_notes__icontains=user_name,
         status='RESOLVED'
     ).order_by('-actual_completion_date', '-updated_at')
 
     context = {
+        'pending_acceptance_tickets': pending_acceptance_tickets,
         'assigned_tickets': assigned_tickets,
         'resolved_tickets': resolved_tickets
     }
-    context.update(get_global_context(request))
     return render(request, 'tickets/my_tickets.html', context)
-
 
 @login_required
 def employee_receipt_view(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    context = {'ticket': ticket}
-    context.update(get_global_context(request))
-    return render(request, 'tickets/employee_receipt.html', context)
-
+    return render(request, 'tickets/employee_receipt.html', {'ticket': ticket})
 
 @login_required
 def employee_ticket_review(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    context = {'ticket': ticket}
-    context.update(get_global_context(request))
-    return render(request, 'tickets/employee_ticket_review.html', context)
-
+    return render(request, 'tickets/employee_ticket_review.html', {'ticket': ticket})
 
 @login_required
 def accept_assignment(request, ticket_id):
@@ -460,8 +426,13 @@ def accept_assignment(request, ticket_id):
         ticket = get_object_or_404(Ticket, id=ticket_id)
         ticket.status = 'SCHEDULED'
         ticket.save()
-    return redirect('my_tickets')
 
+        is_ajax = request.headers.get(
+            'X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '')
+        if is_ajax:
+            return JsonResponse({'success': True, 'message': 'Ticket accepted successfully.'})
+
+    return redirect('my_tickets')
 
 @login_required
 def decline_assignment(request, ticket_id):
@@ -476,7 +447,8 @@ def decline_assignment(request, ticket_id):
                 if 'Assigned to:' in line:
                     names_str = line.replace('Assigned to:', '').strip()
                     names = [n.strip() for n in names_str.split(',') if n.strip()]
-                    if user_name in names: names.remove(user_name)
+                    if user_name in names:
+                        names.remove(user_name)
                     if not names:
                         new_lines.append("Assigned to: Unassigned")
                     else:
@@ -485,10 +457,15 @@ def decline_assignment(request, ticket_id):
                     new_lines.append(line)
             ticket.admin_notes = '\n'.join(new_lines)
 
-        ticket.status = 'UNRESOLVED'
+        ticket.status = 'PENDING'
         ticket.save()
-    return redirect('my_tickets')
 
+        is_ajax = request.headers.get(
+            'X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '')
+        if is_ajax:
+            return JsonResponse({'success': True, 'message': 'Ticket declined and returned to Admin queue.'})
+
+    return redirect('my_tickets')
 
 @login_required
 def resolve_assignment(request, ticket_id):
@@ -497,7 +474,6 @@ def resolve_assignment(request, ticket_id):
         ticket.status = 'RESOLVED'
         ticket.save()
     return redirect('my_tickets')
-
 
 @login_required
 def unresolve_assignment(request, ticket_id):

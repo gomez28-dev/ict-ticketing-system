@@ -3,15 +3,80 @@
 {% block title %}My Tickets - Helpdesk{% endblock %}
 
 {% block content %}
+{% csrf_token %}
+
 <div class="max-w-7xl mx-auto space-y-10">
 
     <div>
         <div class="mb-6 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                    My Active Tickets
+                    <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Pending Requests
                 </h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tickets assigned to you that are awaiting your acceptance or decline.</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {% if pending_acceptance_tickets %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 font-bold">Ticket ID</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Priority</th>
+                            <th scope="col" class="px-6 py-4 font-bold">School</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Work Type</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for ticket in pending_acceptance_tickets %}
+                        <tr id="pending-row-{{ ticket.id }}" class="bg-yellow-50/50 dark:bg-yellow-900/10 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors">
+                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ ticket.ticket_number }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 rounded text-xs font-bold
+                                    {% if ticket.priority == 'URGENT' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                                    {% elif ticket.priority == 'HIGH' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400
+                                    {% elif ticket.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
+                                    {% else %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% endif %}">
+                                    {{ ticket.priority }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ ticket.school_name }}</td>
+                            <td class="px-6 py-4 text-gray-600 dark:text-gray-300 font-medium">{{ ticket.work_type|default:"N/A" }}</td>
+                            <td class="px-6 py-4 text-right flex justify-end gap-3 items-center">
+                                <button onclick="handleTicketAction({{ ticket.id }}, 'decline')" class="text-red-600 hover:text-red-800 font-bold text-sm transition-colors flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    Decline
+                                </button>
+                                <span class="text-gray-300 dark:text-gray-600">|</span>
+                                <button onclick="handleTicketAction({{ ticket.id }}, 'accept')" class="text-green-600 hover:text-green-800 font-bold text-sm bg-green-50 dark:bg-green-900/30 px-3 py-1.5 rounded-lg transition-colors border border-green-100 dark:border-green-800 flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    Accept
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center p-8 text-center">
+                <p class="text-gray-500 dark:text-gray-400 font-medium">You have no pending requests to review.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    My Active Tasks
+                </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tasks currently assigned to you that require action.</p>
             </div>
         </div>
@@ -124,4 +189,49 @@
     </div>
 
 </div>
+
+<script>
+    function handleTicketAction(ticketId, action) {
+        const url = action === 'accept'
+            ? `/admin-dashboard/my-tickets/accept/${ticketId}/`
+            : `/admin-dashboard/my-tickets/decline/${ticketId}/`;
+
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Dynamically remove the row from the Pending Requests table so no refresh is needed
+                const row = document.getElementById(`pending-row-${ticketId}`);
+                if (row) {
+                    // Add a tiny animation out before removing if desired, but display: none works perfectly
+                    row.style.display = 'none';
+                }
+
+                // If it was accepted, let the user know they can check their active queue
+                if (action === 'accept') {
+                    // To keep the instantaneous feel without forcing a browser refresh,
+                    // we show an alert. (If you prefer to move the row into the Active table
+                    // via JS we can map the DOM elements, but an alert is the cleanest start!)
+                    alert('Task Accepted successfully! It is now in your Active Tasks list (refresh to view).');
+                }
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An unexpected error occurred while processing the request.');
+        });
+    }
+</script>
 {% endblock %}

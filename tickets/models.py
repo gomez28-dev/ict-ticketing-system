@@ -56,6 +56,7 @@ class Ticket(models.Model):
         ('IN_PROGRESS', 'In Progress'),
         ('UNRESOLVED', 'Unresolved'),
         ('RESOLVED', 'Resolved'),
+        ('COMPLETED', 'Completed'),
     )
 
     PRIORITY_CHOICES = (
@@ -117,9 +118,9 @@ class Ticket(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # --- SCHEDULED DATE FIELD ---
-    # Changed from DateTimeField to DateField
+    # --- SCHEDULED DATE & TIME FIELDS ---
     scheduled_date = models.DateField(null=True, blank=True, help_text="Date the ticket is scheduled for")
+    scheduled_time = models.TimeField(null=True, blank=True, help_text="Time the ticket is scheduled for")
 
     due_date = models.DateTimeField(null=True, blank=True)
     actual_completion_date = models.DateTimeField(null=True, blank=True)
@@ -139,9 +140,10 @@ class Ticket(models.Model):
         if not self.title and self.support_type and self.school_name:
             self.title = f"{self.get_support_type_display()} - {self.school_name}"
 
-        if self.status == 'RESOLVED' and not self.actual_completion_date:
+        # Capture completion date if resolved OR completed
+        if self.status in ['RESOLVED', 'COMPLETED'] and not self.actual_completion_date:
             self.actual_completion_date = timezone.now()
-        elif self.status != 'RESOLVED' and self.actual_completion_date:
+        elif self.status not in ['RESOLVED', 'COMPLETED'] and self.actual_completion_date:
             self.actual_completion_date = None
 
         super().save(*args, **kwargs)

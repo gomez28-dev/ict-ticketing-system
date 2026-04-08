@@ -17,7 +17,12 @@ urlpatterns = [
     path('admin-dashboard/', views.dashboard, name='dashboard'),
     path('admin-dashboard/analytics/', views.analytics_dashboard, name='analytics'),
     path('admin-dashboard/requests/', views.requests_view, name='requests'),
+
+    # --- DOCUMENTS ACTIONS ---
     path('admin-dashboard/documents/', views.documents_view, name='documents'),
+    path('admin-dashboard/documents/complete/<int:ticket_id>/', views.complete_ticket_ajax,
+         name='complete_ticket_ajax'),
+
     path('admin-dashboard/backlog/', views.backlog_view, name='backlog'),
     path('admin-dashboard/create/', views.admin_create_ticket, name='admin_create_ticket'),
     path('admin-dashboard/teams/', views.teams_view, name='teams'),
@@ -33,7 +38,7 @@ urlpatterns = [
     path('admin-dashboard/my-tickets/unresolve/<int:ticket_id>/', views.unresolve_assignment,
          name='unresolve_assignment'),
 
-    # --- NEW EMPLOYEE RECEIPT PATH ---
+    # Employee Receipt Path
     path('admin-dashboard/my-tickets/receipt/<int:ticket_id>/', views.employee_receipt_view, name='employee_receipt'),
 
     # Form Actions & Triage

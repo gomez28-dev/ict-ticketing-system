@@ -3,7 +3,7 @@
 {% block title %}Triage Request {{ ticket.ticket_number }}{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto">
+<div class="max-w-7xl mx-auto">
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Triage Request: {{ ticket.ticket_number }}</h1>
@@ -17,6 +17,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
         <div class="lg:col-span-2 space-y-6">
+
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Original Submission</h3>
 
@@ -44,6 +45,52 @@
                     <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap border border-gray-100 dark:border-gray-700 min-h-[100px]">{{ ticket.description|default:"No description provided." }}</div>
                 </div>
             </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                    <h3 class="text-md font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Recent History: {{ ticket.school_name }}
+                    </h3>
+                </div>
+
+                {% if recent_school_tickets %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-white dark:bg-gray-800 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 font-bold">Ticket ID</th>
+                                <th scope="col" class="px-6 py-3 font-bold">Support Type</th>
+                                <th scope="col" class="px-6 py-3 font-bold">Status</th>
+                                <th scope="col" class="px-6 py-3 font-bold text-right">Date Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            {% for recent in recent_school_tickets %}
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                <td class="px-6 py-3 font-medium text-gray-900 dark:text-white">{{ recent.ticket_number }}</td>
+                                <td class="px-6 py-3">{{ recent.get_support_type_display|truncatechars:35 }}</td>
+                                <td class="px-6 py-3">
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded
+                                        {% if recent.status == 'RESOLVED' or recent.status == 'COMPLETED' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
+                                        {% elif recent.status == 'PENDING' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
+                                        {% else %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400{% endif %}">
+                                        {{ recent.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-3 text-right text-gray-500">{{ recent.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-6 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">No previous tickets found for this location.</p>
+                </div>
+                {% endif %}
+            </div>
+
         </div>
 
         <div class="space-y-6">
@@ -81,9 +128,10 @@
 
             <form method="POST" action="{% url 'approve_request' ticket.id %}" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 {% csrf_token %}
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Action: Triage & Assign</h3>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                    <div class="sm:col-span-2">
+                <div class="space-y-4 mb-5">
+                    <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Work Type</label>
                         <select name="work_type" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
                             <option value="REMOTE WORK" {% if ticket.work_type == 'REMOTE WORK' %}selected{% endif %}>Remote Work (Online/Home)</option>
@@ -101,9 +149,15 @@
                         </select>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Scheduled Date</label>
-                        <input type="date" name="scheduled_date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Date</label>
+                            <input type="date" name="scheduled_date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Time</label>
+                            <input type="time" name="scheduled_time" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                        </div>
                     </div>
                 </div>
 
@@ -112,7 +166,7 @@
 
                     <input type="text" id="staffSearchInput" onkeydown="if(event.key === 'Enter') { event.preventDefault(); return false; }" placeholder="Search by name..." class="w-full mb-2 border border-gray-300 dark:border-gray-600 rounded-lg p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
 
-                    <div id="staffListContainer" class="max-h-56 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800/50 space-y-1 custom-scrollbar">
+                    <div id="staffListContainer" class="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800/50 space-y-1 custom-scrollbar">
                         {% for staff in staff_data %}
                         <label class="staff-item flex items-center gap-3 cursor-pointer p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
                             <input type="checkbox" name="assigned_staff" value="{{ staff.name }}" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
@@ -124,7 +178,7 @@
 
                 <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    Approve & Send to Employee
+                    Approve & Assign
                 </button>
             </form>
         </div>
