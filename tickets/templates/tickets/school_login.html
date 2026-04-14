@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>School Login - Helpdesk Submission</title>
     <style>
-        body { font-family: sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        body { font-family: sans-serif; background-color: #f4f7f6; display: flex; flex-direction: column; min-height: 100vh; margin: 0; }
         .login-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
@@ -15,7 +15,8 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px;">
+        <div class="login-container">
         <h2 style="text-align: center; margin-bottom: 20px;">School Helpdesk Portal</h2>
 
         {% if messages %}
@@ -40,12 +41,37 @@
             </div>
 
             <div class="form-group">
-                <label for="school_id">School ID (Password):</label>
-                <input type="password" name="school_id" id="school_id" class="form-control" placeholder="Enter your official School ID" required>
+                <label for="school_id">School ID:</label>
+                <input type="text" name="school_id" id="school_id" class="form-control" placeholder="Enter your official School ID" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
             </div>
 
             <button type="submit" class="btn-submit">Access Submission Form</button>
         </form>
+        </div>
     </div>
+
+    <footer style="width: 100%; background-color: #1e3a8a; color: #dbeafe; padding: 24px 0; border-top: 4px solid #eab308; box-sizing: border-box; margin-top: auto;">
+        <div style="max-width: 1152px; margin: 0 auto; padding: 0 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; font-size: 14px;">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.3); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 8px; font-weight: bold; color: white; text-transform: uppercase; letter-spacing: 2px;">Logo</span>
+                </div>
+                <div>
+                    <p style="font-weight: bold; margin: 0;">DepEd Division of Valenzuela - ICT Unit</p>
+                    <p style="font-size: 12px; color: #93c5fd; margin: 0;">&copy; {% now "Y" %} All rights reserved.</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 24px;">
+                <a href="#" style="color: #dbeafe; text-decoration: none;">Privacy Policy</a>
+                <a href="#" style="color: #dbeafe; text-decoration: none;">Terms of Service</a>
+                <a href="#" style="color: #dbeafe; text-decoration: none;">Contact Support</a>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

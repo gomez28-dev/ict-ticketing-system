@@ -89,6 +89,7 @@ class Command(BaseCommand):
                     defaults={
                         'name': str(sec_name).strip(),
                         'district': district_label,
+                        'password': 'pbkdf2_sha256$1200000$yxVstmeDa4jgFPKbARyyYt$TYZVP2LaT6q3jtk6FzUV75dzoGUi4DD+7LfmWAAsrlE='
                     }
                 )
                 if created:
@@ -108,6 +109,7 @@ class Command(BaseCommand):
                     defaults={
                         'name': str(elem_name).strip(),
                         'district': str(elem_district).strip() if elem_district else "Unknown",
+                        'password': 'pbkdf2_sha256$1200000$yxVstmeDa4jgFPKbARyyYt$TYZVP2LaT6q3jtk6FzUV75dzoGUi4DD+7LfmWAAsrlE='
                     }
                 )
                 if created:

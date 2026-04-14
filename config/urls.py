@@ -24,7 +24,6 @@ urlpatterns = [
          name='complete_ticket_ajax'),
 
     path('admin-dashboard/backlog/', views.backlog_view, name='backlog'),
-    path('admin-dashboard/create/', views.admin_create_ticket, name='admin_create_ticket'),
     path('admin-dashboard/teams/', views.teams_view, name='teams'),
     path('admin-dashboard/add-employee/', views.add_employee, name='add_employee'),
 

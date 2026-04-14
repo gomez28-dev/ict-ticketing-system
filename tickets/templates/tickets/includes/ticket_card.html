@@ -7,11 +7,11 @@
      data-requester="{{ ticket.first_name }} {{ ticket.last_name }}"
      data-email="{{ ticket.email|default:'N/A' }}"
      data-contact="{{ ticket.contact_number|default:'N/A' }}"
-     data-district="{{ ticket.get_school_district_display|default:'N/A' }}"
+     data-district="{{ ticket.school_district|default:'N/A' }}"
      data-school="{{ ticket.school_name|default:'N/A' }}"
      data-support-type="{{ ticket.get_support_type_display|default:'N/A' }}"
-     data-description="{{ ticket.description|escapejs }}"
-     data-notes="{{ ticket.admin_notes|escapejs }}"
+     data-description="{{ ticket.description }}"
+     data-notes="{{ ticket.admin_notes|default:'' }}"
      data-created="{{ ticket.created_at|date:'M d, Y h:i A' }}"
      data-updated="{{ ticket.updated_at|date:'M d, Y h:i A' }}">
 

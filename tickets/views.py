@@ -101,12 +101,16 @@ def school_login(request):
     if request.method == 'POST':
         school_name = request.POST.get('school_name')
         school_id = request.POST.get('school_id')
+        password = request.POST.get('password')
         try:
             school = School.objects.get(name=school_name, school_id=school_id)
-            request.session['school_name'] = school.name
-            request.session['school_district'] = school.district
-            request.session['is_school_authenticated'] = True
-            return redirect('public_submit')
+            if school.check_password(password):
+                request.session['school_name'] = school.name
+                request.session['school_district'] = school.district
+                request.session['is_school_authenticated'] = True
+                return redirect('public_submit')
+            else:
+                messages.error(request, 'Invalid Password. Please try again.')
         except School.DoesNotExist:
             messages.error(request, 'Invalid School Name or School ID. Please try again.')
 
@@ -348,38 +352,6 @@ def update_ticket_ajax(request, ticket_id):
 
 def settings_view(request):
     return render(request, 'tickets/settings.html')
-
-@user_passes_test(is_admin_or_superuser, login_url='dashboard')
-def admin_create_ticket(request):
-    if request.method == 'POST':
-        try:
-            predicted_hours = int(float(request.POST.get('predicted_hours', 1)))
-        except (ValueError, TypeError):
-            predicted_hours = 1
-
-        scheduled_date_str = request.POST.get('scheduled_date')
-        scheduled_time_str = request.POST.get('scheduled_time')
-
-        ticket = Ticket.objects.create(
-            first_name=request.POST.get('first_name'), last_name=request.POST.get('last_name'),
-            email=request.POST.get('email', ''), contact_number=request.POST.get('contact_number', ''),
-            school_district=request.POST.get('school_district', 'Not Specified'),
-            school_name=request.POST.get('school_name', 'Not Specified'),
-            support_type=request.POST.get('support_type', 'OTHER'), description=request.POST.get('description', ''),
-            priority=request.POST.get('priority', 'MEDIUM'), work_type=request.POST.get('work_type', 'REMOTE WORK'),
-            status='PENDING_ACCEPTANCE', predicted_hours=predicted_hours,
-            scheduled_date=scheduled_date_str if scheduled_date_str else None,
-            scheduled_time=scheduled_time_str if scheduled_time_str else None
-        )
-        assigned_staff_list = request.POST.getlist('assigned_staff')
-        if assigned_staff_list:
-            unique_staff = list(set(assigned_staff_list))
-            assigned_staff_str = ", ".join(unique_staff)
-            ticket.admin_notes = f"Assigned to: {assigned_staff_str}\n"
-            ticket.save()
-        return redirect('dashboard')
-
-    return render(request, 'tickets/admin_create_ticket.html', {'staff_data': get_staff_data()})
 
 # ==========================================
 # EMPLOYEE SPECIFIC VIEWS
