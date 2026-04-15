@@ -115,7 +115,7 @@ This creates a local `db.sqlite3` file in the project root with all the required
 The project includes a `schools.xlsx` file with school records. Import them into the database:
 
 ```
-python manage.py import_schools
+python manage.py import_schools schools.xlsx
 ```
 
 > **📝 NOTE:** This command reads `schools.xlsx` from the project root and populates the school records used for the login and ticketing system.
@@ -191,7 +191,7 @@ pip install -r requirements.txt
 python manage.py migrate
 
 # 5. Import school data
-python manage.py import_schools
+python manage.py import_schools schools.xlsx
 
 # 6. Create admin account
 python manage.py createsuperuser
