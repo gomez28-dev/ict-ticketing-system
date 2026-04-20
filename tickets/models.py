@@ -182,3 +182,18 @@ class UserSettings(models.Model):
 
     def __str__(self):
         return f"Settings for {self.user.username}"
+
+
+class TicketAuditLog(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='audit_logs')
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=255)
+    old_value = models.TextField(blank=True, null=True)
+    new_value = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.ticket.ticket_number} - {self.action} at {self.timestamp}"

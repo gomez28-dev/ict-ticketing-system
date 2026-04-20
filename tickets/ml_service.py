@@ -57,10 +57,28 @@ staff_db = {
 # PREDICTION SERVICES
 # ==========================================
 
+def get_mapped_support_type(support_type):
+    """
+    Maps the values from the Ticket's public submission form to the
+    internal expertise and ML feature categories.
+    """
+    mapping = {
+        'CCTV': 'CCTV',
+        'PC_MAINTENANCE': 'PC_MAINTENANCE',
+        'NETWORK_MAINTENANCE': 'NETWORK',
+        'GOOGLE_ACCOUNT': 'ACCOUNT',
+        'MS_ACCOUNT': 'ACCOUNT',
+        'PASSWORD_RESET': 'ACCOUNT',
+        'OTHER': 'OTHER',
+    }
+    return mapping.get(support_type, 'OTHER')
+
+
 def predict_ticket_duration(support_type, priority):
     """Predicts task duration in hours."""
-    base_hours = {'ACCOUNT': 1, 'NETWORK': 4, 'HARDWARE': 8, 'SOFTWARE': 3, 'OTHER': 5}
-    estimated_time = base_hours.get(support_type, 5)
+    mapped_type = get_mapped_support_type(support_type)
+    base_hours = {'ACCOUNT': 1, 'NETWORK': 4, 'HARDWARE': 8, 'PC_MAINTENANCE': 8, 'SOFTWARE': 3, 'CCTV': 4, 'OTHER': 5}
+    estimated_time = base_hours.get(mapped_type, 5)
 
     priority_multipliers = {'URGENT': 0.5, 'HIGH': 0.8, 'MEDIUM': 1.0, 'LOW': 1.5}
     multiplier = priority_multipliers.get(priority, 1.0)
@@ -77,9 +95,11 @@ def recommend_staff(school_name, support_type):
     # 1. Find all staff members who match the required expertise
     eligible_staff = []
 
+    mapped_type = get_mapped_support_type(support_type)
+
     for name, info in staff_db.items():
         # Check if they have the specific skill OR if they are management ("ALL")
-        if support_type in info["expertise"] or "ALL" in info["expertise"]:
+        if mapped_type in info["expertise"] or "ALL" in info["expertise"]:
             eligible_staff.append(name)
 
     # 2. Fallback just in case no exact match is found
@@ -104,10 +124,12 @@ def predict_risk(support_type, priority):
     BASELINE RISK PREDICTION
     Flags potential blockers based on category and urgency.
     """
-    if priority == 'URGENT' or support_type == 'HARDWARE':
+    mapped_type = get_mapped_support_type(support_type)
+    
+    if priority == 'URGENT' or mapped_type in ['HARDWARE', 'PC_MAINTENANCE']:
         return {"level": "High", "color": "red",
                 "blockers": "Hardware procurement delays or unavailability of replacement parts. High urgency may cause staff bottleneck."}
-    elif support_type == 'NETWORK':
+    elif mapped_type == 'NETWORK':
         return {"level": "Medium", "color": "yellow",
                 "blockers": "Requires coordination with external ISPs. Possible line check delays."}
     else:

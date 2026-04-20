@@ -1,6 +1,6 @@
-from .ml_service import predict_ticket_duration, recommend_staff, predict_risk
+from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type
 from django.utils import timezone
-from .models import Ticket, School
+from .models import Ticket, School, TicketAuditLog
 from .forms import PublicTicketForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
@@ -189,6 +189,7 @@ def complete_ticket_ajax(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
         ticket.status = 'COMPLETED'
+        ticket._current_user = request.user
         ticket.save()
         return JsonResponse({'success': True, 'message': 'Ticket moved to Completed Documents.'})
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
@@ -202,17 +203,31 @@ def ticket_triage_view(request, ticket_id):
     predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
     staff_rec = recommend_staff(ticket.school_name, ticket.support_type)
     risk_assessment = predict_risk(ticket.support_type, ticket.priority)
+    mapped_type = get_mapped_support_type(ticket.support_type)
 
     recent_school_tickets = Ticket.objects.filter(
         school_name=ticket.school_name
     ).exclude(id=ticket.id).order_by('-created_at')[:5]
+
+    all_staff = get_staff_data()
+    filtered_staff = []
+
+    for staff in all_staff:
+        # Normalize expertise (e.g., 'PC MAINTENANCE' -> 'PC_MAINTENANCE') to match the mapped type
+        normalized_expertise = [str(exp).replace(' ', '_') for exp in staff['expertise']]
+        if mapped_type in normalized_expertise or 'ALL' in normalized_expertise or staff['name'].strip().lower() == 'test employee':
+            filtered_staff.append(staff)
+
+    # Fallback if no matching staff
+    if not filtered_staff:
+        filtered_staff = all_staff
 
     context = {
         'ticket': ticket,
         'predicted_hours': predicted_hours,
         'staff_rec': staff_rec,
         'risk_assessment': risk_assessment,
-        'staff_data': get_staff_data(),
+        'staff_data': filtered_staff,
         'recent_school_tickets': recent_school_tickets
     }
     return render(request, 'tickets/ticket_creation.html', context)
@@ -242,6 +257,7 @@ def approve_request(request, ticket_id):
 
         existing_notes = ticket.admin_notes or ""
         ticket.admin_notes = f"Assigned to: {assigned_staff_str}\n{existing_notes}"
+        ticket._current_user = request.user
         ticket.save()
     return redirect('dashboard')
 
@@ -297,7 +313,37 @@ def analytics_dashboard(request):
     return render(request, 'tickets/analytics.html')
 
 def teams_view(request):
-    return render(request, 'tickets/teams.html', {'staff_data': get_staff_data()})
+    staff_list = get_staff_data()
+    
+    category_map = {
+        'MANAGEMENT': 'Management / Officers',
+        'SYSTEM ADMIN': 'Management / Officers',
+        'CCTV': 'CCTV Operations',
+        'WEBSITE': 'Application Development',
+        'SYSTEM DEV': 'Application Development',
+        'NETWORK': 'Network Infrastructure',
+        'INTERNET': 'Network Infrastructure',
+        'ACCOUNT': 'Information Security & User Support',
+        'SOFTWARE': 'Information Security & User Support',
+        'SECURITY': 'Information Security & User Support',
+        'GRAPHICS': 'Graphic Design & Multimedia',
+        'MULTIMEDIA': 'Graphic Design & Multimedia',
+        'PC MAINTENANCE': 'Computer Maintenance',
+        'PRINTER': 'Computer Maintenance',
+        'HARDWARE': 'Computer Maintenance',
+        'SYSTEM TESTING': 'System Testing',
+    }
+    
+    grouped_staff = {}
+    for staff in staff_list:
+        primary_expertise = staff['expertise'][0] if staff['expertise'] else 'OTHER'
+        category = category_map.get(primary_expertise, 'Other / General')
+        
+        if category not in grouped_staff:
+            grouped_staff[category] = []
+        grouped_staff[category].append(staff)
+        
+    return render(request, 'tickets/teams.html', {'grouped_staff': grouped_staff})
 
 # ==========================================
 # UTILITY VIEWS
@@ -306,6 +352,12 @@ def teams_view(request):
 def backlog_view(request):
     backlog_tickets = Ticket.objects.filter(status='BACKLOG').order_by('created_at')
     history_tickets = Ticket.objects.filter(status='RESOLVED').order_by('-updated_at')
+    audit_logs = TicketAuditLog.objects.all().order_by('-timestamp')[:50]
+
+    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    activities_today = TicketAuditLog.objects.filter(timestamp__gte=today_start).count()
+    urgent_tasks = Ticket.objects.filter(priority__in=['HIGH', 'URGENT']).exclude(status__in=['RESOLVED', 'COMPLETED']).count()
+
     oldest_age = "0d"
     if backlog_tickets.exists():
         oldest_age = f"{(timezone.now() - backlog_tickets.first().created_at).days}d"
@@ -316,6 +368,9 @@ def backlog_view(request):
         'in_backlog': backlog_tickets.count(),
         'high_urgent': backlog_tickets.filter(priority__in=['HIGH', 'URGENT']).count(),
         'oldest_age': oldest_age,
+        'audit_logs': audit_logs,
+        'activities_today': activities_today,
+        'urgent_tasks': urgent_tasks,
     }
     return render(request, 'tickets/backlog.html', context)
 
@@ -323,6 +378,7 @@ def move_from_backlog(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
         ticket.status = 'SCHEDULED'
+        ticket._current_user = request.user
         ticket.save()
     return redirect('backlog')
 
@@ -344,6 +400,7 @@ def update_ticket_ajax(request, ticket_id):
             if data.get('status'): ticket.status = data.get('status')
             if data.get('priority'): ticket.priority = data.get('priority')
             if data.get('admin_notes') is not None: ticket.admin_notes = data.get('admin_notes')
+            ticket._current_user = request.user
             ticket.save()
             return JsonResponse({'success': True, 'message': 'Ticket updated successfully.'})
         except Exception as e:
@@ -397,6 +454,7 @@ def accept_assignment(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
         ticket.status = 'SCHEDULED'
+        ticket._current_user = request.user
         ticket.save()
 
         is_ajax = request.headers.get(
@@ -430,6 +488,7 @@ def decline_assignment(request, ticket_id):
             ticket.admin_notes = '\n'.join(new_lines)
 
         ticket.status = 'PENDING'
+        ticket._current_user = request.user
         ticket.save()
 
         is_ajax = request.headers.get(
@@ -444,6 +503,7 @@ def resolve_assignment(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
         ticket.status = 'RESOLVED'
+        ticket._current_user = request.user
         ticket.save()
     return redirect('my_tickets')
 
@@ -452,5 +512,6 @@ def unresolve_assignment(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
         ticket.status = 'UNRESOLVED'
+        ticket._current_user = request.user
         ticket.save()
     return redirect('my_tickets')

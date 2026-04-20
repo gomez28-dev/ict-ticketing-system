@@ -14,32 +14,39 @@
     {% endif %}
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-    {% for staff in staff_data %}
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
-        <div class="p-5 flex flex-col items-center border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-            <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 text-xl font-bold mb-3">
-                {{ staff.name|make_list|first|default:"E" }}
-            </div>
-            <h3 class="text-lg font-bold text-gray-800 dark:text-white text-center">{{ staff.name }}</h3>
+{% for category, staff_list in grouped_staff.items %}
+    <div class="mb-10 w-full">
+        <h2 class="text-xl border-b border-gray-200 dark:border-gray-700 pb-2 mb-4 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide">
+            {{ category }}
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for staff in staff_list %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
+                <div class="p-5 flex flex-col items-center border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 text-xl font-bold mb-3">
+                        {{ staff.name|make_list|first|default:"E" }}
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white text-center">{{ staff.name }}</h3>
 
-            <div class="mt-2 flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                {{ staff.active_tickets }} Active Tasks
-            </div>
-        </div>
+                    <div class="mt-2 flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        {{ staff.active_tickets }} Active Tasks
+                    </div>
+                </div>
 
-        <div class="p-5">
-            <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold mb-3">Expertise</h4>
-            <div class="flex flex-wrap gap-2">
-                {% for skill in staff.expertise %}
-                    <span class="px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
-                        {{ skill }}
-                    </span>
-                {% endfor %}
+                <div class="p-5">
+                    <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold mb-3">Expertise</h4>
+                    <div class="flex flex-wrap gap-2">
+                        {% for skill in staff.expertise %}
+                            <span class="px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                                {{ skill }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
+            {% endfor %}
         </div>
     </div>
-    {% endfor %}
-</div>
+{% endfor %}
 {% endblock %}
