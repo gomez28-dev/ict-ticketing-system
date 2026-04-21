@@ -1,17 +1,18 @@
 from django.contrib import admin
 from django.urls import path
 from tickets import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    # Public Helpdesk Submission Form
-    path('', views.public_submit, name='public_submit'),
 
     # Auth Links
     path('login/', views.custom_login, name='login'),
     path('logout/', views.custom_logout, name='logout'),
     path('school-login/', views.school_login, name='school_login'),
+    path('school-logout/', views.school_logout, name='school_logout'),
+    path('school-dashboard/', views.school_dashboard, name='school_dashboard'),
 
     # Dashboard Links
     path('admin-dashboard/', views.dashboard, name='dashboard'),
@@ -49,3 +50,6 @@ urlpatterns = [
     path('admin-dashboard/settings/', views.settings_view, name='settings'),
     path('admin-dashboard/request/<int:ticket_id>/', views.ticket_triage_view, name='ticket_triage'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

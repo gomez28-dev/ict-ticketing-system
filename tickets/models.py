@@ -44,6 +44,10 @@ class School(models.Model):
     school_id = models.CharField(max_length=50, unique=True)
     district = models.CharField(max_length=100, blank=True, null=True)
     password = models.CharField(max_length=128, default='pbkdf2_sha256$1200000$yxVstmeDa4jgFPKbARyyYt$TYZVP2LaT6q3jtk6FzUV75dzoGUi4DD+7LfmWAAsrlE=') # Default: DepEd123!
+    ict_first_name = models.CharField(max_length=100, blank=True, null=True)
+    ict_last_name = models.CharField(max_length=100, blank=True, null=True)
+    ict_contact_number = models.CharField(max_length=20, blank=True, null=True)
+    ict_email = models.EmailField(blank=True, null=True)
 
     def set_password(self, raw_password):
         from django.contrib.auth.hashers import make_password
@@ -94,6 +98,7 @@ class Ticket(models.Model):
     ticket_number = models.CharField(max_length=20, unique=True, blank=True)
     title = models.CharField(max_length=255, blank=True)
     description = models.TextField(help_text="Request Details")
+    attachment = models.FileField(upload_to='ticket_attachments/', null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tickets', null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='MEDIUM')

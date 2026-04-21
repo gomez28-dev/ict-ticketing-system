@@ -99,26 +99,84 @@ def custom_logout(request):
 
 def school_login(request):
     if request.method == 'POST':
-        school_name = request.POST.get('school_name')
         school_id = request.POST.get('school_id')
         password = request.POST.get('password')
         try:
-            school = School.objects.get(name=school_name, school_id=school_id)
+            school = School.objects.get(school_id=school_id)
             if school.check_password(password):
                 request.session['school_name'] = school.name
                 request.session['school_district'] = school.district
                 request.session['is_school_authenticated'] = True
-                return redirect('public_submit')
+                return redirect('school_dashboard')
             else:
                 messages.error(request, 'Invalid Password. Please try again.')
         except School.DoesNotExist:
-            messages.error(request, 'Invalid School Name or School ID. Please try again.')
+            messages.error(request, 'Invalid School ID. Please try again.')
 
-    schools = School.objects.all().order_by('name')
-    return render(request, 'tickets/school_login.html', {'schools': schools})
+    return render(request, 'tickets/school_login.html')
+
+def school_logout(request):
+    request.session.flush()
+    return redirect('school_login')
+
+def school_dashboard(request):
+    if not request.session.get('is_school_authenticated'):
+        return redirect('school_login')
+
+    school_name = request.session.get('school_name')
+    try:
+        school = School.objects.get(name=school_name)
+    except School.DoesNotExist:
+        return redirect('school_login')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'update_profile':
+            school.ict_first_name = request.POST.get('ict_first_name')
+            school.ict_last_name = request.POST.get('ict_last_name')
+            school.ict_contact_number = request.POST.get('ict_contact_number')
+            school.ict_email = request.POST.get('ict_email')
+            school.save()
+            messages.success(request, 'Profile updated successfully.')
+        elif action == 'create_ticket':
+            try:
+                ticket = Ticket.objects.create(
+                    first_name=school.ict_first_name or '',
+                    last_name=school.ict_last_name or '',
+                    contact_number=school.ict_contact_number or '',
+                    email=school.ict_email or '',
+                    school_district=school.district or 'Not Specified',
+                    school_name=school.name or 'Not Specified',
+                    support_type=request.POST.get('support_type', 'OTHER'),
+                    description=request.POST.get('description', ''),
+                    status='PENDING',
+                    priority='MEDIUM',
+                    attachment=request.FILES.get('attachment')
+                )
+                ticket.predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
+                ticket.save()
+                messages.success(request, f"Ticket {ticket.ticket_number} has been created successfully.")
+            except Exception as e:
+                print(f"Submission Error: {e}")
+                messages.error(request, "Failed to create ticket. Please try again.")
+        
+        return redirect('school_dashboard')
+
+    tickets = Ticket.objects.filter(school_name=school.name).order_by('-created_at')
+    
+    # Notifications: get audit logs for these tickets
+    ticket_ids = tickets.values_list('id', flat=True)
+    notifications = TicketAuditLog.objects.filter(ticket_id__in=ticket_ids).order_by('-timestamp')[:20]
+
+    context = {
+        'school': school,
+        'tickets': tickets,
+        'notifications': notifications,
+    }
+    return render(request, 'tickets/school_dashboard.html', context)
 
 # ==========================================
-# MAIN KANBAN & PUBLIC VIEWS
+# MAIN KANBAN & DASHBOARD VIEWS
 # ==========================================
 
 def dashboard(request):
@@ -133,36 +191,6 @@ def dashboard(request):
         'chart_resolved': get_mock_chart_data()['resolved'],
     }
     return render(request, 'tickets/dashboard.html', context)
-
-def public_submit(request):
-    if not request.session.get('is_school_authenticated'):
-        return redirect('school_login')
-
-    success_ticket = None
-    if request.method == 'POST':
-        try:
-            ticket = Ticket.objects.create(
-                first_name=request.POST.get('first_name'),
-                last_name=request.POST.get('last_name'),
-                middle_name=request.POST.get('middle_name', ''),
-                contact_number=request.POST.get('contact_number', ''),
-                email=request.POST.get('email', ''),
-                school_district=request.POST.get('school_district', 'Not Specified'),
-                school_name=request.POST.get('school_name', 'Not Specified'),
-                support_type=request.POST.get('support_type', 'OTHER'),
-                description=request.POST.get('description', ''),
-                status='PENDING',
-                priority='MEDIUM'
-            )
-            ticket.predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
-            ticket.save()
-            success_ticket = ticket
-            messages.success(request, f"Ticket {ticket.ticket_number} has been successfully submitted and placed in the queue.")
-        except Exception as e:
-            print(f"Submission Error: {e}")
-            messages.error(request, "There was an error processing your request. Please try again.")
-
-    return render(request, 'tickets/public_submit.html', {'success_ticket': success_ticket})
 
 def requests_view(request):
     pending_requests = Ticket.objects.filter(status='PENDING').order_by('-created_at')

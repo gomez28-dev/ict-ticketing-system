@@ -31,16 +31,6 @@
             {% csrf_token %}
 
             <div class="form-group">
-                <label for="school_name">Select School:</label>
-                <select name="school_name" id="school_name" class="form-control" required>
-                    <option value="" disabled selected>-- Choose your school --</option>
-                    {% for school in schools %}
-                        <option value="{{ school.name }}">{{ school.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
                 <label for="school_id">School ID:</label>
                 <input type="text" name="school_id" id="school_id" class="form-control" placeholder="Enter your official School ID" required>
             </div>
