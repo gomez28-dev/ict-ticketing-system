@@ -12,7 +12,10 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('school-login/', views.school_login, name='school_login'),
     path('school-logout/', views.school_logout, name='school_logout'),
+    path('school-login/forgot-password/', views.request_password_reset, name='request_password_reset'),
     path('school-dashboard/', views.school_dashboard, name='school_dashboard'),
+    path('school-dashboard/ticket/<int:ticket_id>/', views.school_ticket_detail, name='school_ticket_detail'),
+    path('school-dashboard/ticket/<int:ticket_id>/print/', views.school_print_ticket, name='school_print_ticket'),
 
     # Dashboard Links
     path('admin-dashboard/', views.dashboard, name='dashboard'),
@@ -26,6 +29,8 @@ urlpatterns = [
 
     path('admin-dashboard/backlog/', views.backlog_view, name='backlog'),
     path('admin-dashboard/teams/', views.teams_view, name='teams'),
+    path('admin-dashboard/schools/', views.schools_management, name='schools_management'),
+    path('admin-dashboard/schools/reset/<int:request_id>/', views.reset_school_password, name='reset_school_password'),
     path('admin-dashboard/add-employee/', views.add_employee, name='add_employee'),
 
     # Employee Specific Links
@@ -35,8 +40,8 @@ urlpatterns = [
     path('admin-dashboard/my-tickets/accept/<int:ticket_id>/', views.accept_assignment, name='accept_assignment'),
     path('admin-dashboard/my-tickets/decline/<int:ticket_id>/', views.decline_assignment, name='decline_assignment'),
     path('admin-dashboard/my-tickets/resolve/<int:ticket_id>/', views.resolve_assignment, name='resolve_assignment'),
-    path('admin-dashboard/my-tickets/unresolve/<int:ticket_id>/', views.unresolve_assignment,
-         name='unresolve_assignment'),
+    path('admin-dashboard/my-tickets/unresolve/<int:ticket_id>/', views.unresolve_assignment, name='unresolve_assignment'),
+    path('admin-dashboard/my-tickets/submit-review/<int:ticket_id>/', views.submit_for_review, name='submit_for_review'),
 
     # Employee Receipt Path
     path('admin-dashboard/my-tickets/receipt/<int:ticket_id>/', views.employee_receipt_view, name='employee_receipt'),

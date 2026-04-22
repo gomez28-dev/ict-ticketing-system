@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}School Portal Dashboard{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+        // BLOCKING SCRIPT TO PREVENT FOUC
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <style>
+        /* Critical dark-mode colors applied before Tailwind loads */
+        html.dark body { background-color: #111827 !important; color: #f3f4f6 !important; }
+        html.dark header { background-color: #1f2937 !important; border-color: #374151 !important; }
+        html.dark footer { background-color: #1f2937 !important; border-color: #4b5563 !important; }
+        html.dark main { background-color: #111827 !important; }
+        /* Prevent transitions on initial load */
+        .preload, .preload * { transition: none !important; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="preload bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col text-gray-800 dark:text-gray-100 transition-colors duration-200">
+
+    <!-- Navigation -->
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 print:hidden">
+        <div class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-blue-900 text-white flex items-center justify-center font-bold text-xs uppercase tracking-wider shadow-sm hidden sm:flex">ICT</div>
+                <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Division Office Helpdesk - {{ school.name }}</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">ID: {{ school.school_id }}</span>
+                <a href="{% url 'school_logout' %}" class="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors">Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 print:hidden">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#1e3a8a] border-t-4 border-[#eab308] text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 py-6 mt-12 print:hidden transition-colors duration-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center text-sm">
+            <div class="flex items-center gap-4 mb-4 md:mb-0">
+                <div class="w-10 h-10 bg-white/20 rounded flex items-center justify-center font-bold text-white uppercase text-xs">LOGO</div>
+                <div>
+                    <h2 class="text-white font-semibold">DepEd Division of Valenzuela - ICT Unit</h2>
+                    <p class="text-xs">&copy; 2026 All rights reserved.</p>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
+                <a href="#" class="hover:text-white transition-colors">Contact Support</a>
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_modals %}{% endblock %}
+
+    <!-- Scripts -->
+    <script>
+        // Dark Mode Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(function() {
+                document.body.classList.remove('preload');
+            }, 50);
+
+            const toggleButton = document.getElementById('dark-mode-toggle');
+            const toggleKnob = document.getElementById('dark-mode-knob');
+            
+            // Sync Toggle State
+            if (document.documentElement.classList.contains('dark')) {
+                if (toggleButton && toggleKnob) {
+                    toggleButton.classList.replace('bg-gray-200', 'bg-blue-600');
+                    toggleKnob.classList.replace('translate-x-0', 'translate-x-5');
+                }
+            }
+
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    const isDark = document.documentElement.classList.contains('dark');
+                    if (isDark) {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                        toggleButton.classList.replace('bg-blue-600', 'bg-gray-200');
+                        toggleKnob.classList.replace('translate-x-5', 'translate-x-0');
+                    } else {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                        toggleButton.classList.replace('bg-gray-200', 'bg-blue-600');
+                        toggleKnob.classList.replace('translate-x-0', 'translate-x-5');
+                    }
+                });
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

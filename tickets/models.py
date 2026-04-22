@@ -61,6 +61,21 @@ class School(models.Model):
         return f"{self.name} ({self.school_id})"
 
 
+class PasswordResetRequest(models.Model):
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending'),
+        ('RESOLVED', 'Resolved'),
+        ('DENIED', 'Denied')
+    )
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='password_requests')
+    request_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Reset Request for {self.school.name} ({self.status})"
+
+
 class Ticket(models.Model):
     STATUS_CHOICES = (
         ('PENDING', 'Pending Review'),
@@ -68,6 +83,7 @@ class Ticket(models.Model):
         ('SCHEDULED', 'Scheduled'),
         ('IN_PROGRESS', 'In Progress'),
         ('UNRESOLVED', 'Unresolved'),
+        ('UNDER_REVIEW', 'Under Review'),
         ('RESOLVED', 'Resolved'),
         ('COMPLETED', 'Completed'),
     )
@@ -127,6 +143,10 @@ class Ticket(models.Model):
     assignee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
                                  related_name='assigned_tickets')
 
+    # --- Resolution Details ---
+    resolution_notes = models.TextField(blank=True, null=True)
+    resolution_attachment = models.FileField(upload_to='resolutions/', null=True, blank=True)
+
     # --- AI-Ready Data Fields ---
     complexity = models.IntegerField(default=1, help_text="Story points or complexity scale (e.g., 1-10)")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -134,7 +154,8 @@ class Ticket(models.Model):
 
     # --- SCHEDULED DATE & TIME FIELDS ---
     scheduled_date = models.DateField(null=True, blank=True, help_text="Date the ticket is scheduled for")
-    scheduled_time = models.TimeField(null=True, blank=True, help_text="Time the ticket is scheduled for")
+    scheduled_start_time = models.TimeField(null=True, blank=True, help_text="Start time the ticket is scheduled for")
+    scheduled_end_time = models.TimeField(null=True, blank=True, help_text="End time the ticket is scheduled for")
 
     due_date = models.DateTimeField(null=True, blank=True)
     actual_completion_date = models.DateTimeField(null=True, blank=True)

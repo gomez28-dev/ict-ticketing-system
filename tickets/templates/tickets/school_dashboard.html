@@ -9,8 +9,21 @@
         tailwind.config = {
             darkMode: 'class',
         }
+        // BLOCKING SCRIPT TO PREVENT FOUC
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
     </script>
     <style>
+        /* Critical dark-mode colors applied before Tailwind loads */
+        html.dark body { background-color: #111827 !important; color: #f3f4f6 !important; }
+        html.dark header { background-color: #1f2937 !important; border-color: #374151 !important; }
+        html.dark footer { background-color: #1f2937 !important; border-color: #4b5563 !important; }
+        html.dark main { background-color: #111827 !important; }
+        /* Prevent transitions on initial load */
+        .preload, .preload * { transition: none !important; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #1d4ed8; }
@@ -19,7 +32,7 @@
         .modal.active { display: flex; }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col text-gray-800 dark:text-gray-100 transition-colors duration-200">
+<body class="preload bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col text-gray-800 dark:text-gray-100 transition-colors duration-200">
 
     <!-- Navigation -->
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 print:hidden">
@@ -53,10 +66,10 @@
         <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200">
             <nav class="-mb-px flex space-x-8 px-4 sm:px-0" aria-label="Tabs">
                 <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn active whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                    My Tickets
+                    My Request
                 </button>
                 <button onclick="switchTab('notifications')" id="tab-notifications" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-                    Notifications
+                    Activity & Audit Trail
                 </button>
                 <button onclick="switchTab('profile')" id="tab-profile" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     Profile
@@ -67,7 +80,7 @@
             </nav>
         </div>
 
-        <!-- Tab 1: My Tickets -->
+        <!-- Tab 1: My Request -->
         <div id="content-tickets" class="tab-content active px-4 sm:px-0">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Ticket History</h2>
@@ -90,7 +103,9 @@
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors">
                         {% for ticket in tickets %}
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ ticket.ticket_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                                <a href="{% url 'school_ticket_detail' ticket.id %}">{{ ticket.ticket_number }}</a>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ ticket.title }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -102,9 +117,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ ticket.created_at|date:"M d, Y" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button onclick="printTicket('{{ ticket.ticket_number }}')" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-semibold px-2 py-1 border border-blue-200 dark:border-blue-800 rounded bg-blue-50 dark:bg-blue-900/30">
-                                    Print
-                                </button>
+                                <a href="{% url 'school_ticket_detail' ticket.id %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-semibold px-2 py-1">View</a>
                             </td>
                         </tr>
                         {% empty %}
@@ -119,27 +132,64 @@
 
         <!-- Tab 2: Notifications -->
         <div id="content-notifications" class="tab-content px-4 sm:px-0">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Recent Updates</h2>
-            <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md transition-colors duration-200">
-                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Activity & Audit Trail</h2>
+            <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg transition-colors duration-200 p-6">
+                <div class="relative">
                     {% for note in notifications %}
-                    <li class="px-6 py-4">
-                        <div class="flex items-center justify-between">
-                            <div class="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">{{ note.ticket.ticket_number }} - {{ note.action }}</div>
-                            <div class="ml-2 flex-shrink-0 flex">
-                                <span class="text-xs text-gray-400 dark:text-gray-500">{{ note.timestamp|timesince }} ago</span>
+                    <div class="flex gap-4 {% if not forloop.last %}pb-8{% endif %} relative">
+                        <!-- Timeline vertical line -->
+                        {% if not forloop.last %}
+                        <div class="absolute left-[18px] top-10 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+                        {% endif %}
+
+                        <!-- Icon -->
+                        <div class="flex-shrink-0 z-10">
+                            {% if 'Resolved' in note.new_value or 'Completed' in note.new_value or note.new_value == 'RESOLVED' or note.new_value == 'COMPLETED' %}
+                            <div class="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
+                                <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                             </div>
-                        </div>
-                        <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                            {% if note.old_value or note.new_value %}
-                                Changed from "{{ note.old_value }}" to "{{ note.new_value }}"
+                            {% elif 'Scheduled' in note.new_value or note.new_value == 'SCHEDULED' or 'scheduled' in note.action %}
+                            <div class="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
+                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            </div>
+                            {% elif 'created' in note.action or 'Created' in note.action or 'submitted' in note.action %}
+                            <div class="w-9 h-9 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
+                                <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </div>
+                            {% else %}
+                            <div class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
+                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </div>
                             {% endif %}
                         </div>
-                    </li>
+
+                        <!-- Content -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
+                                    <span class="text-blue-600 dark:text-blue-400">{{ note.ticket.ticket_number }}</span>
+                                    <span class="mx-1 text-gray-300 dark:text-gray-600">·</span>
+                                    {{ note.action }}
+                                </p>
+                                <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap flex-shrink-0">{{ note.timestamp|timesince }} ago</span>
+                            </div>
+                            {% if note.old_value or note.new_value %}
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                <span class="line-through text-red-400 dark:text-red-500">{{ note.old_value }}</span>
+                                <span class="mx-1">→</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">{{ note.new_value }}</span>
+                            </p>
+                            {% endif %}
+                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{{ note.timestamp|date:"M d, Y · h:i A" }}</p>
+                        </div>
+                    </div>
                     {% empty %}
-                    <li class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">No recent notifications.</li>
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">No activity recorded yet.</p>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
             </div>
         </div>
 
@@ -385,14 +435,19 @@
 
         // Dark Mode Logic
         document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(function() {
+                document.body.classList.remove('preload');
+            }, 50);
+
             const toggleButton = document.getElementById('dark-mode-toggle');
             const toggleKnob = document.getElementById('dark-mode-knob');
             
-            // Check Local Storage
-            if (localStorage.getItem('theme') === 'dark') {
-                document.documentElement.classList.add('dark');
-                toggleButton.classList.replace('bg-gray-200', 'bg-blue-600');
-                toggleKnob.classList.replace('translate-x-0', 'translate-x-5');
+            // Sync Toggle State
+            if (document.documentElement.classList.contains('dark')) {
+                if (toggleButton && toggleKnob) {
+                    toggleButton.classList.replace('bg-gray-200', 'bg-blue-600');
+                    toggleKnob.classList.replace('translate-x-0', 'translate-x-5');
+                }
             }
 
             toggleButton.addEventListener('click', () => {

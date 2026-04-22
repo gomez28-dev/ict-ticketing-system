@@ -1,6 +1,6 @@
 from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type
 from django.utils import timezone
-from .models import Ticket, School, TicketAuditLog
+from .models import Ticket, School, TicketAuditLog, PasswordResetRequest
 from .forms import PublicTicketForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
@@ -175,6 +175,37 @@ def school_dashboard(request):
     }
     return render(request, 'tickets/school_dashboard.html', context)
 
+def school_ticket_detail(request, ticket_id):
+    if not request.session.get('is_school_authenticated'):
+        return redirect('school_login')
+
+    school_name = request.session.get('school_name')
+    ticket = get_object_or_404(Ticket, id=ticket_id, school_name=school_name)
+    school = School.objects.get(name=school_name)
+
+    assigned_employees = "None"
+    general_notes = ""
+    
+    if ticket.admin_notes:
+        lines = ticket.admin_notes.split('\n')
+        notes_lines = []
+        for line in lines:
+            if line.startswith('Assigned to:'):
+                assigned_employees = line.replace('Assigned to:', '').strip()
+            else:
+                if line.strip():
+                    notes_lines.append(line.strip())
+        general_notes = '\n'.join(notes_lines)
+
+    context = {
+        'ticket': ticket,
+        'school': school,
+        'assigned_employees': assigned_employees,
+        'general_notes': general_notes,
+    }
+    return render(request, 'tickets/school_ticket_detail.html', context)
+
+
 # ==========================================
 # MAIN KANBAN & DASHBOARD VIEWS
 # ==========================================
@@ -272,9 +303,18 @@ def approve_request(request, ticket_id):
         if scheduled_date_str:
             ticket.scheduled_date = scheduled_date_str
 
-        scheduled_time_str = request.POST.get('scheduled_time')
-        if scheduled_time_str:
-            ticket.scheduled_time = scheduled_time_str
+        scheduled_start_time_str = request.POST.get('scheduled_start_time')
+        if scheduled_start_time_str:
+            ticket.scheduled_start_time = scheduled_start_time_str
+
+        scheduled_end_time_str = request.POST.get('scheduled_end_time')
+        if scheduled_end_time_str:
+            # Backend Validation
+            if scheduled_start_time_str and scheduled_end_time_str <= scheduled_start_time_str:
+                from django.contrib import messages
+                messages.error(request, "Scheduled End Time must be strictly after Start Time.")
+                return redirect('ticket_triage', ticket_id=ticket.id)
+            ticket.scheduled_end_time = scheduled_end_time_str
 
         assigned_staff_list = request.POST.getlist('assigned_staff')
         if not assigned_staff_list:
@@ -467,10 +507,31 @@ def my_tickets(request):
     }
     return render(request, 'tickets/my_tickets.html', context)
 
-@login_required
 def employee_receipt_view(request, ticket_id):
+    is_employee = request.user.is_authenticated and getattr(request.user, 'role', '') == 'MEMBER' and not request.user.is_superuser
+    is_school = request.session.get('is_school_authenticated', False)
+    
+    if not (is_employee or is_school):
+        from django.contrib import messages
+        messages.error(request, 'Only assigned employees or the respective school can print document forms.')
+        return redirect('dashboard' if request.user.is_authenticated else 'school_dashboard')
+        
     ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    if is_school and ticket.school_name != request.session.get('school_name'):
+        from django.contrib import messages
+        messages.error(request, 'You do not have permission to access this document.')
+        return redirect('school_dashboard')
+
     return render(request, 'tickets/employee_receipt.html', {'ticket': ticket})
+
+def school_print_ticket(request, ticket_id):
+    if not request.session.get('is_school_authenticated'):
+        return redirect('school_login')
+    
+    school_name = request.session.get('school_name')
+    ticket = get_object_or_404(Ticket, id=ticket_id, school_name=school_name)
+    return render(request, 'tickets/school_print_ticket.html', {'ticket': ticket})
 
 @login_required
 def employee_ticket_review(request, ticket_id):
@@ -539,7 +600,87 @@ def resolve_assignment(request, ticket_id):
 def unresolve_assignment(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
+        reason = request.POST.get('reason', '').strip()
+        
+        if reason:
+            timestamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+            reason_text = f"\n[{timestamp}] Unresolved Reason: {reason}"
+            if ticket.admin_notes:
+                ticket.admin_notes += reason_text
+            else:
+                ticket.admin_notes = reason_text.strip()
+                
         ticket.status = 'UNRESOLVED'
         ticket._current_user = request.user
         ticket.save()
     return redirect('my_tickets')
+
+@login_required
+def submit_for_review(request, ticket_id):
+    if request.method == 'POST':
+        ticket = get_object_or_404(Ticket, id=ticket_id)
+        resolution_notes = request.POST.get('resolution_notes', '').strip()
+        resolution_attachment = request.FILES.get('resolution_attachment')
+        
+        ticket.resolution_notes = resolution_notes
+        if resolution_attachment:
+            ticket.resolution_attachment = resolution_attachment
+            
+        ticket.status = 'UNDER_REVIEW'
+        ticket._current_user = request.user
+        ticket.save()
+        messages.success(request, f'Ticket {ticket.ticket_number} submitted for QA review.')
+    return redirect('my_tickets')
+
+# ==========================================
+# SCHOOLS MANAGEMENT & DIRECTORY
+# ==========================================
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def schools_management(request):
+    schools = School.objects.all().order_by('name')
+    pending_requests = PasswordResetRequest.objects.filter(status='PENDING').order_by('-request_date')
+    
+    context = {
+        'schools': schools,
+        'pending_requests': pending_requests,
+    }
+    return render(request, 'tickets/schools_management.html', context)
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def reset_school_password(request, request_id):
+    if request.method == 'POST':
+        reset_request = get_object_or_404(PasswordResetRequest, id=request_id)
+        new_password = request.POST.get('new_password')
+        
+        if new_password:
+            school = reset_request.school
+            school.set_password(new_password)
+            school.save()
+            
+            reset_request.status = 'RESOLVED'
+            reset_request.save()
+            
+            messages.success(request, f"Password successfully updated for {school.name}.")
+        else:
+            messages.error(request, "New password cannot be empty.")
+            
+    return redirect('schools_management')
+
+def request_password_reset(request):
+    if request.method == 'POST':
+        school_id = request.POST.get('school_id')
+        school = School.objects.filter(school_id=school_id).first()
+        
+        if school:
+            # Check if there is already a pending request
+            existing_request = PasswordResetRequest.objects.filter(school=school, status='PENDING').first()
+            if not existing_request:
+                PasswordResetRequest.objects.create(school=school, status='PENDING')
+            
+            # Since this is an AJAX fetch, we return JSON
+            return JsonResponse({'success': True, 'message': 'Reset request sent to Division ICT Admin.'})
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid School ID.'})
+            
+    return JsonResponse({'success': False, 'message': 'Invalid method.'})
