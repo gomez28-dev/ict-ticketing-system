@@ -61,19 +61,63 @@ class School(models.Model):
         return f"{self.name} ({self.school_id})"
 
 
-class PasswordResetRequest(models.Model):
-    STATUS_CHOICES = (
-        ('PENDING', 'Pending'),
-        ('RESOLVED', 'Resolved'),
-        ('DENIED', 'Denied')
-    )
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='password_requests')
-    request_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-    notes = models.TextField(blank=True, null=True)
+
+class PasswordResetOTP(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='otp_codes')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            from datetime import timedelta
+            self.expires_at = timezone.now() + timedelta(minutes=15)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    @property
+    def is_valid(self):
+        return not self.is_used and not self.is_expired
+
+    @staticmethod
+    def generate_code():
+        import random
+        return f"{random.randint(100000, 999999)}"
 
     def __str__(self):
-        return f"Reset Request for {self.school.name} ({self.status})"
+        status = "Valid" if self.is_valid else ("Used" if self.is_used else "Expired")
+        return f"OTP for {self.school.name}: {self.code} [{status}]"
+
+
+class SchoolAccountRequest(models.Model):
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending Review'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+    )
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='account_requests')
+    ict_name = models.CharField(max_length=200, help_text="Full name of the ICT Coordinator")
+    email = models.EmailField()
+    contact_number = models.CharField(max_length=20)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    domain_verified = models.BooleanField(default=False, help_text="Auto-flagged if email ends with @deped.gov.ph")
+    request_date = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # Auto-flag domain verification for official DepEd emails
+        if self.email and self.email.strip().lower().endswith('@deped.gov.ph'):
+            self.domain_verified = True
+        else:
+            self.domain_verified = False
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        verified = "✓ Verified" if self.domain_verified else "✗ Unverified"
+        return f"Access Request: {self.school.name} ({self.status}) [{verified}]"
 
 
 class Ticket(models.Model):

@@ -198,12 +198,15 @@
             </div>
             <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white">Confirm Resolution</h3>
             <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                <p>Are you sure you want to formally resolve this ticket? Ensure you have reviewed the evidence.</p>
+                <p>Ensure you have reviewed the evidence. You can also provide final feedback to the school below.</p>
             </div>
-            <form method="POST" action="{% url 'resolve_assignment' ticket.id %}" class="mt-6 flex items-center justify-center gap-3">
+            <form method="POST" action="{% url 'resolve_assignment' ticket.id %}" class="mt-4">
                 {% csrf_token %}
-                <button type="button" onclick="document.getElementById('modal-resolve').classList.add('hidden')" class="px-4 py-2 w-full bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-sm font-medium rounded-md">No, cancel</button>
-                <button type="submit" class="px-4 py-2 w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md">Yes, resolve</button>
+                <textarea name="admin_feedback" rows="3" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm p-3 mb-4 text-sm focus:ring-green-500 focus:border-green-500" placeholder="Optional: Provide feedback or clarifications for the school..."></textarea>
+                <div class="flex items-center justify-center gap-3">
+                    <button type="button" onclick="document.getElementById('modal-resolve').classList.add('hidden')" class="px-4 py-2 w-full bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-sm font-medium rounded-md">No, cancel</button>
+                    <button type="submit" class="px-4 py-2 w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md">Yes, resolve</button>
+                </div>
             </form>
         </div>
     </div>

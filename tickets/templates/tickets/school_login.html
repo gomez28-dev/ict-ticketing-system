@@ -43,107 +43,13 @@
             <button type="submit" class="btn-submit">Access Submission Form</button>
 
             <div style="text-align: center; margin-top: 15px;">
-                <button type="button" onclick="toggleResetForm()" style="background: none; border: none; color: #3b82f6; text-decoration: underline; cursor: pointer; font-size: 14px;">Forgot Password / Request Reset</button>
+                <a href="{% url 'forgot_password' %}" style="color: #3b82f6; text-decoration: underline; font-size: 14px;">Forgot Password?</a>
             </div>
-        </form>
-
-        <form id="reset_form" style="display: none;" onsubmit="handleResetRequest(event)">
-            <p style="text-align: center; color: #4b5563; font-size: 14px; margin-bottom: 20px;">Enter your School ID to notify the Division ICT Admin that you need a password reset.</p>
-            
-            <div id="reset_alert" class="alert" style="display: none;"></div>
-
-            <div class="form-group">
-                <label for="reset_school_id">School ID:</label>
-                <input type="text" id="reset_school_id" class="form-control" placeholder="Enter your official School ID" required>
-            </div>
-
-            <button type="submit" class="btn-submit" style="background-color: #6366f1;">Send Reset Request</button>
-            
-            <div style="text-align: center; margin-top: 15px;">
-                <button type="button" onclick="toggleResetForm()" style="background: none; border: none; color: #6b7280; text-decoration: underline; cursor: pointer; font-size: 14px;">Back to Login</button>
+            <div style="text-align: center; margin-top: 8px;">
+                <a href="{% url 'request_access' %}" style="color: #6b7280; font-size: 13px; text-decoration: none;">Don't have an account? <span style="color: #3b82f6; text-decoration: underline;">Request Access</span></a>
             </div>
         </form>
         </div>
-
-        <script>
-            function toggleResetForm() {
-                const loginForm = document.getElementById('login_form');
-                const resetForm = document.getElementById('reset_form');
-                const title = document.querySelector('h2');
-                const alertBox = document.getElementById('reset_alert');
-                
-                alertBox.style.display = 'none'; // reset alert state
-
-                if (loginForm.style.display === 'none') {
-                    loginForm.style.display = 'block';
-                    resetForm.style.display = 'none';
-                    title.textContent = 'School Helpdesk Portal';
-                } else {
-                    loginForm.style.display = 'none';
-                    resetForm.style.display = 'block';
-                    title.textContent = 'Request Password Reset';
-                }
-            }
-
-            function getCookie(name) {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
-                    }
-                }
-                return cookieValue;
-            }
-
-            function handleResetRequest(e) {
-                e.preventDefault();
-                const schoolId = document.getElementById('reset_school_id').value;
-                const alertBox = document.getElementById('reset_alert');
-                
-                // Clear state
-                alertBox.style.display = 'none';
-                alertBox.className = 'alert';
-                
-                const formData = new FormData();
-                formData.append('school_id', schoolId);
-                
-                fetch("{% url 'request_password_reset' %}", {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken') || '{{ csrf_token }}',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    alertBox.style.display = 'block';
-                    alertBox.textContent = data.message;
-                    if (data.success) {
-                        alertBox.style.backgroundColor = '#d1fae5';
-                        alertBox.style.color = '#065f46';
-                        alertBox.style.border = '1px solid #a7f3d0';
-                        document.getElementById('reset_school_id').value = '';
-                    } else {
-                        alertBox.style.backgroundColor = '#fee2e2';
-                        alertBox.style.color = '#991b1b';
-                        alertBox.style.border = '1px solid #fecaca';
-                    }
-                })
-                .catch(err => {
-                    alertBox.style.display = 'block';
-                    alertBox.textContent = 'An error occurred. Please try again.';
-                    alertBox.style.backgroundColor = '#fee2e2';
-                    alertBox.style.color = '#991b1b';
-                    alertBox.style.border = '1px solid #fecaca';
-                });
-            }
-        </script>
     </div>
 
     <footer style="width: 100%; background-color: #1e3a8a; color: #dbeafe; padding: 24px 0; border-top: 4px solid #eab308; box-sizing: border-box; margin-top: auto;">

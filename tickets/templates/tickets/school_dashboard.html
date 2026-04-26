@@ -83,7 +83,7 @@
         <!-- Tab 1: My Request -->
         <div id="content-tickets" class="tab-content active px-4 sm:px-0">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Ticket History</h2>
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Request History</h2>
                 <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-medium transition-colors">
                     + Request Support
                 </button>
@@ -392,9 +392,34 @@
 
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" onclick="closeModal()" class="bg-white dark:bg-gray-700 border dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 font-medium transition-colors">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Submit Ticket</button>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Submit Request</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Success Validation Modal -->
+    <div id="successModal" class="modal fixed inset-0 z-[60] items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm {% if submitted_ticket %}active{% endif %}">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden transition-colors duration-200">
+            <div class="p-6 text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+                    <svg class="h-10 w-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Success Validation</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">Your request form has been successfully submitted. Your Request ID is <span class="font-bold text-blue-600 dark:text-blue-400">#{{ submitted_ticket.ticket_number }}</span>.</p>
+                
+                <div class="flex flex-col gap-3">
+                    <button onclick="printTicket('{{ submitted_ticket.ticket_number }}')" class="w-full bg-[#1e3a8a] text-white px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-blue-800 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Print Submission Receipt
+                    </button>
+                    <button onclick="closeSuccessModal()" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -414,6 +439,15 @@
 
         function closeModal() {
             document.getElementById('ticketModal').classList.remove('active');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.remove('active');
+            // Remove the query parameters from URL without reloading
+            const url = new URL(window.location);
+            url.searchParams.delete('submitted');
+            url.searchParams.delete('ticket_id');
+            window.history.replaceState({}, '', url);
         }
 
         // Print Ticket Logic

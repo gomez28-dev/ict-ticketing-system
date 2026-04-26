@@ -97,14 +97,16 @@
             {% endif %}
             
             {% if assigned_employees and assigned_employees != 'None' and assigned_employees != 'Unassigned' %}
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
-                <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Employee Assigned</p>
-                <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ assigned_employees }}</div>
-            </div>
+                {% if ticket.status == 'ACCEPTED' or ticket.status == 'SCHEDULED' or ticket.status == 'RESOLVED' or ticket.status == 'COMPLETED' %}
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Employee Assigned</p>
+                    <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ assigned_employees }}</div>
+                </div>
+                {% endif %}
             {% endif %}
 
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200 flex-grow">
-                <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Admin Notes / Updates</p>
+                <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3">Feedback from Division</p>
                 {% if general_notes %}
                     <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-700/50 p-4 rounded border border-gray-100 dark:border-gray-600 whitespace-pre-line">{{ general_notes }}</div>
                 {% else %}

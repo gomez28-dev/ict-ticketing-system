@@ -1,9 +1,10 @@
 from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type
 from django.utils import timezone
-from .models import Ticket, School, TicketAuditLog, PasswordResetRequest
+from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP
 from .forms import PublicTicketForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.urls import reverse
 from django.db.models import Q
 import json
 from django.contrib.auth import authenticate, login, logout
@@ -155,7 +156,7 @@ def school_dashboard(request):
                 )
                 ticket.predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
                 ticket.save()
-                messages.success(request, f"Ticket {ticket.ticket_number} has been created successfully.")
+                return redirect(f"{reverse('school_dashboard')}?submitted=true&ticket_id={ticket.id}")
             except Exception as e:
                 print(f"Submission Error: {e}")
                 messages.error(request, "Failed to create ticket. Please try again.")
@@ -168,10 +169,20 @@ def school_dashboard(request):
     ticket_ids = tickets.values_list('id', flat=True)
     notifications = TicketAuditLog.objects.filter(ticket_id__in=ticket_ids).order_by('-timestamp')[:20]
 
+    submitted_ticket = None
+    if request.GET.get('submitted') == 'true':
+        submitted_ticket_id = request.GET.get('ticket_id')
+        if submitted_ticket_id:
+            try:
+                submitted_ticket = Ticket.objects.get(id=submitted_ticket_id, school_name=school.name)
+            except Ticket.DoesNotExist:
+                pass
+
     context = {
         'school': school,
         'tickets': tickets,
         'notifications': notifications,
+        'submitted_ticket': submitted_ticket,
     }
     return render(request, 'tickets/school_dashboard.html', context)
 
@@ -281,13 +292,20 @@ def ticket_triage_view(request, ticket_id):
     if not filtered_staff:
         filtered_staff = all_staff
 
+    # Extract feedback lines (exclude internal "Assigned to:" line)
+    existing_feedback = ""
+    if ticket.admin_notes:
+        feedback_lines = [line for line in ticket.admin_notes.split('\n') if not line.startswith('Assigned to:')]
+        existing_feedback = '\n'.join(feedback_lines).strip()
+
     context = {
         'ticket': ticket,
         'predicted_hours': predicted_hours,
         'staff_rec': staff_rec,
         'risk_assessment': risk_assessment,
         'staff_data': filtered_staff,
-        'recent_school_tickets': recent_school_tickets
+        'recent_school_tickets': recent_school_tickets,
+        'existing_feedback': existing_feedback,
     }
     return render(request, 'tickets/ticket_creation.html', context)
 
@@ -323,8 +341,13 @@ def approve_request(request, ticket_id):
             unique_staff = list(set(assigned_staff_list))
             assigned_staff_str = ", ".join(unique_staff)
 
-        existing_notes = ticket.admin_notes or ""
-        ticket.admin_notes = f"Assigned to: {assigned_staff_str}\n{existing_notes}"
+        feedback = request.POST.get('admin_feedback', '').strip()
+        
+        # Structure admin_notes with specific headers to facilitate parsing
+        ticket.admin_notes = f"Assigned to: {assigned_staff_str}"
+        if feedback:
+            ticket.admin_notes += f"\n{feedback}"
+            
         ticket._current_user = request.user
         ticket.save()
     return redirect('dashboard')
@@ -591,6 +614,21 @@ def decline_assignment(request, ticket_id):
 def resolve_assignment(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
+        feedback = request.POST.get('admin_feedback', '').strip()
+        if feedback:
+            # Preserve the assignment line if it exists
+            assigned_line = ""
+            if ticket.admin_notes:
+                for line in ticket.admin_notes.split('\n'):
+                    if line.startswith('Assigned to:'):
+                        assigned_line = line
+                        break
+            
+            if assigned_line:
+                ticket.admin_notes = f"{assigned_line}\n{feedback}"
+            else:
+                ticket.admin_notes = feedback
+
         ticket.status = 'RESOLVED'
         ticket._current_user = request.user
         ticket.save()
@@ -639,48 +677,259 @@ def submit_for_review(request, ticket_id):
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def schools_management(request):
     schools = School.objects.all().order_by('name')
-    pending_requests = PasswordResetRequest.objects.filter(status='PENDING').order_by('-request_date')
-    
+    account_requests = SchoolAccountRequest.objects.filter(status='PENDING').order_by('-request_date')
+
     context = {
         'schools': schools,
-        'pending_requests': pending_requests,
+        'account_requests': account_requests,
     }
     return render(request, 'tickets/schools_management.html', context)
 
+
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
-def reset_school_password(request, request_id):
+def admin_force_reset_password(request, school_id):
+    """Emergency fallback — Admin manually resets a school's password without OTP."""
     if request.method == 'POST':
-        reset_request = get_object_or_404(PasswordResetRequest, id=request_id)
-        new_password = request.POST.get('new_password')
-        
-        if new_password:
-            school = reset_request.school
-            school.set_password(new_password)
-            school.save()
-            
-            reset_request.status = 'RESOLVED'
-            reset_request.save()
-            
-            messages.success(request, f"Password successfully updated for {school.name}.")
-        else:
-            messages.error(request, "New password cannot be empty.")
-            
+        school = get_object_or_404(School, id=school_id)
+        new_password = request.POST.get('new_password', '').strip()
+
+        if not new_password or len(new_password) < 8:
+            messages.error(request, "Password must be at least 8 characters long.")
+            return redirect('schools_management')
+
+        school.set_password(new_password)
+        school.save()
+
+        messages.success(request, f"Password for '{school.name}' has been force-reset successfully.")
     return redirect('schools_management')
 
-def request_password_reset(request):
+def forgot_password(request):
+    """Step 1: User submits email → OTP is generated and emailed."""
     if request.method == 'POST':
-        school_id = request.POST.get('school_id')
-        school = School.objects.filter(school_id=school_id).first()
-        
+        email = request.POST.get('email', '').strip().lower()
+
+        if not email:
+            return render(request, 'tickets/forgot_password.html', {
+                'error': 'Please enter your email address.',
+            })
+
+        # Look up school by ICT email — use generic message to prevent info disclosure
+        school = School.objects.filter(ict_email__iexact=email).first()
+
         if school:
-            # Check if there is already a pending request
-            existing_request = PasswordResetRequest.objects.filter(school=school, status='PENDING').first()
-            if not existing_request:
-                PasswordResetRequest.objects.create(school=school, status='PENDING')
-            
-            # Since this is an AJAX fetch, we return JSON
-            return JsonResponse({'success': True, 'message': 'Reset request sent to Division ICT Admin.'})
-        else:
-            return JsonResponse({'success': False, 'message': 'Invalid School ID.'})
-            
-    return JsonResponse({'success': False, 'message': 'Invalid method.'})
+            # Invalidate any previous unused OTPs for this school
+            PasswordResetOTP.objects.filter(school=school, is_used=False).update(is_used=True)
+
+            # Generate and save new OTP
+            code = PasswordResetOTP.generate_code()
+            otp = PasswordResetOTP(school=school, code=code)
+            otp.save()
+
+            # Send email with OTP
+            try:
+                from django.core.mail import send_mail
+                send_mail(
+                    subject='ICT Helpdesk — Password Reset Code',
+                    message=(
+                        f'Your password reset verification code is: {code}\n\n'
+                        f'This code will expire in 15 minutes.\n\n'
+                        f'If you did not request this, please ignore this email.\n\n'
+                        f'— DepEd Division of Valenzuela, ICT Unit'
+                    ),
+                    from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                print(f"[OTP Email Error] {e}")
+                # Still proceed — in dev/demo the OTP is in the DB for testing
+
+        # Always show the same success message regardless of whether email was found
+        # This prevents attackers from enumerating which emails are registered
+        request.session['otp_email'] = email
+        return render(request, 'tickets/forgot_password.html', {
+            'email_sent': True,
+            'email': email,
+        })
+
+    return render(request, 'tickets/forgot_password.html')
+
+
+def verify_otp(request):
+    """Step 2: User enters the 6-digit code from their email."""
+    email = request.session.get('otp_email')
+    if not email:
+        return redirect('forgot_password')
+
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+
+        if not code or len(code) != 6:
+            return render(request, 'tickets/verify_otp.html', {
+                'error': 'Please enter the 6-digit code.',
+                'email': email,
+            })
+
+        # Find the school and matching OTP
+        school = School.objects.filter(ict_email__iexact=email).first()
+        if school:
+            otp = PasswordResetOTP.objects.filter(
+                school=school, code=code, is_used=False
+            ).order_by('-created_at').first()
+
+            if otp and otp.is_valid:
+                # Mark OTP as used and store verified school in session
+                otp.is_used = True
+                otp.save()
+                request.session['otp_verified_school_id'] = school.id
+                return redirect('reset_password_confirm')
+            elif otp and otp.is_expired:
+                return render(request, 'tickets/verify_otp.html', {
+                    'error': 'This code has expired. Please request a new one.',
+                    'email': email,
+                })
+
+        # Generic error for invalid code
+        return render(request, 'tickets/verify_otp.html', {
+            'error': 'Invalid verification code. Please try again.',
+            'email': email,
+        })
+
+    return render(request, 'tickets/verify_otp.html', {'email': email})
+
+
+def reset_password_confirm(request):
+    """Step 3: User sets a new password after OTP verification."""
+    school_id = request.session.get('otp_verified_school_id')
+    if not school_id:
+        return redirect('forgot_password')
+
+    school = get_object_or_404(School, id=school_id)
+
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if not new_password or len(new_password) < 8:
+            return render(request, 'tickets/reset_password_confirm.html', {
+                'error': 'Password must be at least 8 characters long.',
+                'school_name': school.name,
+            })
+
+        if new_password != confirm_password:
+            return render(request, 'tickets/reset_password_confirm.html', {
+                'error': 'Passwords do not match.',
+                'school_name': school.name,
+            })
+
+        # Set the new password
+        school.set_password(new_password)
+        school.save()
+
+        # Clean up session
+        del request.session['otp_verified_school_id']
+        if 'otp_email' in request.session:
+            del request.session['otp_email']
+
+        return render(request, 'tickets/reset_password_confirm.html', {
+            'success': True,
+        })
+
+    return render(request, 'tickets/reset_password_confirm.html', {
+        'school_name': school.name,
+    })
+
+
+# ==========================================
+# VETTED ACCOUNT REQUEST SYSTEM
+# ==========================================
+
+def request_access(request):
+    """Public view — schools can request access to the ticketing system."""
+    schools = School.objects.all().order_by('name')
+
+    if request.method == 'POST':
+        school_id = request.POST.get('school', '').strip()
+        ict_name = request.POST.get('ict_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        contact_number = request.POST.get('contact_number', '').strip()
+
+        # Validate required fields
+        if not all([school_id, ict_name, email, contact_number]):
+            return render(request, 'tickets/request_access.html', {
+                'error': 'All required fields must be filled out.',
+                'schools': schools,
+                'form_data': request.POST,
+            })
+
+        # Validate selected school exists
+        try:
+            school = School.objects.get(id=school_id)
+        except School.DoesNotExist:
+            return render(request, 'tickets/request_access.html', {
+                'error': 'Invalid school selection. Please select a valid school.',
+                'schools': schools,
+                'form_data': request.POST,
+            })
+
+        # Check for duplicate pending request
+        if SchoolAccountRequest.objects.filter(school=school, status='PENDING').exists():
+            return render(request, 'tickets/request_access.html', {
+                'error': f'An access request for "{school.name}" is already pending review. Please wait for the ICT Admin to process it.',
+                'schools': schools,
+                'form_data': request.POST,
+            })
+
+        # Create the request — domain_verified is auto-set in model.save()
+        SchoolAccountRequest.objects.create(
+            school=school,
+            ict_name=ict_name,
+            email=email,
+            contact_number=contact_number,
+        )
+
+        return render(request, 'tickets/request_access.html', {
+            'success': True,
+            'school_name': school.name,
+            'is_deped_email': email.strip().lower().endswith('@deped.gov.ph'),
+        })
+
+    return render(request, 'tickets/request_access.html', {'schools': schools})
+
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def approve_account_request(request, request_id):
+    """Admin approves — updates the linked School record with ICT details and sets default password."""
+    if request.method == 'POST':
+        account_request = get_object_or_404(SchoolAccountRequest, id=request_id, status='PENDING')
+        school = account_request.school
+
+        # Split ict_name into first/last for the School record
+        name_parts = account_request.ict_name.strip().split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+        # Update the existing School record with provided ICT details
+        school.ict_first_name = first_name
+        school.ict_last_name = last_name
+        school.ict_contact_number = account_request.contact_number
+        school.ict_email = account_request.email
+        school.set_password('DepEd123!')
+        school.save()
+
+        # Remove the request
+        account_request.delete()
+
+        messages.success(request, f"Access approved for '{school.name}'. ICT personnel details updated and password set to: DepEd123!")
+    return redirect('schools_management')
+
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def reject_account_request(request, request_id):
+    """Admin rejects an access request — simply deletes it."""
+    if request.method == 'POST':
+        account_request = get_object_or_404(SchoolAccountRequest, id=request_id, status='PENDING')
+        school_name = account_request.school.name
+        account_request.delete()
+        messages.success(request, f"Access request for '{school_name}' has been rejected and removed.")
+    return redirect('schools_management')

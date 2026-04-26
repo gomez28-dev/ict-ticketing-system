@@ -127,3 +127,19 @@ AUTH_USER_MODEL = 'tickets.User'
 
 # Redirect to custom login page after logout
 LOGOUT_REDIRECT_URL = 'login'
+
+# ==========================================
+# EMAIL CONFIGURATION
+# ==========================================
+# For development: emails print to console
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# For production: uncomment below and set environment variables
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+
+DEFAULT_FROM_EMAIL = 'ICT Helpdesk <noreply@deped-valenzuela.gov.ph>'

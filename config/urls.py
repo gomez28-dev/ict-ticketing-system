@@ -12,7 +12,10 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('school-login/', views.school_login, name='school_login'),
     path('school-logout/', views.school_logout, name='school_logout'),
-    path('school-login/forgot-password/', views.request_password_reset, name='request_password_reset'),
+    path('forgot-password/', views.forgot_password, name='forgot_password'),
+    path('forgot-password/verify/', views.verify_otp, name='verify_otp'),
+    path('forgot-password/reset/', views.reset_password_confirm, name='reset_password_confirm'),
+    path('request-access/', views.request_access, name='request_access'),
     path('school-dashboard/', views.school_dashboard, name='school_dashboard'),
     path('school-dashboard/ticket/<int:ticket_id>/', views.school_ticket_detail, name='school_ticket_detail'),
     path('school-dashboard/ticket/<int:ticket_id>/print/', views.school_print_ticket, name='school_print_ticket'),
@@ -30,7 +33,9 @@ urlpatterns = [
     path('admin-dashboard/backlog/', views.backlog_view, name='backlog'),
     path('admin-dashboard/teams/', views.teams_view, name='teams'),
     path('admin-dashboard/schools/', views.schools_management, name='schools_management'),
-    path('admin-dashboard/schools/reset/<int:request_id>/', views.reset_school_password, name='reset_school_password'),
+    path('admin-dashboard/schools/force-reset/<int:school_id>/', views.admin_force_reset_password, name='admin_force_reset_password'),
+    path('admin-dashboard/schools/account/approve/<int:request_id>/', views.approve_account_request, name='approve_account_request'),
+    path('admin-dashboard/schools/account/reject/<int:request_id>/', views.reject_account_request, name='reject_account_request'),
     path('admin-dashboard/add-employee/', views.add_employee, name='add_employee'),
 
     # Employee Specific Links
