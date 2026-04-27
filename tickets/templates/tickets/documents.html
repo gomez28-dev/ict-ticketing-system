@@ -28,6 +28,7 @@
                         <th scope="col" class="px-6 py-4 font-bold">Location</th>
                         <th scope="col" class="px-6 py-4 font-bold">Support Type</th>
                         <th scope="col" class="px-6 py-4 font-bold">Date Resolved</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Resolution File</th>
                         <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
@@ -51,16 +52,30 @@
                         <td class="px-6 py-4 text-gray-500">
                             {{ ticket.actual_completion_date|date:"M d, Y"|default:ticket.updated_at|date:"M d, Y" }}
                         </td>
+                        <td class="px-6 py-4">
+                            {% if ticket.resolution_attachment %}
+                            <a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium">
+                                View File
+                            </a>
+                            {% else %}
+                            <span class="text-xs text-gray-400 dark:text-gray-500">No file</span>
+                            {% endif %}
+                        </td>
                         <td class="px-6 py-4 flex items-center justify-end gap-3">
                             {% if request.user.role == 'MEMBER' and not request.user.is_superuser %}
                             <a href="{% url 'employee_receipt' ticket.id %}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 View
                             </a>
+                            {% else %}
+                            <a href="{% url 'employee_receipt' ticket.id %}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                View
+                            </a>
                             {% endif %}
-                            <button onclick="markAsCompleted({{ ticket.id }})" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-medium text-sm flex items-center gap-1">
+                            <button onclick="markAsCompleted({{ ticket.id }})" class="whitespace-nowrap text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-medium text-sm flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                Complete
+                                Verify & Complete
                             </button>
                         </td>
                     </tr>
@@ -118,7 +133,13 @@
                                 View
                             </a>
                             {% else %}
-                            <span class="text-gray-400 dark:text-gray-500 text-sm">Archived</span>
+                            <div class="flex items-center justify-end gap-3">
+                                <a href="{% url 'employee_receipt' ticket.id %}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    View
+                                </a>
+                                <span class="text-gray-400 dark:text-gray-500 text-sm">Archived</span>
+                            </div>
                             {% endif %}
                         </td>
                     </tr>
@@ -153,6 +174,10 @@
     }
 
     function markAsCompleted(ticketId) {
+        if (!window.confirm('Are you sure you want to complete this ticket?')) {
+            return;
+        }
+
         const url = `/admin-dashboard/documents/complete/${ticketId}/`;
         const csrftoken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]').value;
 

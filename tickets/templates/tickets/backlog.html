@@ -1,116 +1,59 @@
 {% extends 'tickets/base_admin.html' %}
 
+{% block title %}Audit Trail - Helpdesk{% endblock %}
+
 {% block content %}
-<div class="mb-6 flex justify-between items-end">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Audit Trail & History</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400">A complete log of resolved tickets and recent system activities.</p>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[#0078d4] dark:text-blue-400 flex items-center justify-center text-xl">✅</div>
-        <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ history_tickets.count }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Total Resolved</div>
-        </div>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-500 dark:text-green-400 flex items-center justify-center text-xl">⚡</div>
-        <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ activities_today }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Activities Today</div>
-        </div>
-    </div>
-    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center justify-center text-xl">🔥</div>
-        <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ urgent_tasks }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Urgent Tasks</div>
-        </div>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-
-    <div class="flex flex-col">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2">✅ Resolved Tickets Log</h2>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 transition-colors">
-            {% if history_tickets %}
-                <div class="overflow-y-auto max-h-[600px]">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 sticky top-0">
-                                <th class="p-4 font-medium">Ticket / Closed On</th>
-                                <th class="p-4 font-medium">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-                            {% for ticket in history_tickets %}
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <td class="p-4">
-                                    <div class="font-bold text-gray-800 dark:text-gray-200">{{ ticket.ticket_number|default:"TKT-NEW" }}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-500">{{ ticket.updated_at|date:'M d, Y' }}</div>
-                                </td>
-                                <td class="p-4">
-                                    <div class="font-medium text-gray-800 dark:text-gray-200">{{ ticket.title }}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 truncate w-48">{{ ticket.school_name|default:"-" }}</div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="py-12 text-center text-gray-400 dark:text-gray-500">
-                    <p class="text-sm font-medium">No resolved tickets yet.</p>
-                </div>
-            {% endif %}
-        </div>
+<div class="max-w-7xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Audit Trail</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">History of ticket changes across the system.</p>
     </div>
 
-    <div class="flex flex-col">
-        <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">⚡ Recent System Activities</h2>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 flex-1 transition-colors">
-            <ol class="relative border-l-2 border-gray-200 dark:border-gray-700 ml-3 space-y-8">
-                {% for log in audit_logs %}
-                <li class="ml-8">
-                    {% if log.action == 'Status Changed' %}
-                    <span class="absolute flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full -left-4 ring-8 ring-white dark:ring-gray-800 dark:bg-blue-900">
-                        <svg class="w-4 h-4 text-blue-800 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    </span>
-                    {% elif log.action == 'Priority Changed' %}
-                    <span class="absolute flex items-center justify-center w-8 h-8 bg-yellow-100 rounded-full -left-4 ring-8 ring-white dark:ring-gray-800 dark:bg-yellow-900">
-                        <svg class="w-4 h-4 text-yellow-800 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    </span>
-                    {% elif log.action == 'Assignment Changed' %}
-                    <span class="absolute flex items-center justify-center w-8 h-8 bg-purple-100 rounded-full -left-4 ring-8 ring-white dark:ring-gray-800 dark:bg-purple-900">
-                        <svg class="w-4 h-4 text-purple-800 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    </span>
-                    {% else %}
-                    <span class="absolute flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full -left-4 ring-8 ring-white dark:ring-gray-800 dark:bg-gray-900">
-                        <svg class="w-4 h-4 text-gray-800 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-                    </span>
-                    {% endif %}
-
-                    <h3 class="flex items-center mb-1 text-sm font-bold text-gray-900 dark:text-white">
-                        Ticket {{ log.ticket.ticket_number }} - {{ log.action }}
-                        {% if forloop.first %}
-                        <span class="bg-blue-100 text-blue-800 text-[10px] font-bold mr-2 px-2 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 ml-3">Latest</span>
-                        {% endif %}
-                    </h3>
-                    <time class="block mb-2 text-xs font-normal leading-none text-gray-400 dark:text-gray-500">{{ log.timestamp|timesince }} ago</time>
-                    <p class="mb-4 text-sm font-normal text-gray-600 dark:text-gray-400">
-                        <span class="font-medium text-gray-800 dark:text-gray-200">{{ log.changed_by.get_full_name|default:"System" }}</span> 
-                        changed it from <span class="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">{{ log.old_value|default:"None" }}</span> to <span class="bg-gray-200 dark:bg-gray-700 font-bold px-1 py-0.5 rounded">{{ log.new_value }}</span>.
-                    </p>
-                </li>
-                {% empty %}
-                <li class="ml-8 text-sm text-gray-500 dark:text-gray-400">No recent activities found.</li>
-                {% endfor %}
-            </ol>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {% if audit_logs %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 font-bold">Ticket Number</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Action</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Changed By</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Old Value</th>
+                        <th scope="col" class="px-6 py-4 font-bold">New Value</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for log in audit_logs %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                            {{ log.ticket.ticket_number|default:"-" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {{ log.action|default:"-" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {{ log.changed_by.get_full_name|default:log.changed_by.username|default:"System" }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ log.old_value|default:"-" }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ log.new_value|default:"-" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {{ log.timestamp|date:"M d, Y g:i A" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {% else %}
+        <div class="p-10 text-center">
+            <p class="text-sm text-gray-500 dark:text-gray-400">No audit logs available.</p>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

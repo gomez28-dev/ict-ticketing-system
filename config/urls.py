@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin-dashboard/', views.dashboard, name='dashboard'),
     path('admin-dashboard/analytics/', views.analytics_dashboard, name='analytics'),
     path('admin-dashboard/requests/', views.requests_view, name='requests'),
+    path('admin-dashboard/requests/reviewed/<int:ticket_id>/', views.reviewed_ticket_readonly, name='reviewed_ticket_readonly'),
 
     # --- DOCUMENTS ACTIONS ---
     path('admin-dashboard/documents/', views.documents_view, name='documents'),
@@ -34,9 +35,11 @@ urlpatterns = [
     path('admin-dashboard/teams/', views.teams_view, name='teams'),
     path('admin-dashboard/schools/', views.schools_management, name='schools_management'),
     path('admin-dashboard/schools/force-reset/<int:school_id>/', views.admin_force_reset_password, name='admin_force_reset_password'),
+    path('admin-dashboard/schools/delete/<int:school_id>/', views.admin_delete_school, name='admin_delete_school'),
     path('admin-dashboard/schools/account/approve/<int:request_id>/', views.approve_account_request, name='approve_account_request'),
     path('admin-dashboard/schools/account/reject/<int:request_id>/', views.reject_account_request, name='reject_account_request'),
     path('admin-dashboard/add-employee/', views.add_employee, name='add_employee'),
+    path('admin-dashboard/settings/delete-account/', views.delete_user_account, name='delete_user_account'),
 
     # Employee Specific Links
     path('admin-dashboard/my-tickets/', views.my_tickets, name='my_tickets'),
@@ -59,6 +62,7 @@ urlpatterns = [
     path('admin-dashboard/search/', views.search_tickets, name='search_tickets'),
     path('admin-dashboard/settings/', views.settings_view, name='settings'),
     path('admin-dashboard/request/<int:ticket_id>/', views.ticket_triage_view, name='ticket_triage'),
+    path('school-dashboard/delete-account/', views.delete_school_account, name='delete_school_account'),
 ]
 
 if settings.DEBUG:

@@ -65,6 +65,26 @@
                 <div class="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-5 rounded-lg border border-gray-100 dark:border-gray-700 whitespace-pre-wrap leading-relaxed">{{ ticket.description }}</div>
             </div>
 
+            {% if ticket.attachment %}
+            <div class="mb-8">
+                <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Attachment</span>
+                <a href="{{ ticket.attachment.url }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-200 dark:border-blue-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    View Attached File
+                </a>
+            </div>
+            {% endif %}
+
+            {% if ticket.resolution_attachment %}
+            <div class="mb-8">
+                <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Resolution Evidence</span>
+                <a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors border border-green-200 dark:border-green-800">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    View Resolution Evidence
+                </a>
+            </div>
+            {% endif %}
+
             {% if ticket.admin_notes %}
             <div class="mb-8">
                 <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Admin Notes & Assignment</span>

@@ -44,6 +44,16 @@
                     <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Description</span>
                     <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap border border-gray-100 dark:border-gray-700 min-h-[100px]">{{ ticket.description|default:"No description provided." }}</div>
                 </div>
+
+                {% if ticket.attachment %}
+                <div class="mt-6">
+                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Attachment</span>
+                    <a href="{{ ticket.attachment.url }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-200 dark:border-blue-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        View Original Attachment
+                    </a>
+                </div>
+                {% endif %}
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">

@@ -26,6 +26,43 @@ def is_admin_or_superuser(user):
         return False
     return user.is_superuser or user.role == 'ADMIN'
 
+
+def is_email_already_associated(email, exclude_school_id=None, exclude_account_request_id=None):
+    normalized_email = (email or '').strip().lower()
+    if not normalized_email:
+        return False
+
+    if User.objects.filter(email__iexact=normalized_email).exists():
+        return True
+
+    school_query = School.objects.filter(ict_email__iexact=normalized_email)
+    if exclude_school_id:
+        school_query = school_query.exclude(id=exclude_school_id)
+    if school_query.exists():
+        return True
+
+    request_query = SchoolAccountRequest.objects.filter(email__iexact=normalized_email)
+    if exclude_account_request_id:
+        request_query = request_query.exclude(id=exclude_account_request_id)
+    return request_query.exists()
+
+
+def resolve_assignee_from_names(assigned_staff_names):
+    normalized_staff_names = [name.strip().lower() for name in assigned_staff_names if name and name.strip()]
+    if not normalized_staff_names:
+        return None
+
+    for staff_name in normalized_staff_names:
+        for user in User.objects.all():
+            full_name = f"{user.first_name} {user.last_name}".strip().lower()
+            if staff_name == full_name:
+                return user
+            if staff_name == (user.username or '').strip().lower():
+                return user
+            if staff_name == (user.email or '').strip().lower():
+                return user
+    return None
+
 @user_passes_test(is_superadmin, login_url='dashboard')
 def add_employee(request):
     error = None
@@ -39,7 +76,9 @@ def add_employee(request):
 
         username = email.split('@')[0] if email else f"{first_name.lower()}.{last_name.lower()}"
 
-        if User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
+        if is_email_already_associated(email):
+            error = "This email is already associated with an account"
+        elif User.objects.filter(username=username).exists() or User.objects.filter(email=email).exists():
             error = "An employee with this email or username already exists."
         else:
             new_user = User.objects.create_user(
@@ -133,10 +172,15 @@ def school_dashboard(request):
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'update_profile':
+            new_ict_email = request.POST.get('ict_email', '').strip()
+            if is_email_already_associated(new_ict_email, exclude_school_id=school.id):
+                messages.error(request, "This email is already associated with an account")
+                return redirect('school_dashboard')
+
             school.ict_first_name = request.POST.get('ict_first_name')
             school.ict_last_name = request.POST.get('ict_last_name')
             school.ict_contact_number = request.POST.get('ict_contact_number')
-            school.ict_email = request.POST.get('ict_email')
+            school.ict_email = new_ict_email
             school.save()
             messages.success(request, 'Profile updated successfully.')
         elif action == 'create_ticket':
@@ -236,7 +280,24 @@ def dashboard(request):
 
 def requests_view(request):
     pending_requests = Ticket.objects.filter(status='PENDING').order_by('-created_at')
-    return render(request, 'tickets/requests.html', {'pending_requests': pending_requests})
+    reviewed_requests = Ticket.objects.filter(
+        status__in=['SCHEDULED', 'IN_PROGRESS'],
+        assignee__isnull=False
+    ).order_by('-updated_at')
+    return render(request, 'tickets/requests.html', {
+        'pending_requests': pending_requests,
+        'reviewed_requests': reviewed_requests
+    })
+
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def reviewed_ticket_readonly(request, ticket_id):
+    ticket = get_object_or_404(
+        Ticket.objects.select_related('assignee'),
+        id=ticket_id,
+        status__in=['SCHEDULED', 'IN_PROGRESS']
+    )
+    return render(request, 'tickets/reviewed_ticket_readonly.html', {'ticket': ticket})
 
 def delete_request(request, ticket_id):
     if request.method == 'POST':
@@ -258,6 +319,8 @@ def documents_view(request):
 def complete_ticket_ajax(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
+        if ticket.status != 'RESOLVED':
+            return JsonResponse({'success': False, 'message': 'Only resolved tickets can be completed.'}, status=400)
         ticket.status = 'COMPLETED'
         ticket._current_user = request.user
         ticket.save()
@@ -337,9 +400,11 @@ def approve_request(request, ticket_id):
         assigned_staff_list = request.POST.getlist('assigned_staff')
         if not assigned_staff_list:
             assigned_staff_str = 'Unassigned'
+            ticket.assignee = None
         else:
             unique_staff = list(set(assigned_staff_list))
             assigned_staff_str = ", ".join(unique_staff)
+            ticket.assignee = resolve_assignee_from_names(unique_staff) or request.user
 
         feedback = request.POST.get('admin_feedback', '').strip()
         
@@ -441,27 +506,9 @@ def teams_view(request):
 # ==========================================
 
 def backlog_view(request):
-    backlog_tickets = Ticket.objects.filter(status='BACKLOG').order_by('created_at')
-    history_tickets = Ticket.objects.filter(status='RESOLVED').order_by('-updated_at')
-    audit_logs = TicketAuditLog.objects.all().order_by('-timestamp')[:50]
-
-    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    activities_today = TicketAuditLog.objects.filter(timestamp__gte=today_start).count()
-    urgent_tasks = Ticket.objects.filter(priority__in=['HIGH', 'URGENT']).exclude(status__in=['RESOLVED', 'COMPLETED']).count()
-
-    oldest_age = "0d"
-    if backlog_tickets.exists():
-        oldest_age = f"{(timezone.now() - backlog_tickets.first().created_at).days}d"
-
+    audit_logs = TicketAuditLog.objects.all().order_by('-timestamp')
     context = {
-        'backlog_tickets': backlog_tickets,
-        'history_tickets': history_tickets,
-        'in_backlog': backlog_tickets.count(),
-        'high_urgent': backlog_tickets.filter(priority__in=['HIGH', 'URGENT']).count(),
-        'oldest_age': oldest_age,
         'audit_logs': audit_logs,
-        'activities_today': activities_today,
-        'urgent_tasks': urgent_tasks,
     }
     return render(request, 'tickets/backlog.html', context)
 
@@ -532,11 +579,12 @@ def my_tickets(request):
 
 def employee_receipt_view(request, ticket_id):
     is_employee = request.user.is_authenticated and getattr(request.user, 'role', '') == 'MEMBER' and not request.user.is_superuser
+    is_admin = request.user.is_authenticated and (getattr(request.user, 'role', '') == 'ADMIN' or request.user.is_superuser)
     is_school = request.session.get('is_school_authenticated', False)
     
-    if not (is_employee or is_school):
+    if not (is_employee or is_school or is_admin):
         from django.contrib import messages
-        messages.error(request, 'Only assigned employees or the respective school can print document forms.')
+        messages.error(request, 'You do not have permission to access this document.')
         return redirect('dashboard' if request.user.is_authenticated else 'school_dashboard')
         
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -872,6 +920,13 @@ def request_access(request):
                 'form_data': request.POST,
             })
 
+        if is_email_already_associated(email):
+            return render(request, 'tickets/request_access.html', {
+                'error': 'This email is already associated with an account',
+                'schools': schools,
+                'form_data': request.POST,
+            })
+
         # Check for duplicate pending request
         if SchoolAccountRequest.objects.filter(school=school, status='PENDING').exists():
             return render(request, 'tickets/request_access.html', {
@@ -904,6 +959,14 @@ def approve_account_request(request, request_id):
         account_request = get_object_or_404(SchoolAccountRequest, id=request_id, status='PENDING')
         school = account_request.school
 
+        if is_email_already_associated(
+            account_request.email,
+            exclude_school_id=school.id,
+            exclude_account_request_id=account_request.id
+        ):
+            messages.error(request, "This email is already associated with an account")
+            return redirect('schools_management')
+
         # Split ict_name into first/last for the School record
         name_parts = account_request.ict_name.strip().split(' ', 1)
         first_name = name_parts[0]
@@ -932,4 +995,40 @@ def reject_account_request(request, request_id):
         school_name = account_request.school.name
         account_request.delete()
         messages.success(request, f"Access request for '{school_name}' has been rejected and removed.")
+    return redirect('schools_management')
+
+
+@login_required
+def delete_user_account(request):
+    if request.method != 'POST':
+        return redirect('settings')
+
+    current_user = request.user
+    logout(request)
+    current_user.delete()
+    return redirect('login')
+
+
+def delete_school_account(request):
+    if request.method != 'POST':
+        return redirect('school_dashboard')
+    if not request.session.get('is_school_authenticated'):
+        return redirect('school_login')
+
+    school_name = request.session.get('school_name')
+    school = get_object_or_404(School, name=school_name)
+    request.session.flush()
+    school.delete()
+    return redirect('school_login')
+
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def admin_delete_school(request, school_id):
+    if request.method != 'POST':
+        return redirect('schools_management')
+
+    school = get_object_or_404(School, id=school_id)
+    school_name = school.name
+    school.delete()
+    messages.success(request, f"School account '{school_name}' has been deleted.")
     return redirect('schools_management')

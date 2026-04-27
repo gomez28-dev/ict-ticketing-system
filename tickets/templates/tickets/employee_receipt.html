@@ -47,10 +47,20 @@
             Go Back
         </a>
         
-        <button onclick="window.print()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md transition-colors flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-            Print PDF Evidence
-        </button>
+        <div class="flex items-center gap-3">
+            {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
+                {% if ticket.status == 'RESOLVED' %}
+                <button onclick="markAsCompleted({{ ticket.id }})" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg shadow-md transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Complete Ticket
+                </button>
+                {% endif %}
+            {% endif %}
+            <button onclick="window.print()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print PDF Evidence
+            </button>
+        </div>
     </div>
 
     <div id="printable-receipt" class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -120,6 +130,20 @@
 
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Problem Description</p>
                 <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">{{ ticket.description }}</div>
+
+                {% if ticket.attachment %}
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">User Attachment</p>
+                <a href="{{ ticket.attachment.url }}" target="_blank" class="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-semibold">
+                    View/Download Request Attachment
+                </a>
+                {% endif %}
+
+                {% if ticket.resolution_attachment %}
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">Resolution Attachment</p>
+                <a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="inline-flex items-center gap-2 text-sm text-green-600 hover:text-green-800 font-semibold">
+                    View/Download Resolution Attachment
+                </a>
+                {% endif %}
             </div>
 
             <div class="pt-16 grid grid-cols-2 gap-12 text-center pb-6">
@@ -149,4 +173,50 @@
         </div>
     </div>
 </div>
+
+{% if request.user.is_superuser or request.user.role == 'ADMIN' %}
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function markAsCompleted(ticketId) {
+        const url = `/admin-dashboard/documents/complete/${ticketId}/`;
+        const csrftoken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Ticket marked as Completed!');
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An unexpected error occurred.');
+        });
+    }
+</script>
+{% endif %}
 {% endblock %}

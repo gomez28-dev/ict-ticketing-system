@@ -28,5 +28,22 @@
             Your theme preference is saved in your browser's local storage. Even if you log out or refresh the page, your preference will be remembered!
         </p>
     </div>
+
+    <div class="bg-red-50 dark:bg-red-900/20 p-6 rounded-xl border border-red-100 dark:border-red-800">
+        <h3 class="text-lg font-bold text-red-800 dark:text-red-300 mb-2">Delete Account</h3>
+        <p class="text-sm text-red-700 dark:text-red-400 mb-4">This permanently deletes your account and cannot be undone.</p>
+        <form method="POST" action="{% url 'delete_user_account' %}" onsubmit="return confirmDeleteAccount();">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                Delete Account
+            </button>
+        </form>
+    </div>
 </div>
+
+<script>
+    function confirmDeleteAccount() {
+        return window.confirm('Are you sure? This cannot be undone.');
+    }
+</script>
 {% endblock %}

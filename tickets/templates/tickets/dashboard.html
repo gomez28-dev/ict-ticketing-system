@@ -183,6 +183,13 @@
                 <div id="modalDescription" class="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-700 whitespace-pre-wrap">Description goes here...</div>
             </div>
 
+            <div id="modalAttachmentWrap" class="mb-8 hidden">
+                <span class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Attachment</span>
+                <a id="modalAttachmentLink" href="#" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-200 dark:border-blue-800">
+                    View/Download Attachment
+                </a>
+            </div>
+
             <div class="grid grid-cols-2 gap-8 mb-6">
                 <div>
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Change Status</label>
@@ -226,6 +233,7 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -284,6 +292,16 @@
                 document.getElementById('modalSchool').innerText = card.getAttribute('data-school');
                 document.getElementById('modalSupportType').innerText = card.getAttribute('data-support-type');
                 document.getElementById('modalDescription').innerText = card.getAttribute('data-description');
+                const attachmentUrl = card.getAttribute('data-attachment-url');
+                const attachmentWrap = document.getElementById('modalAttachmentWrap');
+                const attachmentLink = document.getElementById('modalAttachmentLink');
+                if (attachmentUrl) {
+                    attachmentLink.setAttribute('href', attachmentUrl);
+                    attachmentWrap.classList.remove('hidden');
+                } else {
+                    attachmentLink.setAttribute('href', '#');
+                    attachmentWrap.classList.add('hidden');
+                }
                 document.getElementById('modalAdminNotes').value = card.getAttribute('data-notes');
                 document.getElementById('modalCreatedDate').innerText = card.getAttribute('data-created');
                 document.getElementById('modalUpdatedDate').innerText = card.getAttribute('data-updated');
@@ -348,6 +366,58 @@
                     alert("Error saving ticket: " + data.message);
                     saveBtn.innerText = "Save Changes";
                     saveBtn.disabled = false;
+                }
+            });
+        });
+
+        // --- 3. KANBAN SORTABLE LOGIC ---
+        const kanbanZones = document.querySelectorAll('.kanban-zone');
+        kanbanZones.forEach(zone => {
+            new Sortable(zone, {
+                group: 'kanban',
+                animation: 150,
+                ghostClass: 'opacity-50',
+                onEnd: function (evt) {
+                    const itemEl = evt.item;
+                    const ticketId = itemEl.getAttribute('data-id');
+                    const newStatus = evt.to.getAttribute('data-status');
+                    
+                    if (evt.from !== evt.to) {
+                        const getCookie = (name) => {
+                            let cookieValue = null;
+                            if (document.cookie && document.cookie !== '') {
+                                const cookies = document.cookie.split(';');
+                                for (let i = 0; i < cookies.length; i++) {
+                                    const cookie = cookies[i].trim();
+                                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                        break;
+                                    }
+                                }
+                            }
+                            return cookieValue;
+                        };
+
+                        fetch(`/admin-dashboard/ticket/update/${ticketId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({
+                                status: newStatus
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.success) {
+                                alert("Error updating ticket status: " + data.message);
+                                evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex]); // revert
+                            } else {
+                                itemEl.setAttribute('data-status', newStatus);
+                            }
+                        });
+                    }
                 }
             });
         });
