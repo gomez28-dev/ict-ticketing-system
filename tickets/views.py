@@ -1,7 +1,7 @@
 from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type
 from django.utils import timezone
 from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP
-from .forms import PublicTicketForm
+from .forms import PublicTicketForm, SubmitForReviewForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.urls import reverse
@@ -25,6 +25,15 @@ def is_admin_or_superuser(user):
     if not user.is_authenticated:
         return False
     return user.is_superuser or user.role == 'ADMIN'
+
+
+def is_employee(user):
+    return user.is_authenticated and not user.is_superuser and getattr(user, 'role', '') == 'MEMBER'
+
+
+ASSIGNED_REVIEW_STATUSES = ['PENDING_ACCEPTANCE', 'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW']
+ADMIN_KANBAN_STATUSES = {'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW', 'UNRESOLVED', 'RESOLVED'}
+EMPLOYEE_KANBAN_STATUSES = {'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW', 'UNRESOLVED'}
 
 
 def is_email_already_associated(email, exclude_school_id=None, exclude_account_request_id=None):
@@ -62,6 +71,17 @@ def resolve_assignee_from_names(assigned_staff_names):
             if staff_name == (user.email or '').strip().lower():
                 return user
     return None
+
+
+def extract_latest_unresolved_reason(admin_notes):
+    if not admin_notes:
+        return ''
+
+    unresolved_lines = [
+        line.strip() for line in admin_notes.split('\n')
+        if 'marked as Unresolved:' in line
+    ]
+    return unresolved_lines[-1] if unresolved_lines else ''
 
 @user_passes_test(is_superadmin, login_url='dashboard')
 def add_employee(request):
@@ -145,7 +165,6 @@ def school_login(request):
             school = School.objects.get(school_id=school_id)
             if school.check_password(password):
                 request.session['school_name'] = school.name
-                request.session['school_district'] = school.district
                 request.session['is_school_authenticated'] = True
                 return redirect('school_dashboard')
             else:
@@ -190,7 +209,6 @@ def school_dashboard(request):
                     last_name=school.ict_last_name or '',
                     contact_number=school.ict_contact_number or '',
                     email=school.ict_email or '',
-                    school_district=school.district or 'Not Specified',
                     school_name=school.name or 'Not Specified',
                     support_type=request.POST.get('support_type', 'OTHER'),
                     description=request.POST.get('description', ''),
@@ -278,15 +296,18 @@ def dashboard(request):
     }
     return render(request, 'tickets/dashboard.html', context)
 
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def requests_view(request):
     pending_requests = Ticket.objects.filter(status='PENDING').order_by('-created_at')
     reviewed_requests = Ticket.objects.filter(
-        status__in=['SCHEDULED', 'IN_PROGRESS'],
+        status__in=ASSIGNED_REVIEW_STATUSES,
         assignee__isnull=False
     ).order_by('-updated_at')
+    unresolved_requests = Ticket.objects.filter(status='UNRESOLVED').order_by('-updated_at')
     return render(request, 'tickets/requests.html', {
         'pending_requests': pending_requests,
-        'reviewed_requests': reviewed_requests
+        'reviewed_requests': reviewed_requests,
+        'unresolved_requests': unresolved_requests,
     })
 
 
@@ -295,10 +316,15 @@ def reviewed_ticket_readonly(request, ticket_id):
     ticket = get_object_or_404(
         Ticket.objects.select_related('assignee'),
         id=ticket_id,
-        status__in=['SCHEDULED', 'IN_PROGRESS']
+        status__in=ASSIGNED_REVIEW_STATUSES + ['UNRESOLVED']
     )
-    return render(request, 'tickets/reviewed_ticket_readonly.html', {'ticket': ticket})
+    context = {
+        'ticket': ticket,
+        'employee_unresolved_reason': extract_latest_unresolved_reason(ticket.admin_notes),
+    }
+    return render(request, 'tickets/reviewed_ticket_readonly.html', context)
 
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def delete_request(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -307,9 +333,11 @@ def delete_request(request, ticket_id):
 
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def documents_view(request):
+    under_review_tickets = Ticket.objects.filter(status='UNDER_REVIEW').order_by('-updated_at')
     resolved_tickets = Ticket.objects.filter(status='RESOLVED').order_by('-updated_at')
     completed_tickets = Ticket.objects.filter(status='COMPLETED').order_by('-updated_at')
     context = {
+        'under_review_tickets': under_review_tickets,
         'resolved_tickets': resolved_tickets,
         'completed_tickets': completed_tickets
     }
@@ -331,6 +359,7 @@ def complete_ticket_ajax(request, ticket_id):
 # AI TRIAGE WORKFLOW
 # ==========================================
 
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def ticket_triage_view(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
@@ -372,11 +401,10 @@ def ticket_triage_view(request, ticket_id):
     }
     return render(request, 'tickets/ticket_creation.html', context)
 
-@login_required
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def approve_request(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if request.method == 'POST':
-        ticket.status = 'PENDING_ACCEPTANCE'
         ticket.priority = request.POST.get('priority', ticket.priority)
         ticket.work_type = request.POST.get('work_type', ticket.work_type)
 
@@ -401,10 +429,12 @@ def approve_request(request, ticket_id):
         if not assigned_staff_list:
             assigned_staff_str = 'Unassigned'
             ticket.assignee = None
+            ticket.status = 'PENDING'
         else:
             unique_staff = list(set(assigned_staff_list))
             assigned_staff_str = ", ".join(unique_staff)
             ticket.assignee = resolve_assignee_from_names(unique_staff) or request.user
+            ticket.status = 'PENDING_ACCEPTANCE'
 
         feedback = request.POST.get('admin_feedback', '').strip()
         
@@ -530,17 +560,71 @@ def search_tickets(request):
 
     return render(request, 'tickets/search_results.html', {'query': query, 'results': results})
 
+@login_required
 def update_ticket_ajax(request, ticket_id):
     if request.method == 'POST':
         try:
             ticket = get_object_or_404(Ticket, id=ticket_id)
-            data = json.loads(request.body)
-            if data.get('status'): ticket.status = data.get('status')
-            if data.get('priority'): ticket.priority = data.get('priority')
-            if data.get('admin_notes') is not None: ticket.admin_notes = data.get('admin_notes')
-            ticket._current_user = request.user
-            ticket.save()
+            data = json.loads(request.body or '{}')
+            is_admin_user = is_admin_or_superuser(request.user)
+            has_changes = False
+
+            new_status = data.get('status')
+            if new_status:
+                allowed_statuses = ADMIN_KANBAN_STATUSES if is_admin_user else EMPLOYEE_KANBAN_STATUSES
+                if new_status not in allowed_statuses:
+                    return JsonResponse({'success': False, 'message': 'That status is not available for your role.'}, status=403)
+
+                if not is_admin_user and new_status == 'UNDER_REVIEW':
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Employees must submit resolution notes and an attachment before a ticket can move to Under Review.'
+                    }, status=400)
+
+                if new_status == 'RESOLVED':
+                    if not is_admin_user:
+                        return JsonResponse({'success': False, 'message': 'Only admins can resolve tickets.'}, status=403)
+                    if ticket.status != 'UNDER_REVIEW':
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'Only tickets currently under review can be marked as resolved.'
+                        }, status=400)
+
+                if new_status == 'COMPLETED':
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'Completed status is only available from the Documents tab.'
+                    }, status=400)
+
+                if ticket.status != new_status:
+                    ticket.status = new_status
+                    has_changes = True
+
+            new_priority = data.get('priority')
+            if new_priority is not None:
+                if not is_admin_user:
+                    return JsonResponse({'success': False, 'message': 'Only admins can change ticket priority.'}, status=403)
+                valid_priorities = {choice[0] for choice in Ticket.PRIORITY_CHOICES}
+                if new_priority not in valid_priorities:
+                    return JsonResponse({'success': False, 'message': 'Invalid priority value.'}, status=400)
+                if ticket.priority != new_priority:
+                    ticket.priority = new_priority
+                    has_changes = True
+
+            if data.get('admin_notes') is not None:
+                if not is_admin_user:
+                    return JsonResponse({'success': False, 'message': 'Only admins can update admin notes.'}, status=403)
+                new_admin_notes = data.get('admin_notes')
+                if ticket.admin_notes != new_admin_notes:
+                    ticket.admin_notes = new_admin_notes
+                    has_changes = True
+
+            if has_changes:
+                ticket._current_user = request.user
+                ticket.save()
             return JsonResponse({'success': True, 'message': 'Ticket updated successfully.'})
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'Invalid request payload.'}, status=400)
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=400)
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
@@ -658,10 +742,14 @@ def decline_assignment(request, ticket_id):
 
     return redirect('my_tickets')
 
-@login_required
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def resolve_assignment(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
+        if ticket.status != 'UNDER_REVIEW':
+            messages.error(request, 'Only tickets under review can be resolved.')
+            return redirect('documents')
+
         feedback = request.POST.get('admin_feedback', '').strip()
         if feedback:
             # Preserve the assignment line if it exists
@@ -680,22 +768,27 @@ def resolve_assignment(request, ticket_id):
         ticket.status = 'RESOLVED'
         ticket._current_user = request.user
         ticket.save()
-    return redirect('my_tickets')
+    return redirect('documents')
 
 @login_required
 def unresolve_assignment(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
         reason = request.POST.get('reason', '').strip()
-        
+        unresolved_attachment = request.FILES.get('unresolved_attachment')
+
         if reason:
             timestamp = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
-            reason_text = f"\n[{timestamp}] Unresolved Reason: {reason}"
+            employee_label = request.user.username or f"{request.user.first_name} {request.user.last_name}".strip() or 'unknown'
+            reason_text = f"[{timestamp}] Employee {employee_label} marked as Unresolved: {reason}"
             if ticket.admin_notes:
-                ticket.admin_notes += reason_text
+                ticket.admin_notes += f"\n{reason_text}"
             else:
-                ticket.admin_notes = reason_text.strip()
-                
+                ticket.admin_notes = reason_text
+
+        if unresolved_attachment:
+            ticket.resolution_attachment = unresolved_attachment
+
         ticket.status = 'UNRESOLVED'
         ticket._current_user = request.user
         ticket.save()
@@ -705,18 +798,49 @@ def unresolve_assignment(request, ticket_id):
 def submit_for_review(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
-        resolution_notes = request.POST.get('resolution_notes', '').strip()
-        resolution_attachment = request.FILES.get('resolution_attachment')
-        
-        ticket.resolution_notes = resolution_notes
-        if resolution_attachment:
-            ticket.resolution_attachment = resolution_attachment
-            
+        if is_admin_or_superuser(request.user):
+            message = 'Only employees can submit tickets for review.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': message}, status=403)
+            messages.error(request, message)
+            return redirect('employee_ticket_review', ticket_id=ticket.id)
+
+        if ticket.status not in ['SCHEDULED', 'IN_PROGRESS', 'UNRESOLVED']:
+            message = 'Only scheduled, in-progress, or unresolved tickets can be submitted for review.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': message}, status=400)
+            messages.error(request, message)
+            return redirect('employee_ticket_review', ticket_id=ticket.id)
+
+        form = SubmitForReviewForm(request.POST, request.FILES)
+        if not form.is_valid():
+            message = 'Resolution notes and an attachment are required before submitting for review.'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': message, 'errors': form.errors}, status=400)
+            messages.error(request, message)
+            return redirect('employee_ticket_review', ticket_id=ticket.id)
+
+        ticket.resolution_notes = form.cleaned_data['resolution_notes']
+        ticket.resolution_attachment = form.cleaned_data['resolution_attachment']
         ticket.status = 'UNDER_REVIEW'
         ticket._current_user = request.user
         ticket.save()
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f'Ticket {ticket.ticket_number} submitted for QA review.',
+                'ticket': {
+                    'id': ticket.id,
+                    'status': ticket.status,
+                    'resolution_notes': ticket.resolution_notes,
+                    'resolution_attachment_url': ticket.resolution_attachment.url if ticket.resolution_attachment else '',
+                }
+            })
+
         messages.success(request, f'Ticket {ticket.ticket_number} submitted for QA review.')
-    return redirect('my_tickets')
+        return redirect('my_tickets')
+    return redirect('employee_ticket_review', ticket_id=ticket_id)
 
 # ==========================================
 # SCHOOLS MANAGEMENT & DIRECTORY

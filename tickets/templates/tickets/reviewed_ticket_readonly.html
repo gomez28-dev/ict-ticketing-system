@@ -15,6 +15,20 @@
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+        {% if ticket.status == 'UNRESOLVED' %}
+        <div class="rounded-xl border border-orange-200 bg-orange-50 p-5 dark:border-orange-800/50 dark:bg-orange-900/20">
+            <div class="flex items-start gap-3">
+                <div class="mt-0.5 rounded-full bg-orange-100 p-2 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M10.29 3.86l-7.01 12.14A2 2 0 005 19h14a2 2 0 001.72-3l-7.01-12.14a2 2 0 00-3.44 0z"></path></svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm font-bold uppercase tracking-wider text-orange-800 dark:text-orange-200">Employee Marked This Ticket as Unresolved</p>
+                    <p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-orange-900 dark:text-orange-100">{{ employee_unresolved_reason|default:ticket.admin_notes }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ticket</p>
@@ -59,12 +73,48 @@
             <p class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4 whitespace-pre-wrap">{{ ticket.admin_notes|default:"No notes" }}</p>
         </div>
 
-        {% if ticket.attachment %}
         <div>
             <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">User Attachment</p>
+            {% if ticket.attachment %}
             <a href="{{ ticket.attachment.url }}" target="_blank" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
-                View/Download Attachment
+                View/Download Original User Attachment
             </a>
+            {% else %}
+            <p class="text-sm text-gray-500 dark:text-gray-400">No user attachment uploaded.</p>
+            {% endif %}
+        </div>
+
+        {% if ticket.status == 'UNRESOLVED' %}
+        <div>
+            <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Employee Unresolved Reason</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/40 rounded-lg p-4 whitespace-pre-wrap">{{ employee_unresolved_reason|default:"No unresolved reason was submitted." }}</p>
+        </div>
+        <div>
+            <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Employee Unresolved Attachment</p>
+            {% if ticket.resolution_attachment %}
+            <a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="text-sm text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 font-medium">
+                View/Download Employee Attachment
+            </a>
+            {% else %}
+            <p class="text-sm text-gray-500 dark:text-gray-400">No unresolved attachment uploaded.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if ticket.status == 'UNDER_REVIEW' or ticket.status == 'RESOLVED' or ticket.status == 'COMPLETED' %}
+        <div>
+            <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Resolution Summary</p>
+            <p class="text-sm text-gray-700 dark:text-gray-300 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/40 rounded-lg p-4 whitespace-pre-wrap">{{ ticket.resolution_notes|default:"No resolution notes were submitted." }}</p>
+        </div>
+        <div>
+            <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Resolution Attachment</p>
+            {% if ticket.resolution_attachment %}
+            <a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-medium">
+                View/Download Resolution Attachment
+            </a>
+            {% else %}
+            <p class="text-sm text-gray-500 dark:text-gray-400">No resolution attachment uploaded.</p>
+            {% endif %}
         </div>
         {% endif %}
     </div>

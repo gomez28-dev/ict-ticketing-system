@@ -47,8 +47,6 @@
                 <div>
                     <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Location</span>
                     <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.school_name }}</span>
-                    <span class="block text-sm text-gray-500 dark:text-gray-400">{{ ticket.get_school_district_display }}</span>
-                    {% if ticket.barangay %}<span class="block text-sm text-gray-500 dark:text-gray-400">{{ ticket.barangay }}</span>{% endif %}
                 </div>
                 <div>
                     <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Support Category</span>
@@ -82,6 +80,13 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     View Resolution Evidence
                 </a>
+            </div>
+            {% endif %}
+
+            {% if ticket.status == 'UNDER_REVIEW' or ticket.status == 'RESOLVED' or ticket.status == 'COMPLETED' %}
+            <div class="mb-8">
+                <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Resolution Summary</span>
+                <div class="text-gray-700 dark:text-gray-300 bg-green-50 dark:bg-green-900/10 p-5 rounded-lg border border-green-200 dark:border-green-800/40 whitespace-pre-wrap leading-relaxed">{{ ticket.resolution_notes|default:"No resolution notes were submitted." }}</div>
             </div>
             {% endif %}
 
@@ -151,11 +156,13 @@
                     Submit for Review
                 </button>
             
-            {% elif ticket.status == 'UNDER_REVIEW' and request.user.role == 'ADMIN' or ticket.status == 'UNDER_REVIEW' and request.user.is_superuser %}
-                <button type="button" onclick="document.getElementById('modal-resolve').classList.remove('hidden')" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    Mark as Resolved
-                </button>
+            {% elif ticket.status == 'UNDER_REVIEW' %}
+                {% if request.user.role == 'ADMIN' or request.user.is_superuser %}
+                    <button type="button" onclick="document.getElementById('modal-resolve').classList.remove('hidden')" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Mark as Resolved
+                    </button>
+                {% endif %}
             {% endif %}
 
         </div>
@@ -170,9 +177,13 @@
             <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 <p>Please provide a detailed reason why this ticket cannot be resolved. This will be added to the admin notes.</p>
             </div>
-            <form method="POST" action="{% url 'unresolve_assignment' ticket.id %}" class="mt-4">
+            <form method="POST" action="{% url 'unresolve_assignment' ticket.id %}" enctype="multipart/form-data" class="mt-4">
                 {% csrf_token %}
                 <textarea name="reason" rows="4" required class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm p-3 mb-4 focus:ring-orange-500 focus:border-orange-500" placeholder="State the reason here..."></textarea>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Attachment</label>
+                    <input type="file" name="unresolved_attachment" class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 dark:file:bg-orange-900/30 dark:file:text-orange-400">
+                </div>
                 <div class="flex items-center justify-end gap-3 px-4 py-3 border-t dark:border-gray-700">
                     <button type="button" onclick="document.getElementById('modal-unresolved').classList.add('hidden')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-sm font-medium rounded-md">Cancel</button>
                     <button type="submit" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-md">Submit Reason</button>

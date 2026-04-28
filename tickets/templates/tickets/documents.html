@@ -16,6 +16,55 @@
         </div>
     </div>
 
+    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Under Review Queue</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-10">
+        {% if under_review_tickets %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
+                    <tr>
+                        <th scope="col" class="px-6 py-4 font-bold">Ticket ID</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Requester</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Location</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Resolution Notes</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Resolution File</th>
+                        <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for ticket in under_review_tickets %}
+                    <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ ticket.ticket_number }}</td>
+                        <td class="px-6 py-4">{{ ticket.first_name }} {{ ticket.last_name }}</td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ ticket.school_name }}</td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{{ ticket.resolution_notes|default:"No resolution notes were submitted." }}</td>
+                        <td class="px-6 py-4">
+                            {% if ticket.resolution_attachment %}
+                            <a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium">
+                                View File
+                            </a>
+                            {% else %}
+                            <span class="text-xs text-gray-400 dark:text-gray-500">No file</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'employee_ticket_review' ticket.id %}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm">
+                                Open Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center p-8 text-center">
+            <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-7-9h8m-9 14h10a2 2 0 002-2V7.414A2 2 0 0018.414 6L13 0.586A2 2 0 0011.586 0H6a2 2 0 00-2 2v18a2 2 0 002 2z"></path></svg>
+            <h3 class="text-md font-bold text-gray-900 dark:text-white">No tickets waiting for review</h3>
+        </div>
+        {% endif %}
+    </div>
+
     <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Resolved Documents (Action Required)</h2>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-10">
         {% if resolved_tickets %}
@@ -28,6 +77,7 @@
                         <th scope="col" class="px-6 py-4 font-bold">Location</th>
                         <th scope="col" class="px-6 py-4 font-bold">Support Type</th>
                         <th scope="col" class="px-6 py-4 font-bold">Date Resolved</th>
+                        <th scope="col" class="px-6 py-4 font-bold">Resolution Notes</th>
                         <th scope="col" class="px-6 py-4 font-bold">Resolution File</th>
                         <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
                     </tr>
@@ -51,6 +101,9 @@
                         </td>
                         <td class="px-6 py-4 text-gray-500">
                             {{ ticket.actual_completion_date|date:"M d, Y"|default:ticket.updated_at|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
+                            {{ ticket.resolution_notes|default:"No resolution notes were submitted." }}
                         </td>
                         <td class="px-6 py-4">
                             {% if ticket.resolution_attachment %}

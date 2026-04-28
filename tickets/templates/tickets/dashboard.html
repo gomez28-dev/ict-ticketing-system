@@ -173,7 +173,6 @@
                 <div><span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Requester</span><span id="modalRequester" class="text-gray-800 dark:text-gray-200 font-medium">Name</span></div>
                 <div><span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Email</span><span id="modalEmail" class="text-gray-800 dark:text-gray-200 font-medium">Email</span></div>
                 <div><span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contact</span><span id="modalContact" class="text-gray-800 dark:text-gray-200 font-medium">Contact</span></div>
-                <div><span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">District</span><span id="modalDistrict" class="text-gray-800 dark:text-gray-200 font-medium">District</span></div>
                 <div><span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">School</span><span id="modalSchool" class="text-gray-800 dark:text-gray-200 font-medium">School</span></div>
                 <div><span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Support Type</span><span id="modalSupportType" class="text-gray-800 dark:text-gray-200 font-medium">Support Type</span></div>
             </div>
@@ -190,16 +189,37 @@
                 </a>
             </div>
 
+            <div id="modalResolutionWrap" class="mb-8 hidden">
+                <span class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Resolution Summary</span>
+                <div id="modalResolutionNotes" class="text-gray-700 dark:text-gray-300 bg-green-50 dark:bg-green-900/10 p-4 rounded-lg border border-green-200 dark:border-green-800/40 whitespace-pre-wrap mb-3">Resolution details...</div>
+                <a id="modalResolutionAttachmentLink" href="#" target="_blank" class="hidden inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors border border-green-200 dark:border-green-800">
+                    View/Download Resolution Attachment
+                </a>
+            </div>
+
             <div class="grid grid-cols-2 gap-8 mb-6">
                 <div>
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Change Status</label>
                     <select id="modalStatusSelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white font-medium">
+                        {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
                         <option value="SCHEDULED">Scheduled</option>
                         <option value="IN_PROGRESS">In Progress</option>
+                        <option value="UNDER_REVIEW">Under Review</option>
                         <option value="UNRESOLVED">Unresolved</option>
                         <option value="RESOLVED">Resolved</option>
+                        {% else %}
+                        <option value="SCHEDULED">Scheduled</option>
+                        <option value="IN_PROGRESS">In Progress</option>
+                        <option value="UNDER_REVIEW">Under Review</option>
+                        <option value="UNRESOLVED">Unresolved</option>
+                        <option value="RESOLVED" disabled>Resolved (Admin only)</option>
+                        {% endif %}
                     </select>
+                    {% if not request.user.is_superuser and request.user.role == 'MEMBER' %}
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Moving a ticket to Under Review requires a resolution summary and evidence upload.</p>
+                    {% endif %}
                 </div>
+                {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
                 <div>
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Change Priority</label>
                     <select id="modalPrioritySelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white font-medium">
@@ -209,12 +229,15 @@
                         <option value="URGENT">Urgent</option>
                     </select>
                 </div>
+                {% endif %}
             </div>
 
+            {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
             <div>
                 <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Admin Notes</label>
                 <textarea id="modalAdminNotes" rows="3" placeholder="Add notes about this ticket..." class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white"></textarea>
             </div>
+            {% endif %}
         </div>
 
         <div class="px-8 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
@@ -229,6 +252,35 @@
         </div>
     </div>
 </div>
+
+<div id="reviewSubmissionModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 w-full max-w-xl rounded-xl shadow-2xl overflow-hidden transition-colors duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">Submit for Review</h2>
+                <p id="reviewSubmissionTicketNumber" class="text-sm text-gray-500 dark:text-gray-400">Ticket</p>
+            </div>
+            <button id="closeReviewModalBtn" class="text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+
+        <form id="reviewSubmissionForm" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="reviewResolutionNotes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Resolution Summary</label>
+                <textarea id="reviewResolutionNotes" name="resolution_notes" rows="4" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-purple-500 outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white" placeholder="Briefly describe what was done..."></textarea>
+            </div>
+            <div>
+                <label for="reviewResolutionAttachment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Evidence Upload</label>
+                <input id="reviewResolutionAttachment" type="file" name="resolution_attachment" required class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-purple-900/30 dark:file:text-purple-400">
+            </div>
+            <div id="reviewSubmissionError" class="hidden text-sm text-red-600 dark:text-red-400"></div>
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button type="button" id="cancelReviewModalBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-sm font-medium rounded-md">Cancel</button>
+                <button type="submit" id="submitReviewModalBtn" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md">Submit for Review</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -237,6 +289,28 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+        const isAdminUser = {% if request.user.is_superuser or request.user.role == 'ADMIN' %}true{% else %}false{% endif %};
+
+        const getCookie = (name) => {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        };
+
+        const moveCardToIndex = (itemEl, parentEl, index) => {
+            const referenceNode = parentEl.children[index] || null;
+            parentEl.insertBefore(itemEl, referenceNode);
+        };
+
         // --- 1. INITIALIZE CHART ---
         const ctx = document.getElementById('activityChart');
         if (ctx) {
@@ -276,19 +350,62 @@
         const closeBtns = [document.getElementById('closeModalBtn'), document.getElementById('cancelModalBtn')];
         const saveBtn = document.getElementById('saveModalBtn');
         let currentTicketId = null;
+        let currentCardElement = null;
+        let pendingReviewMove = null;
+
+        const reviewModal = document.getElementById('reviewSubmissionModal');
+        const reviewForm = document.getElementById('reviewSubmissionForm');
+        const reviewError = document.getElementById('reviewSubmissionError');
+        const reviewTicketNumber = document.getElementById('reviewSubmissionTicketNumber');
+        const submitReviewBtn = document.getElementById('submitReviewModalBtn');
+
+        const closeTicketModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-50');
+            saveBtn.innerText = 'Save Changes';
+            currentTicketId = null;
+            currentCardElement = null;
+        };
+
+        const openReviewModal = ({ ticketId, ticketNumber, itemEl = null, targetZone = null }) => {
+            pendingReviewMove = {
+                ticketId,
+                itemEl,
+                targetZone: targetZone || document.querySelector('.kanban-zone[data-status="UNDER_REVIEW"]')
+            };
+            reviewTicketNumber.innerText = ticketNumber || 'Ticket';
+            reviewForm.setAttribute('action', `/admin-dashboard/my-tickets/submit-review/${ticketId}/`);
+            reviewForm.reset();
+            reviewError.innerText = '';
+            reviewError.classList.add('hidden');
+            reviewModal.classList.remove('hidden');
+            reviewModal.classList.add('flex');
+        };
+
+        const closeReviewModal = () => {
+            pendingReviewMove = null;
+            reviewForm.reset();
+            reviewError.innerText = '';
+            reviewError.classList.add('hidden');
+            reviewModal.classList.add('hidden');
+            reviewModal.classList.remove('flex');
+        };
 
         cards.forEach(card => {
             card.addEventListener('click', () => {
                 currentTicketId = card.getAttribute('data-id');
+                currentCardElement = card;
+                const currentStatus = card.getAttribute('data-status');
 
                 document.getElementById('modalTicketNumber').innerText = card.getAttribute('data-number');
-                document.getElementById('modalStatusBadge').innerText = card.getAttribute('data-status').replace('_', ' ');
+                document.getElementById('modalStatusBadge').innerText = currentStatus.replace('_', ' ');
                 document.getElementById('modalPriorityBadge').innerText = card.getAttribute('data-priority');
                 document.getElementById('modalPredictionBadge').innerHTML = `🤖 Est: ${card.getAttribute('data-predicted')}h`;
                 document.getElementById('modalRequester').innerText = card.getAttribute('data-requester');
                 document.getElementById('modalEmail').innerText = card.getAttribute('data-email');
                 document.getElementById('modalContact').innerText = card.getAttribute('data-contact');
-                document.getElementById('modalDistrict').innerText = card.getAttribute('data-district');
                 document.getElementById('modalSchool').innerText = card.getAttribute('data-school');
                 document.getElementById('modalSupportType').innerText = card.getAttribute('data-support-type');
                 document.getElementById('modalDescription').innerText = card.getAttribute('data-description');
@@ -302,11 +419,40 @@
                     attachmentLink.setAttribute('href', '#');
                     attachmentWrap.classList.add('hidden');
                 }
-                document.getElementById('modalAdminNotes').value = card.getAttribute('data-notes');
+                const resolutionNotes = card.getAttribute('data-resolution-notes');
+                const resolutionAttachmentUrl = card.getAttribute('data-resolution-attachment-url');
+                const resolutionWrap = document.getElementById('modalResolutionWrap');
+                const resolutionNotesEl = document.getElementById('modalResolutionNotes');
+                const resolutionAttachmentLink = document.getElementById('modalResolutionAttachmentLink');
+                if (['UNDER_REVIEW', 'RESOLVED', 'COMPLETED'].includes(currentStatus) || resolutionNotes || resolutionAttachmentUrl) {
+                    resolutionNotesEl.innerText = resolutionNotes || 'No resolution notes were submitted.';
+                    if (resolutionAttachmentUrl) {
+                        resolutionAttachmentLink.setAttribute('href', resolutionAttachmentUrl);
+                        resolutionAttachmentLink.classList.remove('hidden');
+                    } else {
+                        resolutionAttachmentLink.setAttribute('href', '#');
+                        resolutionAttachmentLink.classList.add('hidden');
+                    }
+                    resolutionWrap.classList.remove('hidden');
+                } else {
+                    resolutionNotesEl.innerText = '';
+                    resolutionAttachmentLink.setAttribute('href', '#');
+                    resolutionAttachmentLink.classList.add('hidden');
+                    resolutionWrap.classList.add('hidden');
+                }
+                const adminNotesField = document.getElementById('modalAdminNotes');
+                if (adminNotesField) {
+                    adminNotesField.value = card.getAttribute('data-notes');
+                }
                 document.getElementById('modalCreatedDate').innerText = card.getAttribute('data-created');
                 document.getElementById('modalUpdatedDate').innerText = card.getAttribute('data-updated');
-                document.getElementById('modalStatusSelect').value = card.getAttribute('data-status');
-                document.getElementById('modalPrioritySelect').value = card.getAttribute('data-priority');
+                document.getElementById('modalStatusSelect').value = currentStatus;
+                const prioritySelect = document.getElementById('modalPrioritySelect');
+                if (prioritySelect) {
+                    prioritySelect.value = card.getAttribute('data-priority');
+                }
+                saveBtn.disabled = !isAdminUser && currentStatus === 'RESOLVED';
+                saveBtn.classList.toggle('opacity-50', saveBtn.disabled);
 
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
@@ -315,33 +461,41 @@
 
         closeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                currentTicketId = null;
+                closeTicketModal();
             });
         });
+
+        document.getElementById('closeReviewModalBtn').addEventListener('click', closeReviewModal);
+        document.getElementById('cancelReviewModalBtn').addEventListener('click', closeReviewModal);
 
         saveBtn.addEventListener('click', () => {
             if (!currentTicketId) return;
 
             const newStatus = document.getElementById('modalStatusSelect').value;
-            const newPriority = document.getElementById('modalPrioritySelect').value;
-            const newNotes = document.getElementById('modalAdminNotes').value;
+            const currentStatus = currentCardElement ? currentCardElement.getAttribute('data-status') : null;
 
-            const getCookie = (name) => {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
-                    }
+            if (!isAdminUser && newStatus === 'UNDER_REVIEW') {
+                closeTicketModal();
+                if (currentStatus !== 'UNDER_REVIEW') {
+                    openReviewModal({
+                        ticketId: currentTicketId,
+                        ticketNumber: currentCardElement ? currentCardElement.getAttribute('data-number') : '',
+                        itemEl: currentCardElement,
+                        targetZone: document.querySelector('.kanban-zone[data-status="UNDER_REVIEW"]')
+                    });
                 }
-                return cookieValue;
-            };
+                return;
+            }
+
+            const payload = { status: newStatus };
+            const prioritySelect = document.getElementById('modalPrioritySelect');
+            const adminNotesField = document.getElementById('modalAdminNotes');
+            if (prioritySelect) {
+                payload.priority = prioritySelect.value;
+            }
+            if (adminNotesField) {
+                payload.admin_notes = adminNotesField.value;
+            }
 
             saveBtn.innerText = "Saving...";
             saveBtn.disabled = true;
@@ -352,11 +506,7 @@
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({
-                    status: newStatus,
-                    priority: newPriority,
-                    admin_notes: newNotes
-                })
+                body: JSON.stringify(payload)
             })
             .then(response => response.json())
             .then(data => {
@@ -366,7 +516,59 @@
                     alert("Error saving ticket: " + data.message);
                     saveBtn.innerText = "Save Changes";
                     saveBtn.disabled = false;
+                    saveBtn.classList.remove('opacity-50');
                 }
+            });
+        });
+
+        reviewForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            if (!pendingReviewMove) {
+                closeReviewModal();
+                return;
+            }
+
+            reviewError.innerText = '';
+            reviewError.classList.add('hidden');
+            submitReviewBtn.disabled = true;
+            submitReviewBtn.innerText = 'Submitting...';
+
+            const formData = new FormData(reviewForm);
+            fetch(reviewForm.getAttribute('action'), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(async (response) => {
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Unable to submit ticket for review.');
+                }
+                return data;
+            })
+            .then(data => {
+                const cardEl = pendingReviewMove.itemEl || document.querySelector(`.ticket-card[data-id="${pendingReviewMove.ticketId}"]`);
+                const targetZone = pendingReviewMove.targetZone || document.querySelector('.kanban-zone[data-status="UNDER_REVIEW"]');
+                if (cardEl && targetZone) {
+                    targetZone.appendChild(cardEl);
+                    cardEl.setAttribute('data-status', data.ticket.status);
+                    cardEl.setAttribute('data-resolution-notes', data.ticket.resolution_notes || '');
+                    cardEl.setAttribute('data-resolution-attachment-url', data.ticket.resolution_attachment_url || '');
+                }
+                closeReviewModal();
+                window.location.reload();
+            })
+            .catch(error => {
+                reviewError.innerText = error.message;
+                reviewError.classList.remove('hidden');
+            })
+            .finally(() => {
+                submitReviewBtn.disabled = false;
+                submitReviewBtn.innerText = 'Submit for Review';
             });
         });
 
@@ -374,7 +576,15 @@
         const kanbanZones = document.querySelectorAll('.kanban-zone');
         kanbanZones.forEach(zone => {
             new Sortable(zone, {
-                group: 'kanban',
+                group: {
+                    name: 'kanban',
+                    put: function(to) {
+                        if (isAdminUser) {
+                            return true;
+                        }
+                        return to.el.getAttribute('data-status') !== 'RESOLVED';
+                    }
+                },
                 animation: 150,
                 ghostClass: 'opacity-50',
                 onEnd: function (evt) {
@@ -383,20 +593,16 @@
                     const newStatus = evt.to.getAttribute('data-status');
                     
                     if (evt.from !== evt.to) {
-                        const getCookie = (name) => {
-                            let cookieValue = null;
-                            if (document.cookie && document.cookie !== '') {
-                                const cookies = document.cookie.split(';');
-                                for (let i = 0; i < cookies.length; i++) {
-                                    const cookie = cookies[i].trim();
-                                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                                        break;
-                                    }
-                                }
-                            }
-                            return cookieValue;
-                        };
+                        if (!isAdminUser && newStatus === 'UNDER_REVIEW') {
+                            moveCardToIndex(itemEl, evt.from, evt.oldIndex);
+                            openReviewModal({
+                                ticketId,
+                                ticketNumber: itemEl.getAttribute('data-number'),
+                                itemEl,
+                                targetZone: evt.to
+                            });
+                            return;
+                        }
 
                         fetch(`/admin-dashboard/ticket/update/${ticketId}/`, {
                             method: 'POST',
@@ -412,7 +618,7 @@
                         .then(data => {
                             if (!data.success) {
                                 alert("Error updating ticket status: " + data.message);
-                                evt.from.insertBefore(itemEl, evt.from.children[evt.oldIndex]); // revert
+                                moveCardToIndex(itemEl, evt.from, evt.oldIndex);
                             } else {
                                 itemEl.setAttribute('data-status', newStatus);
                             }
