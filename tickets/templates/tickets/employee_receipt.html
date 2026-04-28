@@ -1,222 +1,328 @@
-{% extends 'tickets/base_admin.html' %}
-
-{% block title %}Task Receipt - {{ ticket.ticket_number }}{% endblock %}
-
-{% block content %}
-<style>
-    @media print {
-        /* Hide the base_admin sidebar, header, and search bar */
-        aside, header, nav {
-            display: none !important;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Request Form - {{ ticket.ticket_number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @page {
+            size: A4;
+            margin: 0.5in;
         }
-        
-        /* Hide everything by default... */
-        body * {
-            visibility: hidden;
+
+        @media print {
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
-        
-        /* ...except the printable receipt container */
-        #printable-receipt, #printable-receipt * {
-            visibility: visible;
+
+        .print-safe-box {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
-        
-        #printable-receipt {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            margin: 0;
-            padding: 20px;
-            background-color: white !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-        
-        .no-print {
-            display: none !important;
-        }
-        
-        body { background: white !important; }
-    }
-</style>
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 print:bg-white print:text-black">
+    <div class="print:hidden sticky top-0 z-10 border-b border-slate-300 bg-white/95 backdrop-blur">
+        <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
+            <a href="javascript:history.back()" class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-slate-900">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Go Back
+            </a>
 
-<div class="max-w-4xl mx-auto mt-4 mb-10">
-    <div class="mb-6 flex items-center justify-between no-print">
-        <a href="javascript:history.back()" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors flex items-center gap-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Go Back
-        </a>
-        
-        <div class="flex items-center gap-3">
-            {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
-                {% if ticket.status == 'RESOLVED' %}
-                <button onclick="markAsCompleted({{ ticket.id }})" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg shadow-md transition-colors flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    Complete Ticket
-                </button>
-                {% endif %}
-            {% endif %}
-            <button onclick="window.print()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md transition-colors flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Print PDF Evidence
-            </button>
-        </div>
-    </div>
-
-    <div id="printable-receipt" class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-        
-        <div class="p-8 border-b-4 border-green-500 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div class="flex items-center gap-5">
-                <div class="w-20 h-20 bg-gray-100 border-2 border-dashed border-gray-400 rounded-xl flex flex-col items-center justify-center overflow-hidden shadow-inner flex-shrink-0">
-                    <svg class="w-6 h-6 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Logo</span>
-                </div>
-                <div>
-                    <h2 class="text-2xl font-black text-gray-900 uppercase tracking-wide">Task Resolution Receipt</h2>
-                    <p class="text-md font-semibold text-gray-600">DepEd Valenzuela - ICT Unit</p>
-                    <p class="text-sm font-bold text-green-600 mt-1 flex items-center gap-1 bg-green-50 inline-flex px-2 py-0.5 rounded">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        Task Successfully Completed
-                    </p>
-                </div>
-            </div>
-            <div class="text-left sm:text-right">
-                <p class="text-sm font-bold text-gray-400 uppercase tracking-wider">Ticket ID</p>
-                <p class="text-3xl font-black text-gray-900 drop-shadow-sm">{{ ticket.ticket_number }}</p>
-            </div>
-        </div>
-
-        <div class="p-8 space-y-8">
-            <div class="grid grid-cols-2 gap-6">
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Served By (Employee)</p>
-                    <p class="font-bold text-lg text-gray-900">{{ request.user.first_name }} {{ request.user.last_name }}</p>
-                    <p class="text-sm text-gray-500">{{ request.user.email }}</p>
-                </div>
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Date Resolved</p>
-                    <p class="font-bold text-lg text-gray-900">{{ ticket.actual_completion_date|date:"F d, Y h:i A"|default:ticket.updated_at|date:"F d, Y h:i A" }}</p>
-                </div>
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">School / Location</p>
-                    <p class="font-bold text-gray-900">{{ ticket.school_name }}</p>
-                    {% if ticket.school_district %}<p class="text-sm text-gray-500">{{ ticket.school_district }}</p>{% endif %}
-                </div>
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Work Category</p>
-                    <p class="font-bold text-gray-900">{{ ticket.work_type|default:"Not Specified" }}</p>
-                </div>
-            </div>
-
-            <hr class="border-gray-200">
-
-            <div>
-                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Original Request Details</h3>
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Requested By</p>
-                        <p class="font-medium text-gray-900">{{ ticket.first_name }} {{ ticket.last_name }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Contact Number</p>
-                        <p class="font-medium text-gray-900">{{ ticket.contact_number }}</p>
-                    </div>
-                </div>
-
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Support Type</p>
-                <span class="inline-block bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded mb-4">
-                    {{ ticket.get_support_type_display }}
-                </span>
-
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Problem Description</p>
-                <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">{{ ticket.description }}</div>
-
-                {% if ticket.attachment %}
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">User Attachment</p>
-                <a href="{{ ticket.attachment.url }}" target="_blank" class="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-semibold">
-                    View/Download Request Attachment
-                </a>
-                {% endif %}
-
-                {% if ticket.resolution_attachment %}
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">Resolution Attachment</p>
-                <a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="inline-flex items-center gap-2 text-sm text-green-600 hover:text-green-800 font-semibold">
-                    View/Download Resolution Attachment
-                </a>
-                {% endif %}
-            </div>
-
-            <div class="pt-16 grid grid-cols-2 gap-12 text-center pb-6">
-                <div>
-                    <div class="border-b border-gray-400 mb-2 w-3/4 mx-auto"></div>
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Employee Signature</p>
-                </div>
-                <div>
-                    <div class="border-b border-gray-400 mb-2 w-3/4 mx-auto"></div>
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Client / Requestor Signature</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="p-6 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gray-100 border border-dashed border-gray-400 rounded-full flex items-center justify-center opacity-70 flex-shrink-0">
-                    <span class="text-[8px] font-bold text-gray-500 uppercase">Logo</span>
-                </div>
-                <p class="text-xs text-gray-500 font-medium">For inquiries, please coordinate with the ICT Unit.<br>This receipt serves as official proof of task resolution.</p>
+                {% if request.user.is_authenticated %}
+                    {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
+                        {% if ticket.status == 'RESOLVED' %}
+                        <button onclick="markAsCompleted({{ ticket.id }})" class="inline-flex items-center gap-2 rounded-md border border-emerald-700 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Complete Ticket
+                        </button>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+
+                <button onclick="window.print()" class="inline-flex items-center gap-2 rounded-md border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                    </svg>
+                    Print JRF
+                </button>
             </div>
-            <div class="text-center sm:text-right text-gray-400">
-                <p class="text-xs font-bold uppercase tracking-wider">Generated by</p>
-                <p class="text-sm font-medium">Ticketing Support System</p>
-            </div>
-        </div>
         </div>
     </div>
-</div>
 
-{% if request.user.is_superuser or request.user.role == 'ADMIN' %}
-<script>
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
+    <main class="mx-auto max-w-5xl px-3 py-4 sm:px-6 print:max-w-none print:px-0 print:py-0">
+        <section class="mx-auto w-full max-w-[210mm] bg-white shadow-lg shadow-slate-300/60 print:shadow-none">
+            <div class="border border-slate-900 p-6 text-slate-900 print:border-black print:text-black sm:p-8">
+                <header class="border-b border-slate-900 pb-4 text-center print:border-black">
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em]">Republic of the Philippines</p>
+                    <p class="mt-1 text-sm font-bold uppercase tracking-[0.16em]">Department of Education</p>
+                    <p class="mt-1 text-sm font-semibold uppercase tracking-[0.1em]">Schools Division Office Valenzuela</p>
+                    <p class="mt-1 text-sm font-semibold uppercase tracking-[0.1em]">Information and Communications Technology Unit</p>
+                    <h1 class="mt-4 text-xl font-extrabold uppercase tracking-[0.18em]">Job Request Form (JRF)</h1>
+                </header>
+
+                <section class="mt-4 border border-slate-900 print:border-black">
+                    <div class="grid grid-cols-2 border-b border-slate-900 text-xs print:border-black sm:grid-cols-4">
+                        <div class="border-r border-slate-900 p-2 print:border-black">
+                            <span class="font-bold uppercase">Date:</span>
+                            <span class="ml-2 font-medium">{{ ticket.created_at|date:"m/d/Y" }}</span>
+                        </div>
+                        <div class="border-r border-slate-900 p-2 print:border-black">
+                            <span class="font-bold uppercase">Time:</span>
+                            <span class="ml-2 font-medium">{{ ticket.created_at|date:"h:i A" }}</span>
+                        </div>
+                        <div class="border-r border-slate-900 p-2 print:border-black">
+                            <span class="font-bold uppercase">Ticket No:</span>
+                            <span class="ml-2 font-medium">{{ ticket.ticket_number }}</span>
+                        </div>
+                        <div class="p-2">
+                            <span class="font-bold uppercase">Contact No:</span>
+                            <span class="ml-2 font-medium">{{ ticket.contact_number|default:"N/A" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 border-b border-slate-900 text-xs print:border-black sm:grid-cols-2">
+                        <div class="border-b border-slate-900 p-2 print:border-black sm:border-b-0 sm:border-r">
+                            <span class="font-bold uppercase">Name of Requestor:</span>
+                            <span class="ml-2 font-medium">{{ ticket.first_name }} {{ ticket.last_name }}</span>
+                        </div>
+                        <div class="p-2">
+                            <span class="font-bold uppercase">Office/School:</span>
+                            <span class="ml-2 font-medium">{{ ticket.school_name|default:"N/A" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="p-2 text-xs">
+                        <span class="font-bold uppercase">Job Request Description:</span>
+                        <span class="ml-2 font-medium">{{ ticket.get_support_type_display|default:ticket.support_type }}</span>
+                    </div>
+                </section>
+
+                <section class="mt-4 break-inside-avoid">
+                    <div class="grid grid-cols-1 border border-slate-900 print:border-black md:grid-cols-2">
+                        <div class="min-h-[260px] border-b border-slate-900 p-3 print:border-black md:border-b-0 md:border-r">
+                            <h2 class="border-b border-slate-900 pb-2 text-center text-xs font-bold uppercase tracking-[0.14em] print:border-black">
+                                Recommendation/Action Taken
+                            </h2>
+                            <div class="min-h-[220px]"></div>
+                        </div>
+                        <div class="min-h-[260px] p-3">
+                            <h2 class="border-b border-slate-900 pb-2 text-center text-xs font-bold uppercase tracking-[0.14em] print:border-black">
+                                Problem/s
+                            </h2>
+                            <div class="pt-3 text-sm leading-6 whitespace-pre-wrap">
+                                {{ ticket.description|default:"" }}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mt-6 grid grid-cols-1 gap-10 text-center text-sm md:grid-cols-2">
+                    <div>
+                        <p class="mb-10 text-left font-semibold">Inspected by:</p>
+                        <div class="border-t border-slate-900 pt-2 font-semibold uppercase print:border-black">
+                            {{ ticket.assignee.get_full_name|default:"(Assigned Employee)" }}
+                        </div>
+                    </div>
+                    <div>
+                        <p class="mb-10 text-left font-semibold">Attested by:</p>
+                        <div class="border-t border-slate-900 pt-2 font-semibold uppercase print:border-black">
+                            {{ ticket.first_name }} {{ ticket.last_name }}
+                        </div>
+                        <p class="mt-1 text-xs uppercase tracking-wide">Client's Name</p>
+                    </div>
+                </section>
+
+                <section class="mt-8 break-inside-avoid">
+                    <div class="grid grid-cols-1 gap-8 text-center text-sm md:grid-cols-2">
+                        <div>
+                            <p class="mb-10 text-left font-semibold">Reviewed by:</p>
+                            <div class="border-t border-slate-900 pt-2 font-semibold uppercase print:border-black">
+                                KARESHENE SD. MALVAR
+                            </div>
+                            <p class="mt-1 text-xs uppercase tracking-wide">Administrative Aide IV</p>
+                        </div>
+                        <div>
+                            <p class="mb-10 text-left font-semibold">Noted by:</p>
+                            <div class="border-t border-slate-900 pt-2 font-semibold uppercase print:border-black">
+                                NOEL E. REYES
+                            </div>
+                            <p class="mt-1 text-xs uppercase tracking-wide">Information Technology Officer I</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mt-8 break-inside-avoid">
+                    <h2 class="mb-2 text-center text-sm font-bold uppercase tracking-[0.14em]">Performance Indicators</h2>
+                    <div class="overflow-hidden border border-slate-900 print:border-black">
+                        <table class="w-full border-collapse text-[11px] leading-5 print:text-black">
+                            <thead>
+                                <tr>
+                                    <th class="w-[8%] border border-slate-900 p-2 text-center font-bold print:border-black">Pts.</th>
+                                    <th class="w-[25%] border border-slate-900 p-2 text-left font-bold print:border-black">Quality (Kalidad ng gawa) 40%</th>
+                                    <th class="w-[8%] border border-slate-900 p-2 text-center font-bold print:border-black">Pts.</th>
+                                    <th class="w-[25%] border border-slate-900 p-2 text-left font-bold print:border-black">Efficiency (Pagka epektibo) 30%</th>
+                                    <th class="w-[8%] border border-slate-900 p-2 text-center font-bold print:border-black">Pts.</th>
+                                    <th class="w-[26%] border border-slate-900 p-2 text-left font-bold print:border-black">Timeliness (Pagtugon sa takdang oras) 30%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="break-inside-avoid">
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>5</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Napaka husay ng pagkakagawa, maaayos ang mga kable, malinis ang mga peripherals, at wasto ang pagbibigay solusyon sa problem, at sinuri pa ang ibang problema</td>
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>5</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Hindi na naulit ang problema at lalong gumanda ang technical processing ng isang computer or system</td>
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>5</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Mas maaga ang pagtugon sa technical assistance request</td>
+                                </tr>
+                                <tr class="break-inside-avoid">
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>4</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Maayos ang pagbibigay solusyon sa technical problema at nilinis ang mga computer o computer peripherals, at sinuri pa ang ibang problema.</td>
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>4</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Gumada ang technical processing buhat ng ayusin ang technical problem</td>
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>4</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Pinilit agahan ang pagtugon sa technical assistance request</td>
+                                </tr>
+                                <tr class="break-inside-avoid">
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>3</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Inayos ang inulat na technical problem</td>
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>3</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Naayos ang technical problem</td>
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>3</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Tumugon sangayon sa schedule ng technical assistance</td>
+                                </tr>
+                                <tr class="break-inside-avoid">
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>2</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Mali ang solusyon na ginawa</td>
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>2</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Hindi naayos ng mabuti ang technical problem</td>
+                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <div class="inline-block h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
+                                            <span>2</span>
+                                        </div>
+                                    </td>
+                                    <td class="border border-slate-900 p-2 align-top print:border-black">Delay na pagtugon sa technical assistance request</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    {% if request.user.is_authenticated %}
+        {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
+        <script>
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
                 }
+                return cookieValue;
             }
-        }
-        return cookieValue;
-    }
 
-    function markAsCompleted(ticketId) {
-        const url = `/admin-dashboard/documents/complete/${ticketId}/`;
-        const csrftoken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+            function markAsCompleted(ticketId) {
+                const url = `/admin-dashboard/documents/complete/${ticketId}/`;
+                const csrftoken = getCookie('csrftoken') || '';
 
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'X-Requested-With': 'XMLHttpRequest',
-                'Content-Type': 'application/json'
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Ticket marked as Completed!');
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An unexpected error occurred.');
+                });
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Ticket marked as Completed!');
-                window.location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An unexpected error occurred.');
-        });
-    }
-</script>
-{% endif %}
-{% endblock %}
+        </script>
+        {% endif %}
+    {% endif %}
+</body>
+</html>

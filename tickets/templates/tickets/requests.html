@@ -12,7 +12,10 @@
             Pending Requests
         </button>
         <button onclick="switchTab('reviewed')" id="tab-reviewed" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors">
-            Reviewed & Assigned
+            Reviewed & Assigned Tickets
+        </button>
+        <button onclick="switchTab('unresolved')" id="tab-unresolved" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors">
+            Unresolved Tickets
         </button>
     </nav>
 </div>
@@ -129,6 +132,68 @@
             <svg class="w-16 h-16 mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <p class="text-lg font-medium">No reviewed requests</p>
             <p class="text-sm">Assigned and scheduled requests will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Tab 3: Unresolved Tickets -->
+<div id="content-unresolved" class="tab-content hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 flex flex-col transition-colors">
+    {% if unresolved_requests %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                        <th class="p-4 font-medium">Ticket / Date</th>
+                        <th class="p-4 font-medium">Requester</th>
+                        <th class="p-4 font-medium">Support Type & School</th>
+                        <th class="p-4 font-medium">Assigned To</th>
+                        <th class="p-4 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                    {% for ticket in unresolved_requests %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="p-4">
+                            <div class="font-bold text-gray-800 dark:text-gray-200">{{ ticket.ticket_number|default:"TKT-NEW" }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.updated_at|date:'M d, Y g:i A' }}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="font-medium text-gray-800 dark:text-gray-200">{{ ticket.first_name }} {{ ticket.last_name }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.email|default:"No email provided" }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.contact_number|default:"" }}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="mb-1">
+                                <span class="inline-block px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-xs font-semibold">
+                                    {{ ticket.get_support_type_display|default:"General Inquiry" }}
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400">{{ ticket.school_name|default:"No school specified" }}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                {% if ticket.assignee %}
+                                    {{ ticket.assignee.get_full_name|default:ticket.assignee.username }}
+                                {% else %}
+                                    Unassigned
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="p-4 flex justify-end gap-2">
+                           <a href="{% url 'reviewed_ticket_readonly' ticket.id %}" class="whitespace-nowrap px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm text-center inline-block border border-gray-300 dark:border-gray-600">
+                                View Details
+                           </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="flex flex-col items-center justify-center h-full py-24 text-gray-400 dark:text-gray-500">
+            <svg class="w-16 h-16 mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M10.29 3.86l-7.01 12.14A2 2 0 005 19h14a2 2 0 001.72-3l-7.01-12.14a2 2 0 00-3.44 0z"></path></svg>
+            <p class="text-lg font-medium">No unresolved tickets</p>
+            <p class="text-sm">Tickets reported back by employees will appear here.</p>
         </div>
     {% endif %}
 </div>

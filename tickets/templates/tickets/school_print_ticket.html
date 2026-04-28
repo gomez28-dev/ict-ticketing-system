@@ -3,150 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print Ticket - {{ ticket.ticket_number }}</title>
+    <title>Proof of Request - {{ ticket.ticket_number }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @page {
+            size: auto;
+            margin: 0.6in;
+        }
+
         @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            @page { margin: 0.5in; }
+            html, body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen" onload="window.print()">
-
-    <!-- Action Bar (hidden on print) -->
-    <div class="no-print bg-white shadow-sm border-b border-gray-200 py-4 px-8 flex items-center justify-between">
-        <a href="{% url 'school_ticket_detail' ticket.id %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 flex items-center gap-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Back to Ticket
-        </a>
-        <button onclick="window.print()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md transition-colors flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-            Print Document
-        </button>
-    </div>
-
-    <!-- Printable Document -->
-    <div class="max-w-4xl mx-auto my-8 no-print:px-4">
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-
-            <!-- Header -->
-            <div class="p-8 border-b-4 border-blue-500 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                <div class="flex items-center gap-5">
-                    <div class="w-20 h-20 bg-gray-100 border-2 border-dashed border-gray-400 rounded-xl flex flex-col items-center justify-center overflow-hidden shadow-inner flex-shrink-0">
-                        <svg class="w-6 h-6 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Logo</span>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-black text-gray-900 uppercase tracking-wide">Service Request Form</h2>
-                        <p class="text-md font-semibold text-gray-600">DepEd Valenzuela - ICT Unit</p>
-                        <p class="text-sm font-bold text-blue-600 mt-1 flex items-center gap-1 bg-blue-50 inline-flex px-2 py-0.5 rounded">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Official Ticket Document
-                        </p>
-                    </div>
-                </div>
-                <div class="text-left sm:text-right">
-                    <p class="text-sm font-bold text-gray-400 uppercase tracking-wider">Ticket ID</p>
-                    <p class="text-3xl font-black text-gray-900 drop-shadow-sm">{{ ticket.ticket_number }}</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ ticket.created_at|date:"F d, Y" }}</p>
-                </div>
-            </div>
-
-            <!-- Body Content -->
-            <div class="p-8 space-y-8">
-                <!-- Key Info Grid -->
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">School / Location</p>
-                        <p class="font-bold text-lg text-gray-900">{{ ticket.school_name }}</p>
-                        {% if ticket.school_district %}<p class="text-sm text-gray-500">{{ ticket.school_district }}</p>{% endif %}
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Current Status</p>
-                        <p class="font-bold text-lg text-gray-900">{{ ticket.get_status_display }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Requested By</p>
-                        <p class="font-bold text-gray-900">{{ ticket.first_name }} {{ ticket.last_name }}</p>
-                        <p class="text-sm text-gray-500">{{ ticket.contact_number }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Date Filed</p>
-                        <p class="font-bold text-gray-900">{{ ticket.created_at|date:"F d, Y h:i A" }}</p>
-                    </div>
-                </div>
-
-                <hr class="border-gray-200">
-
-                <!-- Request Details -->
-                <div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Request Details</h3>
-                    
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Support Type</p>
-                    <span class="inline-block bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded mb-4">
-                        {{ ticket.get_support_type_display }}
-                    </span>
-
-                    {% if ticket.title %}
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-4">Title</p>
-                    <p class="font-medium text-gray-900 mb-4">{{ ticket.title }}</p>
-                    {% endif %}
-
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Description</p>
-                    <div class="p-4 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">{{ ticket.description }}</div>
-                </div>
-
-                {% if ticket.scheduled_date or ticket.scheduled_start_time %}
-                <hr class="border-gray-200">
-                <div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Schedule</h3>
-                    <div class="grid grid-cols-2 gap-6">
-                        {% if ticket.scheduled_date %}
-                        <div>
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Scheduled Date</p>
-                            <p class="font-bold text-gray-900">{{ ticket.scheduled_date|date:"F d, Y" }}</p>
-                        </div>
-                        {% endif %}
-                        {% if ticket.scheduled_start_time and ticket.scheduled_end_time %}
-                        <div>
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Time Block</p>
-                            <p class="font-bold text-gray-900">{{ ticket.scheduled_start_time|time:"g:i A" }} – {{ ticket.scheduled_end_time|time:"g:i A" }}</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Signatures -->
-                <div class="pt-16 grid grid-cols-2 gap-12 text-center pb-6">
-                    <div>
-                        <div class="border-b border-gray-400 mb-2 w-3/4 mx-auto"></div>
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">ICT Personnel Signature</p>
-                    </div>
-                    <div>
-                        <div class="border-b border-gray-400 mb-2 w-3/4 mx-auto"></div>
-                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Client / Requestor Signature</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="p-6 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gray-100 border border-dashed border-gray-400 rounded-full flex items-center justify-center opacity-70 flex-shrink-0">
-                        <span class="text-[8px] font-bold text-gray-500 uppercase">Logo</span>
-                    </div>
-                    <p class="text-xs text-gray-500 font-medium">For inquiries, please coordinate with the ICT Unit.<br>This document serves as an official record of the submitted request.</p>
-                </div>
-                <div class="text-center sm:text-right text-gray-400">
-                    <p class="text-xs font-bold uppercase tracking-wider">Generated by</p>
-                    <p class="text-sm font-medium">Ticketing Support System</p>
-                </div>
-            </div>
+<body class="bg-slate-100 text-slate-900 print:bg-white print:text-black">
+    <div class="print:hidden sticky top-0 z-10 border-b border-slate-300 bg-white/95 backdrop-blur">
+        <div class="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 sm:px-6">
+            <a href="{% url 'school_ticket_detail' ticket.id %}" class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-slate-900">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Ticket
+            </a>
+            <button onclick="window.print()" class="inline-flex items-center gap-2 rounded-md border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                Print Receipt
+            </button>
         </div>
     </div>
 
+    <main class="mx-auto max-w-4xl px-3 py-4 sm:px-6 print:max-w-none print:px-0 print:py-0">
+        <section class="mx-auto w-full max-w-[190mm] bg-white shadow-lg shadow-slate-300/60 print:shadow-none">
+            <div class="border border-slate-900 p-6 print:border-black sm:p-8">
+                <header class="border-b border-slate-900 pb-4 text-center print:border-black">
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em]">Schools Division Office Valenzuela</p>
+                    <p class="mt-1 text-sm font-bold uppercase tracking-[0.16em]">Information and Communications Technology Unit</p>
+                    <h1 class="mt-4 text-xl font-extrabold uppercase tracking-[0.18em]">Proof of Request</h1>
+                </header>
+
+                <section class="mt-6 space-y-4 text-sm">
+                    <div class="border border-slate-900 print:border-black">
+                        <div class="grid grid-cols-1 sm:grid-cols-2">
+                            <div class="border-b border-slate-900 p-3 print:border-black sm:border-b-0 sm:border-r">
+                                <p class="text-[11px] font-bold uppercase tracking-wide">Requester Name</p>
+                                <p class="mt-1 font-medium">{{ ticket.first_name }} {{ ticket.last_name }}</p>
+                            </div>
+                            <div class="p-3">
+                                <p class="text-[11px] font-bold uppercase tracking-wide">School/Location</p>
+                                <p class="mt-1 font-medium">{{ ticket.school_name|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-900 print:border-black">
+                        <div class="grid grid-cols-1 sm:grid-cols-2">
+                            <div class="border-b border-slate-900 p-3 print:border-black sm:border-b-0 sm:border-r">
+                                <p class="text-[11px] font-bold uppercase tracking-wide">Ticket ID</p>
+                                <p class="mt-1 font-medium">{{ ticket.ticket_number }}</p>
+                            </div>
+                            <div class="p-3">
+                                <p class="text-[11px] font-bold uppercase tracking-wide">Date Filed</p>
+                                <p class="mt-1 font-medium">{{ ticket.created_at|date:"F d, Y h:i A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-900 p-3 print:border-black">
+                        <p class="text-[11px] font-bold uppercase tracking-wide">Service Requested</p>
+                        <p class="mt-1 font-medium">{{ ticket.get_support_type_display|default:ticket.support_type }}</p>
+                    </div>
+
+                    <div class="border border-slate-900 p-3 print:border-black">
+                        <p class="text-[11px] font-bold uppercase tracking-wide">Description</p>
+                        <div class="mt-2 min-h-[180px] whitespace-pre-wrap leading-6">{{ ticket.description|default:"" }}</div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
