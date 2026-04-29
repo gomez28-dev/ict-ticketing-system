@@ -356,6 +356,25 @@ def decline_request(request, ticket_id):
     return redirect('requests')
 
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def reject_unresolved(request, ticket_id):
+    if request.method == 'POST':
+        ticket = get_object_or_404(Ticket, id=ticket_id)
+        reject_note = request.POST.get('reject_note', '').strip()
+        
+        if reject_note:
+            note_entry = f"\n[Admin Rejected Unresolved Status]: {reject_note}"
+            if ticket.admin_notes:
+                ticket.admin_notes += note_entry
+            else:
+                ticket.admin_notes = note_entry
+                
+        ticket.status = 'IN_PROGRESS'
+        ticket._current_user = request.user
+        ticket.save()
+        
+    return redirect('requests')
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def documents_view(request):
     under_review_tickets = Ticket.objects.filter(status='UNDER_REVIEW').order_by('-updated_at')
     resolved_tickets = Ticket.objects.filter(status='RESOLVED').order_by('-updated_at')
@@ -750,7 +769,7 @@ def my_tickets(request):
 
     resolved_tickets = Ticket.objects.filter(
         admin_notes__icontains=user_name,
-        status='RESOLVED'
+        status__in=['RESOLVED', 'COMPLETED']
     ).order_by('-actual_completion_date', '-updated_at')
 
     context = {

@@ -157,10 +157,7 @@
                             </td>
                             <td class="px-6 py-4 text-gray-500">{{ ticket.actual_completion_date|date:"M d, Y"|default:ticket.updated_at|date:"M d, Y" }}</td>
                             <td class="px-6 py-4 text-right flex justify-end gap-3 items-center">
-                                <form method="POST" action="{% url 'unresolve_assignment' ticket.id %}" class="inline">
-                                    {% csrf_token %}
-                                    <button type="submit" class="text-orange-600 hover:text-orange-800 text-xs font-bold transition-colors">Reopen Task</button>
-                                </form>
+                                <a href="{% url 'employee_ticket_review' ticket.id %}" class="text-blue-600 hover:text-blue-800 text-xs font-bold transition-colors">View Details</a>
 
                                 <span class="text-gray-300 dark:text-gray-600">|</span>
 

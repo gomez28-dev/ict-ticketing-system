@@ -72,6 +72,7 @@ urlpatterns = [
     path('admin-dashboard/search/', views.search_tickets, name='search_tickets'),
     path('admin-dashboard/settings/', views.settings_view, name='settings'),
     path('admin-dashboard/request/<int:ticket_id>/', views.ticket_triage_view, name='ticket_triage'),
+    path('admin-dashboard/request/reject-unresolved/<int:ticket_id>/', views.reject_unresolved, name='reject_unresolved'),
     path('school-dashboard/delete-account/', views.delete_school_account, name='delete_school_account'),
 ]
 
