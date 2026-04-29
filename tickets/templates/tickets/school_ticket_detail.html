@@ -63,15 +63,19 @@
                 </a>
             </div>
             <div class="mt-1">
-                {% if ticket.status == 'PENDING' %}
+                {% if ticket.status == "PENDING" %}
                     <span class="px-4 py-1.5 inline-flex text-sm font-bold rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 shadow-sm border border-gray-300 dark:border-gray-600">
                         PENDING
                     </span>
-                {% elif ticket.status == 'SCHEDULED' %}
+                {% elif ticket.status == "SCHEDULED" %}
                     <span class="px-4 py-1.5 inline-flex text-sm font-bold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400 shadow-sm border border-yellow-200 dark:border-yellow-700/50">
                         SCHEDULED
                     </span>
-                {% elif ticket.status == 'RESOLVED' or ticket.status == 'COMPLETED' %}
+                {% elif ticket.status == "DECLINED" %}
+                    <span class="px-4 py-1.5 inline-flex text-sm font-bold rounded-full bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400 shadow-sm border border-red-200 dark:border-red-700/50">
+                        DECLINED
+                    </span>
+                {% elif ticket.status == "RESOLVED" or ticket.status == "COMPLETED" %}
                     <span class="px-4 py-1.5 inline-flex text-sm font-bold rounded-full bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400 shadow-sm border border-green-200 dark:border-green-700/50">
                         {{ ticket.get_status_display|upper }}
                     </span>
@@ -83,7 +87,15 @@
             </div>
         </div>
 
-        {% if ticket.status != 'PENDING' %}
+        {% if ticket.status == "DECLINED" %}
+            <div class="mt-6 p-5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <h4 class="text-sm font-bold text-red-800 dark:text-red-400 mb-2">Reason for Decline:</h4>
+                <p class="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap">{{ ticket.decline_reason }}</p>
+            </div>
+        {% endif %}
+
+        {% if ticket.status != "PENDING" %}
+            
             {% if ticket.scheduled_date %}
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
                 <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Scheduled Date</p>
@@ -96,8 +108,8 @@
             </div>
             {% endif %}
             
-            {% if assigned_employees and assigned_employees != 'None' and assigned_employees != 'Unassigned' %}
-                {% if ticket.status == 'ACCEPTED' or ticket.status == 'SCHEDULED' or ticket.status == 'RESOLVED' or ticket.status == 'COMPLETED' %}
+            {% if assigned_employees and assigned_employees != "None" and assigned_employees != "Unassigned" %}
+                {% if ticket.status == "ACCEPTED" or ticket.status == "SCHEDULED" or ticket.status == "RESOLVED" or ticket.status == "COMPLETED" %}
                 <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
                     <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Employee Assigned</p>
                     <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ assigned_employees }}</div>

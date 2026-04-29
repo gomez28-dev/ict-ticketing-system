@@ -1,7 +1,7 @@
 from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type
 from django.utils import timezone
 from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP
-from .forms import PublicTicketForm, SubmitForReviewForm
+from .forms import PublicTicketForm, SubmitForReviewForm, validate_ph_mobile
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.urls import reverse
@@ -192,13 +192,26 @@ def school_dashboard(request):
         action = request.POST.get('action')
         if action == 'update_profile':
             new_ict_email = request.POST.get('ict_email', '').strip()
+            
+            normalized_email = new_ict_email.lower()
+            allowed_emails = ['admin@test.com', 'employee@test.com']
+            if not normalized_email.endswith('@deped.gov.ph') and normalized_email not in allowed_emails:
+                messages.error(request, "Only official @deped.gov.ph email addresses are permitted.")
+                return redirect('school_dashboard')
+
             if is_email_already_associated(new_ict_email, exclude_school_id=school.id):
                 messages.error(request, "This email is already associated with an account")
                 return redirect('school_dashboard')
 
             school.ict_first_name = request.POST.get('ict_first_name')
             school.ict_last_name = request.POST.get('ict_last_name')
-            school.ict_contact_number = request.POST.get('ict_contact_number')
+            ict_contact = request.POST.get('ict_contact_number', '').strip()
+            try:
+                ict_contact = validate_ph_mobile(ict_contact)
+            except Exception:
+                messages.error(request, "Please enter a valid 11-digit Philippine mobile number starting with 09 (e.g., 09123456789).")
+                return redirect('school_dashboard')
+            school.ict_contact_number = ict_contact
             school.ict_email = new_ict_email
             school.save()
             messages.success(request, 'Profile updated successfully.')
@@ -329,6 +342,17 @@ def delete_request(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
         ticket.delete()
+    return redirect('requests')
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def decline_request(request, ticket_id):
+    if request.method == 'POST':
+        ticket = get_object_or_404(Ticket, id=ticket_id)
+        reason = request.POST.get('decline_reason', '').strip()
+        ticket.status = 'DECLINED'
+        ticket.decline_reason = reason
+        ticket._current_user = request.user
+        ticket.save()
     return redirect('requests')
 
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
@@ -703,6 +727,81 @@ def accept_assignment(request, ticket_id):
 
         is_ajax = request.headers.get(
             'X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '')
+
+def settings_view(request):
+    return render(request, 'tickets/settings.html')
+
+# ==========================================
+# EMPLOYEE SPECIFIC VIEWS
+# ==========================================
+
+@login_required
+def my_tickets(request):
+    user_name = f"{request.user.first_name} {request.user.last_name}".strip()
+
+    pending_acceptance_tickets = Ticket.objects.filter(
+        admin_notes__icontains=user_name,
+        status='PENDING_ACCEPTANCE'
+    ).order_by('-created_at')
+
+    assigned_tickets = Ticket.objects.filter(
+        admin_notes__icontains=user_name
+    ).exclude(status__in=['RESOLVED', 'PENDING_ACCEPTANCE', 'COMPLETED']).order_by('-created_at')
+
+    resolved_tickets = Ticket.objects.filter(
+        admin_notes__icontains=user_name,
+        status='RESOLVED'
+    ).order_by('-actual_completion_date', '-updated_at')
+
+    context = {
+        'pending_acceptance_tickets': pending_acceptance_tickets,
+        'assigned_tickets': assigned_tickets,
+        'resolved_tickets': resolved_tickets
+    }
+    return render(request, 'tickets/my_tickets.html', context)
+
+def employee_receipt_view(request, ticket_id):
+    is_employee = request.user.is_authenticated and getattr(request.user, 'role', '') == 'MEMBER' and not request.user.is_superuser
+    is_admin = request.user.is_authenticated and (getattr(request.user, 'role', '') == 'ADMIN' or request.user.is_superuser)
+    is_school = request.session.get('is_school_authenticated', False)
+    
+    if not (is_employee or is_school or is_admin):
+        from django.contrib import messages
+        messages.error(request, 'You do not have permission to access this document.')
+        return redirect('dashboard' if request.user.is_authenticated else 'school_dashboard')
+        
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    if is_school and ticket.school_name != request.session.get('school_name'):
+        from django.contrib import messages
+        messages.error(request, 'You do not have permission to access this document.')
+        return redirect('school_dashboard')
+
+    return render(request, 'tickets/employee_receipt.html', {'ticket': ticket})
+
+def school_print_ticket(request, ticket_id):
+    if not request.session.get('is_school_authenticated'):
+        return redirect('school_login')
+    
+    school_name = request.session.get('school_name')
+    ticket = get_object_or_404(Ticket, id=ticket_id, school_name=school_name)
+    return render(request, 'tickets/school_print_ticket.html', {'ticket': ticket})
+
+@login_required
+def employee_ticket_review(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    return render(request, 'tickets/employee_ticket_review.html', {'ticket': ticket})
+
+@login_required
+def accept_assignment(request, ticket_id):
+    if request.method == 'POST':
+        ticket = get_object_or_404(Ticket, id=ticket_id)
+        ticket.status = 'SCHEDULED'
+        ticket._current_user = request.user
+        ticket.save()
+
+        is_ajax = request.headers.get(
+            'X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '')
         if is_ajax:
             return JsonResponse({'success': True, 'message': 'Ticket accepted successfully.'})
 
@@ -730,6 +829,14 @@ def decline_assignment(request, ticket_id):
                 else:
                     new_lines.append(line)
             ticket.admin_notes = '\n'.join(new_lines)
+
+        reason = request.POST.get('decline_reason', '').strip()
+        if reason:
+            decline_note = f"\n[Declined by {user_name}] Reason: {reason}"
+            if ticket.admin_notes:
+                ticket.admin_notes += decline_note
+            else:
+                ticket.admin_notes = decline_note
 
         ticket.status = 'PENDING'
         ticket._current_user = request.user
@@ -1034,6 +1141,15 @@ def request_access(request):
                 'form_data': request.POST,
             })
 
+        # Validate PH mobile number format
+        import re
+        if not re.fullmatch(r'09\d{9}', contact_number):
+            return render(request, 'tickets/request_access.html', {
+                'error': 'Please enter a valid 11-digit Philippine mobile number starting with 09 (e.g., 09123456789).',
+                'schools': schools,
+                'form_data': request.POST,
+            })
+
         # Validate selected school exists
         try:
             school = School.objects.get(id=school_id)
@@ -1047,6 +1163,15 @@ def request_access(request):
         if is_email_already_associated(email):
             return render(request, 'tickets/request_access.html', {
                 'error': 'This email is already associated with an account',
+                'schools': schools,
+                'form_data': request.POST,
+            })
+
+        normalized_email = email.lower()
+        allowed_emails = ['admin@test.com', 'employee@test.com']
+        if not normalized_email.endswith('@deped.gov.ph') and normalized_email not in allowed_emails:
+            return render(request, 'tickets/request_access.html', {
+                'error': 'Only official @deped.gov.ph email addresses are permitted.',
                 'schools': schools,
                 'form_data': request.POST,
             })
@@ -1141,8 +1266,22 @@ def delete_school_account(request):
 
     school_name = request.session.get('school_name')
     school = get_object_or_404(School, name=school_name)
+
+    # Clear ICT personnel details — keep the School record intact
+    school.ict_first_name = None
+    school.ict_last_name = None
+    school.ict_contact_number = None
+    school.ict_email = None
+
+    # Deactivate login by setting an unusable password hash
+    from django.contrib.auth.hashers import make_password
+    school.password = make_password(None)
+    school.save()
+
+    # Terminate the session
     request.session.flush()
-    school.delete()
+
+    messages.success(request, "Your ICT personnel account has been successfully removed. You may re-register through the Request Access flow.")
     return redirect('school_login')
 
 
@@ -1153,6 +1292,17 @@ def admin_delete_school(request, school_id):
 
     school = get_object_or_404(School, id=school_id)
     school_name = school.name
-    school.delete()
-    messages.success(request, f"School account '{school_name}' has been deleted.")
+
+    # Clear ICT personnel details — keep the School record intact
+    school.ict_first_name = None
+    school.ict_last_name = None
+    school.ict_contact_number = None
+    school.ict_email = None
+
+    # Deactivate login by setting an unusable password hash
+    from django.contrib.auth.hashers import make_password
+    school.password = make_password(None)
+    school.save()
+
+    messages.success(request, f"ICT personnel account for '{school_name}' has been removed. The school record remains in the system.")
     return redirect('schools_management')

@@ -12,7 +12,7 @@
             Pending Requests
         </button>
         <button onclick="switchTab('reviewed')" id="tab-reviewed" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors">
-            Reviewed & Assigned Tickets
+            Reviewed &amp; Assigned Tickets
         </button>
         <button onclick="switchTab('unresolved')" id="tab-unresolved" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors">
             Unresolved Tickets
@@ -29,7 +29,7 @@
                     <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
                         <th class="p-4 font-medium">Ticket / Date</th>
                         <th class="p-4 font-medium">Requester</th>
-                        <th class="p-4 font-medium">Support Type & School</th>
+                        <th class="p-4 font-medium">Support Type &amp; School</th>
                         <th class="p-4 font-medium text-right">Actions</th>
                     </tr>
                 </thead>
@@ -54,14 +54,11 @@
                             <div class="text-xs text-gray-600 dark:text-gray-400">{{ ticket.school_name|default:"No school specified" }}</div>
                         </td>
                         <td class="p-4 flex justify-end gap-2">
-                            <form action="{% url 'delete_request' ticket.id %}" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete this request?');">
-                                {% csrf_token %}
-                                <button type="submit" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-red-600 dark:text-red-400 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
-                                    Delete
-                                </button>
-                            </form>
+                            <button onclick="openDeclineModal('{{ ticket.id }}')" type="button" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-red-600 dark:text-red-400 rounded text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                                Decline
+                            </button>
                            <a href="{% url 'ticket_triage' ticket.id %}" class="whitespace-nowrap px-3 py-1.5 bg-[#0078d4] text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors shadow-sm text-center inline-block">
-                                Review & Create Ticket
+                                Review &amp; Create Ticket
                            </a>
                         </td>
                     </tr>
@@ -87,7 +84,7 @@
                     <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
                         <th class="p-4 font-medium">Ticket / Date</th>
                         <th class="p-4 font-medium">Requester</th>
-                        <th class="p-4 font-medium">Support Type & School</th>
+                        <th class="p-4 font-medium">Support Type &amp; School</th>
                         <th class="p-4 font-medium">Assigned To</th>
                         <th class="p-4 font-medium text-right">Actions</th>
                     </tr>
@@ -145,7 +142,7 @@
                     <tr class="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
                         <th class="p-4 font-medium">Ticket / Date</th>
                         <th class="p-4 font-medium">Requester</th>
-                        <th class="p-4 font-medium">Support Type & School</th>
+                        <th class="p-4 font-medium">Support Type &amp; School</th>
                         <th class="p-4 font-medium">Assigned To</th>
                         <th class="p-4 font-medium text-right">Actions</th>
                     </tr>
@@ -214,6 +211,41 @@
         const activeBtn = document.getElementById('tab-' + tabId);
         activeBtn.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
         activeBtn.classList.add('border-[#0078d4]', 'text-[#0078d4]');
+    }
+</script>
+
+<!-- Decline Modal -->
+<div id="declineModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-gray-900/50 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden">
+        <div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Decline Request</h3>
+            <button onclick="closeDeclineModal()" class="text-gray-400 hover:text-gray-500">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <form id="declineForm" method="POST" class="px-6 py-4">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason for Declining</label>
+                <textarea name="decline_reason" rows="4" class="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required></textarea>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeDeclineModal()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded">Cancel</button>
+                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Decline</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openDeclineModal(ticketId) {
+        document.getElementById('declineModal').classList.remove('hidden');
+        document.getElementById('declineModal').classList.add('flex');
+        document.getElementById('declineForm').action = "{% url 'decline_request' 999999 %}".replace('999999', ticketId);
+    }
+    function closeDeclineModal() {
+        document.getElementById('declineModal').classList.add('hidden');
+        document.getElementById('declineModal').classList.remove('flex');
     }
 </script>
 {% endblock %}

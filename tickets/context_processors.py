@@ -1,4 +1,4 @@
-from .models import Ticket
+from .models import Ticket, SchoolAccountRequest
 
 
 def global_ticket_counts(request):
@@ -17,4 +17,8 @@ def global_ticket_counts(request):
             admin_notes__icontains=user_name
         ).exclude(status__in=['RESOLVED', 'COMPLETED']).count()
 
-    return context
+        # Badge counts for Schools and Documents nav items
+        context['pending_schools_count'] = SchoolAccountRequest.objects.filter(status='PENDING').count()
+        context['under_review_docs_count'] = Ticket.objects.filter(status='UNDER_REVIEW').count()
+
+    return context

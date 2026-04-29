@@ -68,8 +68,13 @@
                         Employees
                     </a>
 
-                    <a href="{% url 'schools_management' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'schools_management' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                        Schools
+                    <a href="{% url 'schools_management' %}" class="flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'schools_management' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <div class="flex items-center gap-3">
+                            Schools
+                        </div>
+                        {% if pending_schools_count and pending_schools_count > 0 %}
+                            <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ pending_schools_count }}</span>
+                        {% endif %}
                     </a>
 
                     <a href="{% url 'requests' %}" class="flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'requests' or url_name == 'ticket_triage' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
@@ -81,8 +86,13 @@
                         {% endif %}
                     </a>
 
-                    <a href="{% url 'documents' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'documents' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                        Documents
+                    <a href="{% url 'documents' %}" class="flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'documents' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
+                        <div class="flex items-center gap-3">
+                            Documents
+                        </div>
+                        {% if under_review_docs_count and under_review_docs_count > 0 %}
+                            <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ under_review_docs_count }}</span>
+                        {% endif %}
                     </a>
 
                     <a href="{% url 'backlog' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'backlog' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">

@@ -108,12 +108,15 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ ticket.title }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    {% if ticket.status == 'RESOLVED' or ticket.status == 'COMPLETED' %} bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400
-                                    {% elif ticket.status == 'PENDING' %} bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400
-                                    {% else %} bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 {% endif %}">
-                                    {{ ticket.get_status_display }}
-                                </span>
+                                {% if ticket.status == "DECLINED" %}
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
+                                {% elif ticket.status == "RESOLVED" or ticket.status == "COMPLETED" %}
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{ ticket.get_status_display }}</span>
+                                {% elif ticket.status == "PENDING" %}
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{ ticket.get_status_display }}</span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ ticket.get_status_display }}</span>
+                                {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ ticket.created_at|date:"M d, Y" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -225,7 +228,7 @@
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Number</label>
-                            <input type="text" name="ict_contact_number" value="{{ school.ict_contact_number|default:'' }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" required>
+                            <input type="tel" name="ict_contact_number" value="{{ school.ict_contact_number|default:'' }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" placeholder="09XXXXXXXXX" maxlength="11" pattern="09[0-9]{9}" title="Please enter a valid 11-digit Philippine mobile number starting with 09" required>
                         </div>
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
@@ -283,82 +286,7 @@
         </div>
     </footer>
 
-    <!-- Print Receipts Container (Hidden from normal view) -->
-    <div id="print-container" class="hidden print:block absolute inset-0 bg-white text-gray-900 z-50 p-8 w-full min-h-screen">
-        {% for ticket in tickets %}
-        <div id="receipt-{{ ticket.ticket_number }}" class="receipt-card hidden w-full max-w-4xl mx-auto">
-            <div class="border-2 rounded-xl border-gray-200 bg-white overflow-hidden">
-                <!-- Header -->
-                <div class="flex justify-between items-start border-b-2 p-8">
-                    <div class="flex items-center gap-6">
-                        <div class="w-16 h-16 border rounded-lg text-sm flex items-center justify-center text-gray-400 font-semibold tracking-wider">LOGO</div>
-                        <div>
-                            <h2 class="text-[#1e3a8a] font-bold text-2xl tracking-wide uppercase">DEPED VALENZUELA</h2>
-                            <p class="text-gray-600 font-medium mt-1">Information and Communication Technology Unit</p>
-                            <p class="text-gray-500 italic mt-1 text-sm">Official Support Ticket Receipt</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs text-gray-500 font-bold tracking-widest uppercase mb-1">Ticket ID</p>
-                        <p class="text-3xl font-bold text-[#1e3a8a]">{{ ticket.ticket_number }}</p>
-                    </div>
-                </div>
-                <!-- Body -->
-                <div class="p-8 grid grid-cols-2 gap-y-8">
-                    <div>
-                        <p class="text-xs text-gray-400 font-bold tracking-widest uppercase mb-2">Requester Name</p>
-                        <p class="font-semibold text-lg text-gray-800 border-b border-gray-100 pb-1 inline-block">{{ ticket.first_name }} {{ ticket.last_name }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-400 font-bold tracking-widest uppercase mb-2">Date Submitted</p>
-                        <p class="font-semibold text-gray-800">{{ ticket.created_at|date:'F d, Y h:i A' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-400 font-bold tracking-widest uppercase mb-2">School / Location</p>
-                        <p class="font-semibold text-lg text-gray-800">{{ ticket.school_name }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-400 font-bold tracking-widest uppercase mb-2">Contact Details</p>
-                        <p class="font-semibold text-gray-800">{{ ticket.contact_number|default:"N/A" }}</p>
-                        <p class="text-gray-500 text-sm mt-1">{{ ticket.email|default:"N/A" }}</p>
-                    </div>
-                    <div class="col-span-2 mt-2">
-                        <p class="text-xs text-gray-400 font-bold tracking-widest uppercase mb-3">Support Type Needed</p>
-                        <span class="bg-blue-50 text-[#1e3a8a] text-sm font-bold px-4 py-2 rounded-md inline-flex border border-blue-200">
-                            {{ ticket.get_support_type_display|default:ticket.support_type }}
-                        </span>
-                    </div>
-                    <div class="col-span-2 mt-2">
-                        <p class="text-xs text-gray-400 font-bold tracking-widest uppercase mb-3">Issue Description</p>
-                        <div class="bg-gray-50 rounded-lg p-5 text-gray-700 border border-gray-200 text-sm">
-                            {{ ticket.description|linebreaksbr }}
-                        </div>
-                    </div>
-                </div>
-                <!-- Footer inner -->
-                <div class="border-t-2 bg-gray-50 p-6 px-8 flex justify-between items-center text-xs text-gray-500">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center bg-white font-bold text-gray-400 text-[10px] tracking-widest">LOGO</div>
-                        <p class="leading-relaxed">For follow-ups and inquiries, please present this receipt.<br>Thank you for reaching out to the ICT Unit.</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="mb-1 uppercase font-semibold text-gray-400">Generated By</p>
-                        <p class="font-bold text-gray-600">Ticketing Support System</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Submit another button placeholder for print visuals -->
-            <div class="mt-8 flex justify-end gap-4">
-                <div class="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-semibold text-sm">Submit Another Ticket</div>
-                <div class="px-6 py-3 bg-[#1e3a8a] text-white rounded-lg font-semibold text-sm flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    Print / Download PDF
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
+    <!-- Removed Print Receipts Container to prevent duplicates -->
 
     <!-- Request Support Modal -->
     <div id="ticketModal" class="modal fixed inset-0 z-50 items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm print:hidden">
@@ -408,7 +336,8 @@
     </div>
 
     <!-- Success Validation Modal -->
-    <div id="successModal" class="modal fixed inset-0 z-[60] items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm {% if submitted_ticket %}active{% endif %}">
+    {% if submitted_ticket %}
+    <div id="successModal" class="modal fixed inset-0 z-[60] items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm active">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden transition-colors duration-200">
             <div class="p-6 text-center">
                 <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
@@ -420,10 +349,10 @@
                 <p class="text-gray-600 dark:text-gray-400 mb-6">Your request form has been successfully submitted. Your Request ID is <span class="font-bold text-blue-600 dark:text-blue-400">#{{ submitted_ticket.ticket_number }}</span>.</p>
                 
                 <div class="flex flex-col gap-3">
-                    <button onclick="printTicket('{{ submitted_ticket.ticket_number }}')" class="w-full bg-[#1e3a8a] text-white px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-blue-800 transition-colors">
+                    <a href="{% url 'school_print_ticket' submitted_ticket.id %}" target="_blank" class="w-full bg-[#1e3a8a] text-white px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-blue-800 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         Print Submission Receipt
-                    </button>
+                    </a>
                     <button onclick="closeSuccessModal()" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                         Close
                     </button>
@@ -431,6 +360,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     <!-- Script for Tabs and Modal -->
     <script>
@@ -463,22 +393,7 @@
             return window.confirm('Are you sure? This cannot be undone.');
         }
 
-        // Print Ticket Logic
-        function printTicket(ticketId) {
-            // Hide all receipts from structural map
-            document.querySelectorAll('.receipt-card').forEach(el => {
-                el.classList.add('hidden');
-                el.classList.remove('block', 'print:block');
-            });
-            // Show only the targeted payload
-            const target = document.getElementById('receipt-' + ticketId);
-            if(target) {
-                target.classList.remove('hidden');
-                target.classList.add('block', 'print:block');
-            }
-            // Trigger native print flow
-            window.print();
-        }
+        // Removed legacy printTicket JS logic
 
         // Dark Mode Logic
         document.addEventListener('DOMContentLoaded', () => {

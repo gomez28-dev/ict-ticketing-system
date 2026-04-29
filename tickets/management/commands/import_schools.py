@@ -119,6 +119,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"\n✅ Done! {added_count} school(s) imported, {skipped_count} already existed (skipped)."
+                f"\nDone! {added_count} school(s) imported, {skipped_count} already existed (skipped)."
             )
         )

@@ -130,6 +130,7 @@ class Ticket(models.Model):
         ('UNDER_REVIEW', 'Under Review'),
         ('RESOLVED', 'Resolved'),
         ('COMPLETED', 'Completed'),
+        ('DECLINED', 'Declined'),
     )
 
     PRIORITY_CHOICES = (
@@ -162,6 +163,7 @@ class Ticket(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tickets', null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='MEDIUM')
+    decline_reason = models.TextField(blank=True, null=True)
 
     # --- Work Type Field ---
     work_type = models.CharField(max_length=20, choices=WORK_TYPE_CHOICES, null=True, blank=True,

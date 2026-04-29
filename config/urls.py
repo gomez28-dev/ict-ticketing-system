@@ -49,6 +49,15 @@ urlpatterns = [
     path('admin-dashboard/my-tickets/decline/<int:ticket_id>/', views.decline_assignment, name='decline_assignment'),
     path('admin-dashboard/my-tickets/resolve/<int:ticket_id>/', views.resolve_assignment, name='resolve_assignment'),
     path('admin-dashboard/my-tickets/unresolve/<int:ticket_id>/', views.unresolve_assignment, name='unresolve_assignment'),
+
+    # Employee Specific Links
+    path('admin-dashboard/my-tickets/', views.my_tickets, name='my_tickets'),
+    path('admin-dashboard/my-tickets/review/<int:ticket_id>/', views.employee_ticket_review,
+         name='employee_ticket_review'),
+    path('admin-dashboard/my-tickets/accept/<int:ticket_id>/', views.accept_assignment, name='accept_assignment'),
+    path('admin-dashboard/my-tickets/decline/<int:ticket_id>/', views.decline_assignment, name='decline_assignment'),
+    path('admin-dashboard/my-tickets/resolve/<int:ticket_id>/', views.resolve_assignment, name='resolve_assignment'),
+    path('admin-dashboard/my-tickets/unresolve/<int:ticket_id>/', views.unresolve_assignment, name='unresolve_assignment'),
     path('admin-dashboard/my-tickets/submit-review/<int:ticket_id>/', views.submit_for_review, name='submit_for_review'),
 
     # Employee Receipt Path
@@ -56,6 +65,7 @@ urlpatterns = [
 
     # Form Actions & Triage
     path('admin-dashboard/requests/approve/<int:ticket_id>/', views.approve_request, name='approve_request'),
+    path('admin-dashboard/requests/decline/<int:ticket_id>/', views.decline_request, name='decline_request'),
     path('admin-dashboard/requests/delete/<int:ticket_id>/', views.delete_request, name='delete_request'),
     path('admin-dashboard/backlog/move/<int:ticket_id>/', views.move_from_backlog, name='move_from_backlog'),
     path('admin-dashboard/ticket/update/<int:ticket_id>/', views.update_ticket_ajax, name='update_ticket_ajax'),

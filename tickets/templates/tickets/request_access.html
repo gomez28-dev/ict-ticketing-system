@@ -182,7 +182,7 @@
 
                     <div class="form-group">
                         <label for="contact_number">Contact Number <span class="required">*</span></label>
-                        <input type="text" name="contact_number" id="contact_number" class="form-control" placeholder="e.g., 09171234567" required value="{{ form_data.contact_number|default:'' }}">
+                        <input type="tel" name="contact_number" id="contact_number" class="form-control" placeholder="09XXXXXXXXX" maxlength="11" pattern="09[0-9]{9}" title="Please enter a valid 11-digit Philippine mobile number starting with 09" required value="{{ form_data.contact_number|default:'' }}">
                     </div>
 
                     <button type="submit" class="btn-submit" id="submit_access_btn">Submit Access Request</button>
