@@ -1,0 +1,98 @@
+{% extends 'tickets/base_admin.html' %}
+
+{% block title %}Edit Profile: {{ profile_user.first_name }} {{ profile_user.last_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto animate-fade-in">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Edit Profile</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Update personnel details, role, and expertise.</p>
+        </div>
+        <a href="{% url 'employee_profile' profile_user.id %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
+            &larr; Back to Profile
+        </a>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 space-y-8">
+        {% csrf_token %}
+
+        <!-- Profile Picture Section -->
+        <div class="flex items-center gap-6 pb-8 border-b border-gray-100 dark:border-gray-700">
+            <div class="w-24 h-24 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-3xl font-bold overflow-hidden shadow-inner border border-blue-200 dark:border-blue-800/50 flex-shrink-0">
+                {% if profile_user.profile_picture %}
+                    <img src="{{ profile_user.profile_picture.url }}" alt="{{ profile_user.first_name }}" class="w-full h-full object-cover">
+                {% else %}
+                    {{ profile_user.first_name|make_list|first|default:"E" }}{{ profile_user.last_name|make_list|first|default:"" }}
+                {% endif %}
+            </div>
+            <div class="flex-1">
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Profile Picture</label>
+                <input type="file" name="profile_picture" accept="image/*" class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-400 transition-colors cursor-pointer">
+                <p class="text-xs text-gray-400 mt-2">Recommended: Square image, max 2MB. JPG, PNG, GIF allowed.</p>
+            </div>
+        </div>
+
+        <!-- Personal Details -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">First Name</label>
+                <input type="text" name="first_name" value="{{ profile_user.first_name }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl p-3 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm" required>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Last Name</label>
+                <input type="text" name="last_name" value="{{ profile_user.last_name }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl p-3 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm" required>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Email Address</label>
+                <input type="email" name="email" value="{{ profile_user.email }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl p-3 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm" required>
+            </div>
+        </div>
+
+        <!-- Role & Expertise -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 border-t border-gray-100 dark:border-gray-700 pt-8">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">System Role</label>
+                <select name="role" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl p-3 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
+                    <option value="MEMBER" {% if profile_user.role == 'MEMBER' %}selected{% endif %}>Team Member</option>
+                    <option value="ADMIN" {% if profile_user.role == 'ADMIN' %}selected{% endif %}>Admin</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Expertise</label>
+                <input type="text" name="expertise" value="{{ profile_user.expertise|join:', '|default:'' }}" placeholder="e.g. NETWORK, CCTV, SOFTWARE" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl p-3 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
+                <p class="text-[10px] text-gray-400 mt-1">Comma-separated list of skills.</p>
+            </div>
+        </div>
+
+        <!-- Bio -->
+        <div class="border-t border-gray-100 dark:border-gray-700 pt-8">
+            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Professional Bio</label>
+            <textarea name="bio" rows="4" placeholder="Brief background, certifications, and experience..." class="w-full border border-gray-300 dark:border-gray-600 rounded-xl p-3 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm custom-scrollbar">{{ profile_user.bio|default:'' }}</textarea>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-3">
+            <a href="{% url 'employee_profile' profile_user.id %}" class="px-6 py-2.5 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors">
+                Cancel
+            </a>
+            <button type="submit" class="px-6 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/30 transition-transform active:scale-95">
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
+</style>
+{% endblock %}

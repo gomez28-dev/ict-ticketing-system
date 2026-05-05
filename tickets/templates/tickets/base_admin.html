@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,76 +34,40 @@
 </head>
 <body class="preload bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 font-sans flex h-screen overflow-hidden transition-colors duration-200">
 
-    <aside class="w-64 bg-[#1e293b] dark:bg-black text-white flex flex-col justify-between h-full shadow-xl z-20">
+    <!-- Mobile Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden" onclick="closeSidebar()"></div>
+
+    <aside id="sidebar" class="fixed lg:relative -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out w-72 sm:w-80 lg:w-64 bg-[#1e293b] dark:bg-black text-white flex flex-col justify-between h-full shadow-xl z-50 flex-shrink-0">
         <div>
-            <div class="p-6 flex items-center gap-3 border-b border-gray-700 dark:border-gray-800">
-                <div class="bg-blue-500 p-2 rounded-lg text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            <div class="p-6 flex items-center justify-between gap-3 border-b border-gray-700 dark:border-gray-800">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="rounded-lg bg-white/10 p-1 flex-shrink-0">
+                        <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="ICT Helpdesk Logo" class="h-8 w-auto object-contain">
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="font-bold text-sm leading-tight uppercase tracking-wider">ICT Unit</h2>
+                        <p class="text-[10px] text-gray-400">Work Management</p>
+                    </div>
                 </div>
-                <div>
-                    <h2 class="font-bold text-sm leading-tight uppercase tracking-wider">ICT Unit</h2>
-                    <p class="text-[10px] text-gray-400">Work Management</p>
-                </div>
+                <button type="button" onclick="closeSidebar()" class="lg:hidden inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-colors" aria-label="Close navigation">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
 
             <nav class="p-4 space-y-2">
-                {% with url_name=request.resolver_match.url_name %}
-
-                <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'dashboard' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                    Board
-                </a>
+                {% include 'tickets/includes/nav_item.html' with url_pattern='dashboard' active_urls='dashboard' label='Board' %}
 
                 {% if request.user.role == 'MEMBER' and not request.user.is_superuser %}
-
-                    <a href="{% url 'my_tickets' %}" class="flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'my_tickets' or url_name == 'employee_ticket_review' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                        <div class="flex items-center gap-3">
-                            My Tickets
-                        </div>
-                        {% if my_ticket_count and my_ticket_count > 0 %}
-                            <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ my_ticket_count }}</span>
-                        {% endif %}
-                    </a>
-
+                    {% include 'tickets/includes/nav_item.html' with url_pattern='my_tickets' active_urls='my_tickets,employee_ticket_review' label='My Tickets' badge_count=my_ticket_count %}
                 {% else %}
-                    <a href="{% url 'teams' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'teams' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                        Employees
-                    </a>
-
-                    <a href="{% url 'schools_management' %}" class="flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'schools_management' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                        <div class="flex items-center gap-3">
-                            Schools
-                        </div>
-                        {% if pending_schools_count and pending_schools_count > 0 %}
-                            <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ pending_schools_count }}</span>
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'requests' %}" class="flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'requests' or url_name == 'ticket_triage' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                        <div class="flex items-center gap-3">
-                            Requests
-                        </div>
-                        {% if pending_count and pending_count > 0 %}
-                            <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ pending_count }}</span>
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'documents' %}" class="flex items-center justify-between px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'documents' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                        <div class="flex items-center gap-3">
-                            Documents
-                        </div>
-                        {% if under_review_docs_count and under_review_docs_count > 0 %}
-                            <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ under_review_docs_count }}</span>
-                        {% endif %}
-                    </a>
-
-                    <a href="{% url 'backlog' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'backlog' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                        Audit Trail
-                    </a>
+                    {% include 'tickets/includes/nav_item.html' with url_pattern='teams' active_urls='teams' label='Employees' %}
+                    {% include 'tickets/includes/nav_item.html' with url_pattern='schools_management' active_urls='schools_management' label='Schools' badge_count=pending_schools_count %}
+                    {% include 'tickets/includes/nav_item.html' with url_pattern='requests' active_urls='requests,ticket_triage' label='Requests' badge_count=pending_count %}
+                    {% include 'tickets/includes/nav_item.html' with url_pattern='documents' active_urls='documents' label='Documents' badge_count=under_review_docs_count %}
+                    {% include 'tickets/includes/nav_item.html' with url_pattern='backlog' active_urls='backlog' label='Audit Trail' %}
                 {% endif %}
 
-                <a href="{% url 'settings' %}" class="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-all {% if url_name == 'settings' %}bg-gray-800 text-white border-l-4 border-blue-500 shadow-lg{% else %}text-gray-400 hover:bg-gray-800 hover:text-white{% endif %}">
-                    Settings
-                </a>
+                {% include 'tickets/includes/nav_item.html' with url_pattern='settings' active_urls='settings' label='Settings' %}
 
                 <div class="pt-4 mt-4 border-t border-gray-700 dark:border-gray-800">
                     <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all text-red-400 hover:bg-red-500/10 hover:text-red-300">
@@ -110,8 +75,6 @@
                         Logout
                     </a>
                 </div>
-
-                {% endwith %}
             </nav>
         </div>
 
@@ -136,29 +99,32 @@
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc] dark:bg-gray-900 transition-colors duration-200">
-        <header class="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-end px-8 shadow-sm">
-            <form method="GET" action="{% url 'search_tickets' %}" class="relative">
-                <input type="text" name="q" placeholder="Search tickets..." class="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 transition-all">
-                <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
-            </form>
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc] dark:bg-gray-900 transition-colors duration-200 w-full relative">
+        <header class="min-h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-3 shadow-sm flex-shrink-0">
+            <button type="button" onclick="openSidebar()" class="lg:hidden inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white" aria-label="Open navigation">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <div class="flex-1 min-w-0 flex justify-end">
+                <form method="GET" action="{% url 'search_tickets' %}" class="relative w-full max-w-[220px] sm:max-w-xs lg:max-w-none lg:w-auto">
+                    <input type="text" name="q" placeholder="Search tickets..." class="h-11 pl-10 pr-4 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full lg:w-64 transition-all">
+                    <span class="absolute left-3 top-2.5 text-gray-400">🔍</span>
+                </form>
+            </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-8 flex flex-col relative">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col relative w-full">
             {% block content %}{% endblock %}
             
             <footer class="mt-auto pt-10 pb-2 w-full">
-                <div class="border-t border-gray-200 dark:border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-gray-200 dark:bg-gray-800 border border-dashed border-gray-400 dark:border-gray-600 rounded-full flex items-center justify-center opacity-70">
-                            <span class="text-[6px] font-bold text-gray-500 dark:text-gray-400 uppercase">Logo</span>
-                        </div>
+                <div class="border-t border-gray-200 dark:border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-5 text-xs text-gray-500 dark:text-gray-400">
+                    <div class="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                        <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="ICT Helpdesk Logo" class="h-10 w-auto object-contain">
                         <p>&copy; {% now "Y" %} DepEd Valenzuela - ICT Unit Ticketing System. All rights reserved.</p>
                     </div>
-                    <div class="mt-4 md:mt-0 flex gap-6">
-                        <a href="#" class="hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium">Privacy Policy</a>
-                        <a href="#" class="hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium">Terms of Service</a>
-                        <a href="#" class="hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium">Contact Support</a>
+                    <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-6">
+                        <a href="#" class="min-h-11 inline-flex items-center hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium">Privacy Policy</a>
+                        <a href="#" class="min-h-11 inline-flex items-center hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium">Terms of Service</a>
+                        <a href="#" class="min-h-11 inline-flex items-center hover:text-blue-500 dark:hover:text-blue-400 transition-colors font-medium">Contact Support</a>
                     </div>
                 </div>
             </footer>
@@ -171,6 +137,31 @@
                 document.body.classList.remove('preload');
             }, 50);
         });
+
+        function openSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                openSidebar();
+            } else {
+                closeSidebar();
+            }
+        }
     </script>
     {% block scripts %}{% endblock %}
 </body>

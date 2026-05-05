@@ -24,6 +24,7 @@ class TicketWorkflowTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_user(
             username='adminuser',
+            email='adminuser@example.com',
             password='pass1234',
             first_name='Admin',
             last_name='User',
@@ -32,6 +33,7 @@ class TicketWorkflowTests(TestCase):
         )
         self.employee = User.objects.create_user(
             username='employeeuser',
+            email='employeeuser@example.com',
             password='pass1234',
             first_name='Employee',
             last_name='User',

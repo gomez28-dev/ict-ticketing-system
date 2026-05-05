@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,21 +27,21 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 print:bg-white print:text-black">
+<body class="bg-slate-100 text-slate-900 overflow-x-hidden print:bg-white print:text-black">
     <div class="print:hidden sticky top-0 z-10 border-b border-slate-300 bg-white/95 backdrop-blur">
-        <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-            <a href="javascript:history.back()" class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-slate-900">
+        <div class="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 sm:px-6">
+            <a href="javascript:history.back()" class="min-h-11 inline-flex items-center justify-center gap-2 text-sm font-medium text-slate-700 transition hover:text-slate-900">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
                 Go Back
             </a>
 
-            <div class="flex items-center gap-3">
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
                 {% if request.user.is_authenticated %}
                     {% if request.user.is_superuser or request.user.role == 'ADMIN' %}
                         {% if ticket.status == 'RESOLVED' %}
-                        <button onclick="markAsCompleted({{ ticket.id }})" class="inline-flex items-center gap-2 rounded-md border border-emerald-700 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                        <button onclick="markAsCompleted({{ ticket.id }})" class="min-h-11 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md border border-emerald-700 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
@@ -50,7 +51,7 @@
                     {% endif %}
                 {% endif %}
 
-                <button onclick="window.print()" class="inline-flex items-center gap-2 rounded-md border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black">
+                <button onclick="window.print()" class="min-h-11 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
                     </svg>
@@ -63,12 +64,17 @@
     <main class="mx-auto max-w-5xl px-3 py-4 sm:px-6 print:max-w-none print:px-0 print:py-0">
         <section class="mx-auto w-full max-w-[210mm] bg-white shadow-lg shadow-slate-300/60 print:shadow-none">
             <div class="border border-slate-900 p-6 text-slate-900 print:border-black print:text-black sm:p-8">
-                <header class="border-b border-slate-900 pb-4 text-center print:border-black">
-                    <p class="text-xs font-semibold uppercase tracking-[0.2em]">Republic of the Philippines</p>
+                <header class="border-b border-slate-900 pb-4 flex flex-col sm:flex-row items-center print:border-black">
+                    <div class="sm:mr-4 mb-3 sm:mb-0">
+                        <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="ICT Helpdesk Logo" class="h-14 w-auto object-contain">
+                    </div>
+                    <div class="flex-1 text-center sm:pr-14">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em]">Republic of the Philippines</p>
                     <p class="mt-1 text-sm font-bold uppercase tracking-[0.16em]">Department of Education</p>
                     <p class="mt-1 text-sm font-semibold uppercase tracking-[0.1em]">Schools Division Office Valenzuela</p>
                     <p class="mt-1 text-sm font-semibold uppercase tracking-[0.1em]">Information and Communications Technology Unit</p>
                     <h1 class="mt-4 text-xl font-extrabold uppercase tracking-[0.18em]">Job Request Form (JRF)</h1>
+                    </div>
                 </header>
 
                 <section class="mt-4 border border-slate-900 print:border-black">
@@ -164,8 +170,8 @@
 
                 <section class="mt-8 break-inside-avoid">
                     <h2 class="mb-2 text-center text-sm font-bold uppercase tracking-[0.14em]">Performance Indicators</h2>
-                    <div class="overflow-hidden border border-slate-900 print:border-black">
-                        <table class="w-full border-collapse text-[11px] leading-5 print:text-black">
+                    <div class="overflow-x-auto border border-slate-900 print:border-black">
+                        <table class="w-full min-w-[720px] border-collapse text-[11px] leading-5 print:text-black">
                             <thead>
                                 <tr>
                                     <th class="w-[8%] border border-slate-900 p-2 text-center font-bold print:border-black">Pts.</th>

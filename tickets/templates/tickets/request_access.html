@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,6 +35,7 @@
         .form-group label .required { color: #dc2626; }
         .form-control {
             width: 100%;
+            min-height: 44px;
             padding: 10px 12px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
@@ -46,6 +48,7 @@
 
         .btn-submit {
             width: 100%;
+            min-height: 44px;
             padding: 12px;
             background-color: #1e3a8a;
             color: white;
@@ -94,7 +97,10 @@
         .info-box strong { font-weight: 700; }
 
         .back-link {
-            display: block;
+            display: flex;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
             text-align: center;
             margin-top: 16px;
             font-size: 14px;
@@ -115,11 +121,26 @@
         }
         .success-container h2 { font-size: 20px; color: #166534; margin-bottom: 8px; }
         .success-container p { font-size: 13px; color: #6b7280; line-height: 1.6; margin-bottom: 8px; }
+            .auth-logo { max-height: 96px; width: auto; max-width: 200px; object-fit: contain; margin: 0 auto 24px auto; display: block; }
+        @media (max-width: 639px) {
+            body { font-size: 14px; overflow-x: hidden; }
+            .page-wrapper { padding: 16px; }
+            .form-container { max-width: none; padding: 24px 16px; }
+            .form-header h2, .success-container h2 { font-size: 20px; }
+            .form-header p, .success-container p, .alert, .info-box { font-size: 14px; }
+            .success-container .btn-submit { max-width: none !important; width: 100%; }
+            .footer-inner { flex-direction: column; justify-content: center !important; text-align: center; }
+            .footer-brand { flex-direction: column; margin-bottom: 18px !important; }
+            .footer-links { flex-direction: column; gap: 8px !important; align-items: center; }
+            .footer-links a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+        }
     </style>
 </head>
 <body>
     <div class="page-wrapper">
         <div class="form-container">
+            <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="ICT Helpdesk Logo" class="auth-logo">
+
 
             {% if success %}
                 <!-- SUCCESS STATE -->
@@ -196,17 +217,15 @@
 
     <!-- Footer -->
     <footer style="width: 100%; background-color: #1e3a8a; color: #dbeafe; padding: 24px 0; border-top: 4px solid #eab308; box-sizing: border-box; margin-top: auto;">
-        <div style="max-width: 1152px; margin: 0 auto; padding: 0 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; font-size: 14px;">
-            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-                <div style="width: 40px; height: 40px; background-color: rgba(255,255,255,0.1); border: 1px dashed rgba(255,255,255,0.3); border-radius: 4px; display: flex; align-items: center; justify-content: center;">
-                    <span style="font-size: 8px; font-weight: bold; color: white; text-transform: uppercase; letter-spacing: 2px;">Logo</span>
-                </div>
+        <div class="footer-inner" style="max-width: 1152px; margin: 0 auto; padding: 0 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; font-size: 14px;">
+            <div class="footer-brand" style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="ICT Helpdesk Logo" style="height: 40px; width: auto; object-fit: contain;">
                 <div>
                     <p style="font-weight: bold; margin: 0;">DepEd Division of Valenzuela - ICT Unit</p>
                     <p style="font-size: 12px; color: #93c5fd; margin: 0;">&copy; {% now "Y" %} All rights reserved.</p>
                 </div>
             </div>
-            <div style="display: flex; gap: 24px;">
+            <div class="footer-links" style="display: flex; gap: 24px;">
                 <a href="#" style="color: #dbeafe; text-decoration: none;">Privacy Policy</a>
                 <a href="#" style="color: #dbeafe; text-decoration: none;">Terms of Service</a>
                 <a href="#" style="color: #dbeafe; text-decoration: none;">Contact Support</a>

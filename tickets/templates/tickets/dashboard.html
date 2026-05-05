@@ -1,24 +1,25 @@
 {% extends 'tickets/base_admin.html' %}
+{% load static %}
 
 {% block content %}
-<div class="mb-6 flex justify-between items-end">
+<div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
     <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Active Board & Analytics</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">Manage active tickets and view system performance.</p>
     </div>
 </div>
 
-<div class="mb-6 inline-flex items-center gap-6 text-xs font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
+<div class="mb-6 flex max-w-full overflow-x-auto kanban-scroll items-center gap-4 sm:gap-6 text-xs font-bold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm transition-colors">
     <span class="uppercase tracking-wider text-gray-400 dark:text-gray-500 mr-2">Deadline Legend:</span>
     <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500 shadow-sm border border-red-200 dark:border-red-900"></span> Urgent / Overdue</span>
     <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-500 shadow-sm border border-yellow-200 dark:border-yellow-900"></span> Medium / Due Soon</span>
     <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500 shadow-sm border border-green-200 dark:border-green-900"></span> Low / On Track</span>
 </div>
 
-<div class="overflow-x-auto kanban-scroll pb-4 mb-8 min-h-[500px] h-[55vh]">
-    <div class="flex gap-6 h-full min-w-max">
+<div class="overflow-x-auto kanban-scroll pb-4 mb-8 min-h-[500px] h-[60vh] sm:h-[55vh] snap-x snap-mandatory touch-pan-x">
+    <div class="flex gap-4 sm:gap-6 h-full min-w-max px-4 sm:px-0">
 
-        <div class="w-80 flex flex-col h-full">
+        <div class="min-w-[280px] w-[85vw] sm:w-80 flex flex-col h-full snap-center">
             <div class="flex items-center justify-between mb-4 px-1">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
@@ -34,7 +35,7 @@
             </div>
         </div>
 
-        <div class="w-80 flex flex-col h-full">
+        <div class="min-w-[280px] w-[85vw] sm:w-80 flex flex-col h-full snap-center">
             <div class="flex items-center justify-between mb-4 px-1">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
@@ -50,7 +51,7 @@
             </div>
         </div>
 
-        <div class="w-80 flex flex-col h-full">
+        <div class="min-w-[280px] w-[85vw] sm:w-80 flex flex-col h-full snap-center">
             <div class="flex items-center justify-between mb-4 px-1">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
@@ -66,7 +67,7 @@
             </div>
         </div>
 
-        <div class="w-80 flex flex-col h-full">
+        <div class="min-w-[280px] w-[85vw] sm:w-80 flex flex-col h-full snap-center">
             <div class="flex items-center justify-between mb-4 px-1">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
@@ -82,7 +83,7 @@
             </div>
         </div>
 
-        <div class="w-80 flex flex-col h-full">
+        <div class="min-w-[280px] w-[85vw] sm:w-80 flex flex-col h-full snap-center">
             <div class="flex items-center justify-between mb-4 px-1">
                 <div class="flex items-center gap-2">
                     <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
@@ -108,6 +109,18 @@
         <h2 class="text-xl font-bold text-gray-900 dark:text-white">System Analytics</h2>
     </div>
 </div>
+
+{% if page_obj.has_other_pages %}
+<div class="flex items-center justify-center space-x-2 mb-8">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-800 transition-colors">Previous</a>
+    {% endif %}
+    <span class="px-4 py-2 text-gray-400">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-800 transition-colors">Next</a>
+    {% endif %}
+</div>
+{% endif %}
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm border-l-4 border-l-blue-500">
@@ -153,10 +166,10 @@
 
 
 <div id="ticketModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 w-full max-w-3xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] transition-colors duration-200">
+    <div class="bg-white dark:bg-gray-800 w-full h-full sm:h-auto sm:max-w-3xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-screen sm:max-h-[95vh] transition-colors duration-200">
 
-        <div class="px-8 py-5 flex justify-between items-center bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-            <div class="flex items-center gap-3">
+        <div class="px-4 sm:px-8 py-4 sm:py-5 flex justify-between items-start gap-3 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
                 <h2 id="modalTicketNumber" class="text-lg font-bold text-[#0056b3] dark:text-blue-400">TKT-0000</h2>
                 <span id="modalStatusBadge" class="px-3 py-1 bg-orange-50 text-orange-600 text-xs font-bold rounded-full border border-orange-100">Status</span>
                 <span id="modalPriorityBadge" class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full border border-gray-200 uppercase">Priority</span>
@@ -165,11 +178,11 @@
                     🤖 Est: 0h
                 </span>
             </div>
-            <button id="closeModalBtn" class="text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl leading-none">&times;</button>
+            <button id="closeModalBtn" class="h-11 w-11 flex-shrink-0 text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl leading-none">&times;</button>
         </div>
 
-        <div class="p-8 overflow-y-auto flex-1 text-sm bg-white dark:bg-gray-800">
-            <div class="grid grid-cols-2 gap-y-6 gap-x-8 mb-8">
+        <div class="p-4 sm:p-8 overflow-y-auto flex-1 text-sm bg-white dark:bg-gray-800">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8 mb-8">
                 <div><span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Requester</span><span id="modalRequester" class="text-gray-800 dark:text-gray-200 font-medium">Name</span></div>
                 <div><span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Email</span><span id="modalEmail" class="text-gray-800 dark:text-gray-200 font-medium">Email</span></div>
                 <div><span class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contact</span><span id="modalContact" class="text-gray-800 dark:text-gray-200 font-medium">Contact</span></div>
@@ -197,7 +210,7 @@
                 </a>
             </div>
 
-            <div class="grid grid-cols-2 gap-8 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-6">
                 <div>
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2">Change Status</label>
                     <select id="modalStatusSelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 focus:ring-2 focus:ring-[#0078d4] outline-none bg-white dark:bg-gray-700 text-gray-700 dark:text-white font-medium">
@@ -240,21 +253,21 @@
             {% endif %}
         </div>
 
-        <div class="px-8 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
-            <div class="flex gap-4 text-xs text-gray-400 dark:text-gray-500">
+        <div class="px-4 sm:px-8 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div class="flex flex-col sm:flex-row gap-1 sm:gap-4 text-xs text-gray-400 dark:text-gray-500">
                 <span>Created: <span id="modalCreatedDate" class="text-gray-500 dark:text-gray-400">Date</span></span>
                 <span>Updated: <span id="modalUpdatedDate" class="text-gray-500 dark:text-gray-400">Date</span></span>
             </div>
-            <div class="flex gap-3">
-                <button id="cancelModalBtn" class="px-5 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Cancel</button>
-                <button id="saveModalBtn" class="px-5 py-2 bg-[#0078d4] hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-colors">Save Changes</button>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="cancelModalBtn" class="min-h-11 px-5 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">Cancel</button>
+                <button id="saveModalBtn" class="min-h-11 px-5 py-2 bg-[#0078d4] hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-colors">Save Changes</button>
             </div>
         </div>
     </div>
 </div>
 
 <div id="reviewSubmissionModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 w-full max-w-xl rounded-xl shadow-2xl overflow-hidden transition-colors duration-200">
+    <div class="bg-white dark:bg-gray-800 w-full h-full sm:h-auto sm:max-w-xl sm:rounded-xl shadow-2xl overflow-y-auto sm:overflow-hidden transition-colors duration-200">
         <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
             <div>
                 <h2 class="text-lg font-bold text-gray-900 dark:text-white">Submit for Review</h2>
@@ -274,9 +287,9 @@
                 <input id="reviewResolutionAttachment" type="file" name="resolution_attachment" required class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-purple-900/30 dark:file:text-purple-400">
             </div>
             <div id="reviewSubmissionError" class="hidden text-sm text-red-600 dark:text-red-400"></div>
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <button type="button" id="cancelReviewModalBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-sm font-medium rounded-md">Cancel</button>
-                <button type="submit" id="submitReviewModalBtn" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md">Submit for Review</button>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button type="button" id="cancelReviewModalBtn" class="min-h-11 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-sm font-medium rounded-md">Cancel</button>
+                <button type="submit" id="submitReviewModalBtn" class="min-h-11 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md">Submit for Review</button>
             </div>
         </form>
     </div>
@@ -284,349 +297,22 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+    .kanban-scroll {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const isAdminUser = {% if request.user.is_superuser or request.user.role == 'ADMIN' %}true{% else %}false{% endif %};
-
-        const getCookie = (name) => {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        };
-
-        const moveCardToIndex = (itemEl, parentEl, index) => {
-            const referenceNode = parentEl.children[index] || null;
-            parentEl.insertBefore(itemEl, referenceNode);
-        };
-
-        // --- 1. INITIALIZE CHART ---
-        const ctx = document.getElementById('activityChart');
-        if (ctx) {
-            new Chart(ctx.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: {{ chart_labels|safe|default:"['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" }},
-                    datasets: [{
-                        label: 'Tickets Received',
-                        data: {{ chart_received|safe|default:"[0, 0, 0, 0, 0, 0, 0]" }},
-                        borderColor: 'rgba(78, 115, 223, 1)',
-                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: true
-                    }, {
-                        label: 'Tickets Resolved',
-                        data: {{ chart_resolved|safe|default:"[0, 0, 0, 0, 0, 0, 0]" }},
-                        borderColor: 'rgba(28, 200, 138, 1)',
-                        backgroundColor: 'rgba(28, 200, 138, 0.05)',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: true
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    responsive: true,
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-        }
-
-        // --- 2. MODAL LOGIC ---
-        const cards = document.querySelectorAll('.ticket-card');
-        const modal = document.getElementById('ticketModal');
-        const closeBtns = [document.getElementById('closeModalBtn'), document.getElementById('cancelModalBtn')];
-        const saveBtn = document.getElementById('saveModalBtn');
-        let currentTicketId = null;
-        let currentCardElement = null;
-        let pendingReviewMove = null;
-
-        const reviewModal = document.getElementById('reviewSubmissionModal');
-        const reviewForm = document.getElementById('reviewSubmissionForm');
-        const reviewError = document.getElementById('reviewSubmissionError');
-        const reviewTicketNumber = document.getElementById('reviewSubmissionTicketNumber');
-        const submitReviewBtn = document.getElementById('submitReviewModalBtn');
-
-        const closeTicketModal = () => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            saveBtn.disabled = false;
-            saveBtn.classList.remove('opacity-50');
-            saveBtn.innerText = 'Save Changes';
-            currentTicketId = null;
-            currentCardElement = null;
-        };
-
-        const openReviewModal = ({ ticketId, ticketNumber, itemEl = null, targetZone = null }) => {
-            pendingReviewMove = {
-                ticketId,
-                itemEl,
-                targetZone: targetZone || document.querySelector('.kanban-zone[data-status="UNDER_REVIEW"]')
-            };
-            reviewTicketNumber.innerText = ticketNumber || 'Ticket';
-            reviewForm.setAttribute('action', `/admin-dashboard/my-tickets/submit-review/${ticketId}/`);
-            reviewForm.reset();
-            reviewError.innerText = '';
-            reviewError.classList.add('hidden');
-            reviewModal.classList.remove('hidden');
-            reviewModal.classList.add('flex');
-        };
-
-        const closeReviewModal = () => {
-            pendingReviewMove = null;
-            reviewForm.reset();
-            reviewError.innerText = '';
-            reviewError.classList.add('hidden');
-            reviewModal.classList.add('hidden');
-            reviewModal.classList.remove('flex');
-        };
-
-        cards.forEach(card => {
-            card.addEventListener('click', () => {
-                currentTicketId = card.getAttribute('data-id');
-                currentCardElement = card;
-                const currentStatus = card.getAttribute('data-status');
-
-                document.getElementById('modalTicketNumber').innerText = card.getAttribute('data-number');
-                document.getElementById('modalStatusBadge').innerText = currentStatus.replace('_', ' ');
-                document.getElementById('modalPriorityBadge').innerText = card.getAttribute('data-priority');
-                document.getElementById('modalPredictionBadge').innerHTML = `🤖 Est: ${card.getAttribute('data-predicted')}h`;
-                document.getElementById('modalRequester').innerText = card.getAttribute('data-requester');
-                document.getElementById('modalEmail').innerText = card.getAttribute('data-email');
-                document.getElementById('modalContact').innerText = card.getAttribute('data-contact');
-                document.getElementById('modalSchool').innerText = card.getAttribute('data-school');
-                document.getElementById('modalSupportType').innerText = card.getAttribute('data-support-type');
-                document.getElementById('modalDescription').innerText = card.getAttribute('data-description');
-                const attachmentUrl = card.getAttribute('data-attachment-url');
-                const attachmentWrap = document.getElementById('modalAttachmentWrap');
-                const attachmentLink = document.getElementById('modalAttachmentLink');
-                if (attachmentUrl) {
-                    attachmentLink.setAttribute('href', attachmentUrl);
-                    attachmentWrap.classList.remove('hidden');
-                } else {
-                    attachmentLink.setAttribute('href', '#');
-                    attachmentWrap.classList.add('hidden');
-                }
-                const resolutionNotes = card.getAttribute('data-resolution-notes');
-                const resolutionAttachmentUrl = card.getAttribute('data-resolution-attachment-url');
-                const resolutionWrap = document.getElementById('modalResolutionWrap');
-                const resolutionNotesEl = document.getElementById('modalResolutionNotes');
-                const resolutionAttachmentLink = document.getElementById('modalResolutionAttachmentLink');
-                if (['UNDER_REVIEW', 'RESOLVED', 'COMPLETED'].includes(currentStatus) || resolutionNotes || resolutionAttachmentUrl) {
-                    resolutionNotesEl.innerText = resolutionNotes || 'No resolution notes were submitted.';
-                    if (resolutionAttachmentUrl) {
-                        resolutionAttachmentLink.setAttribute('href', resolutionAttachmentUrl);
-                        resolutionAttachmentLink.classList.remove('hidden');
-                    } else {
-                        resolutionAttachmentLink.setAttribute('href', '#');
-                        resolutionAttachmentLink.classList.add('hidden');
-                    }
-                    resolutionWrap.classList.remove('hidden');
-                } else {
-                    resolutionNotesEl.innerText = '';
-                    resolutionAttachmentLink.setAttribute('href', '#');
-                    resolutionAttachmentLink.classList.add('hidden');
-                    resolutionWrap.classList.add('hidden');
-                }
-                const adminNotesField = document.getElementById('modalAdminNotes');
-                if (adminNotesField) {
-                    adminNotesField.value = card.getAttribute('data-notes');
-                }
-                document.getElementById('modalCreatedDate').innerText = card.getAttribute('data-created');
-                document.getElementById('modalUpdatedDate').innerText = card.getAttribute('data-updated');
-                document.getElementById('modalStatusSelect').value = currentStatus;
-                const prioritySelect = document.getElementById('modalPrioritySelect');
-                if (prioritySelect) {
-                    prioritySelect.value = card.getAttribute('data-priority');
-                }
-                saveBtn.disabled = !isAdminUser && currentStatus === 'RESOLVED';
-                saveBtn.classList.toggle('opacity-50', saveBtn.disabled);
-
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            });
-        });
-
-        closeBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                closeTicketModal();
-            });
-        });
-
-        document.getElementById('closeReviewModalBtn').addEventListener('click', closeReviewModal);
-        document.getElementById('cancelReviewModalBtn').addEventListener('click', closeReviewModal);
-
-        saveBtn.addEventListener('click', () => {
-            if (!currentTicketId) return;
-
-            const newStatus = document.getElementById('modalStatusSelect').value;
-            const currentStatus = currentCardElement ? currentCardElement.getAttribute('data-status') : null;
-
-            if (!isAdminUser && newStatus === 'UNDER_REVIEW') {
-                closeTicketModal();
-                if (currentStatus !== 'UNDER_REVIEW') {
-                    openReviewModal({
-                        ticketId: currentTicketId,
-                        ticketNumber: currentCardElement ? currentCardElement.getAttribute('data-number') : '',
-                        itemEl: currentCardElement,
-                        targetZone: document.querySelector('.kanban-zone[data-status="UNDER_REVIEW"]')
-                    });
-                }
-                return;
-            }
-
-            const payload = { status: newStatus };
-            const prioritySelect = document.getElementById('modalPrioritySelect');
-            const adminNotesField = document.getElementById('modalAdminNotes');
-            if (prioritySelect) {
-                payload.priority = prioritySelect.value;
-            }
-            if (adminNotesField) {
-                payload.admin_notes = adminNotesField.value;
-            }
-
-            saveBtn.innerText = "Saving...";
-            saveBtn.disabled = true;
-
-            fetch(`/admin-dashboard/ticket/update/${currentTicketId}/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert("Error saving ticket: " + data.message);
-                    saveBtn.innerText = "Save Changes";
-                    saveBtn.disabled = false;
-                    saveBtn.classList.remove('opacity-50');
-                }
-            });
-        });
-
-        reviewForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-
-            if (!pendingReviewMove) {
-                closeReviewModal();
-                return;
-            }
-
-            reviewError.innerText = '';
-            reviewError.classList.add('hidden');
-            submitReviewBtn.disabled = true;
-            submitReviewBtn.innerText = 'Submitting...';
-
-            const formData = new FormData(reviewForm);
-            fetch(reviewForm.getAttribute('action'), {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            })
-            .then(async (response) => {
-                const data = await response.json();
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Unable to submit ticket for review.');
-                }
-                return data;
-            })
-            .then(data => {
-                const cardEl = pendingReviewMove.itemEl || document.querySelector(`.ticket-card[data-id="${pendingReviewMove.ticketId}"]`);
-                const targetZone = pendingReviewMove.targetZone || document.querySelector('.kanban-zone[data-status="UNDER_REVIEW"]');
-                if (cardEl && targetZone) {
-                    targetZone.appendChild(cardEl);
-                    cardEl.setAttribute('data-status', data.ticket.status);
-                    cardEl.setAttribute('data-resolution-notes', data.ticket.resolution_notes || '');
-                    cardEl.setAttribute('data-resolution-attachment-url', data.ticket.resolution_attachment_url || '');
-                }
-                closeReviewModal();
-                window.location.reload();
-            })
-            .catch(error => {
-                reviewError.innerText = error.message;
-                reviewError.classList.remove('hidden');
-            })
-            .finally(() => {
-                submitReviewBtn.disabled = false;
-                submitReviewBtn.innerText = 'Submit for Review';
-            });
-        });
-
-        // --- 3. KANBAN SORTABLE LOGIC ---
-        const kanbanZones = document.querySelectorAll('.kanban-zone');
-        kanbanZones.forEach(zone => {
-            new Sortable(zone, {
-                group: {
-                    name: 'kanban',
-                    put: function(to) {
-                        if (isAdminUser) {
-                            return true;
-                        }
-                        return to.el.getAttribute('data-status') !== 'RESOLVED';
-                    }
-                },
-                animation: 150,
-                ghostClass: 'opacity-50',
-                onEnd: function (evt) {
-                    const itemEl = evt.item;
-                    const ticketId = itemEl.getAttribute('data-id');
-                    const newStatus = evt.to.getAttribute('data-status');
-                    
-                    if (evt.from !== evt.to) {
-                        if (!isAdminUser && newStatus === 'UNDER_REVIEW') {
-                            moveCardToIndex(itemEl, evt.from, evt.oldIndex);
-                            openReviewModal({
-                                ticketId,
-                                ticketNumber: itemEl.getAttribute('data-number'),
-                                itemEl,
-                                targetZone: evt.to
-                            });
-                            return;
-                        }
-
-                        fetch(`/admin-dashboard/ticket/update/${ticketId}/`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': getCookie('csrftoken')
-                            },
-                            body: JSON.stringify({
-                                status: newStatus
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (!data.success) {
-                                alert("Error updating ticket status: " + data.message);
-                                moveCardToIndex(itemEl, evt.from, evt.oldIndex);
-                            } else {
-                                itemEl.setAttribute('data-status', newStatus);
-                            }
-                        });
-                    }
-                }
-            });
-        });
-    });
+    window.DashboardData = {
+        isAdminUser: {% if request.user.is_superuser or request.user.role == 'ADMIN' %}true{% else %}false{% endif %},
+        chartLabels: {{ chart_labels|safe|default:"['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" }},
+        chartReceived: {{ chart_received|safe|default:"[0, 0, 0, 0, 0, 0, 0]" }},
+        chartResolved: {{ chart_resolved|safe|default:"[0, 0, 0, 0, 0, 0, 0]" }}
+    };
 </script>
+<script src="{% static 'tickets/js/dashboard.js' %}"></script>
 {% endblock %}

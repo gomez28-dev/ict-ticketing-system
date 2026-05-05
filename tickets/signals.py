@@ -18,7 +18,7 @@ def log_ticket_changes(sender, instance, **kwargs):
                 changed_by=changed_by,
                 action='Status Changed',
                 old_value=old_ticket.get_status_display(),
-                new_value=dict(Ticket.STATUS_CHOICES).get(instance.status, instance.status)
+                new_value=dict(Ticket.Status.choices).get(instance.status, instance.status)
             )
 
         if old_ticket.priority != instance.priority:
@@ -27,7 +27,7 @@ def log_ticket_changes(sender, instance, **kwargs):
                 changed_by=changed_by,
                 action='Priority Changed',
                 old_value=old_ticket.get_priority_display(),
-                new_value=dict(Ticket.PRIORITY_CHOICES).get(instance.priority, instance.priority)
+                new_value=dict(Ticket.Priority.choices).get(instance.priority, instance.priority)
             )
 
         # Check for assignment changes in admin_notes

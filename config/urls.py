@@ -49,15 +49,6 @@ urlpatterns = [
     path('admin-dashboard/my-tickets/decline/<int:ticket_id>/', views.decline_assignment, name='decline_assignment'),
     path('admin-dashboard/my-tickets/resolve/<int:ticket_id>/', views.resolve_assignment, name='resolve_assignment'),
     path('admin-dashboard/my-tickets/unresolve/<int:ticket_id>/', views.unresolve_assignment, name='unresolve_assignment'),
-
-    # Employee Specific Links
-    path('admin-dashboard/my-tickets/', views.my_tickets, name='my_tickets'),
-    path('admin-dashboard/my-tickets/review/<int:ticket_id>/', views.employee_ticket_review,
-         name='employee_ticket_review'),
-    path('admin-dashboard/my-tickets/accept/<int:ticket_id>/', views.accept_assignment, name='accept_assignment'),
-    path('admin-dashboard/my-tickets/decline/<int:ticket_id>/', views.decline_assignment, name='decline_assignment'),
-    path('admin-dashboard/my-tickets/resolve/<int:ticket_id>/', views.resolve_assignment, name='resolve_assignment'),
-    path('admin-dashboard/my-tickets/unresolve/<int:ticket_id>/', views.unresolve_assignment, name='unresolve_assignment'),
     path('admin-dashboard/my-tickets/submit-review/<int:ticket_id>/', views.submit_for_review, name='submit_for_review'),
 
     # Employee Receipt Path
@@ -74,7 +65,14 @@ urlpatterns = [
     path('admin-dashboard/request/<int:ticket_id>/', views.ticket_triage_view, name='ticket_triage'),
     path('admin-dashboard/request/reject-unresolved/<int:ticket_id>/', views.reject_unresolved, name='reject_unresolved'),
     path('school-dashboard/delete-account/', views.delete_school_account, name='delete_school_account'),
+
+    # Performance Review (Phase 4)
+    path('admin-dashboard/documents/review/<int:ticket_id>/', views.submit_performance_review, name='submit_performance_review'),
+
+    # Employee Profile (Phase 5)
+    path('admin-dashboard/employee/<int:user_id>/profile/', views.employee_profile, name='employee_profile'),
+    path('admin-dashboard/employee/<int:user_id>/edit/', views.edit_employee_profile, name='edit_employee_profile'),
 ]
 
-if settings.DEBUG:
+if settings.DEBUG or getattr(settings, 'SERVE_MEDIA_FILES', False):
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,14 +37,14 @@
 
     <!-- Navigation -->
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 print:hidden">
-        <div class="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
-            <div class="flex items-center gap-3">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 px-4 sm:px-6 py-4 max-w-7xl mx-auto">
+            <div class="flex items-center gap-3 min-w-0 text-center sm:text-left">
                 <div class="w-8 h-8 rounded bg-blue-900 text-white flex items-center justify-center font-bold text-xs uppercase tracking-wider shadow-sm hidden sm:flex">ICT</div>
-                <h1 class="text-lg font-semibold text-gray-900 dark:text-white">Division Office Helpdesk - {{ school.name }}</h1>
+                <h1 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words">Division Office Helpdesk - {{ school.name }}</h1>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">ID: {{ school.school_id }}</span>
-                <a href="{% url 'school_logout' %}" class="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors">Logout</a>
+                <a href="{% url 'school_logout' %}" class="min-h-11 inline-flex items-center text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors">Logout</a>
             </div>
         </div>
     </header>
@@ -63,18 +64,18 @@
         {% endif %}
 
         <!-- Tabs Navigation -->
-        <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200">
-            <nav class="-mb-px flex space-x-8 px-4 sm:px-0" aria-label="Tabs">
-                <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn active whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200 overflow-x-auto">
+            <nav class="-mb-px flex min-w-max space-x-6 sm:space-x-8 px-4 sm:px-0" aria-label="Tabs">
+                <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn active whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     My Request
                 </button>
-                <button onclick="switchTab('notifications')" id="tab-notifications" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <button onclick="switchTab('notifications')" id="tab-notifications" class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     Activity & Audit Trail
                 </button>
-                <button onclick="switchTab('profile')" id="tab-profile" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <button onclick="switchTab('profile')" id="tab-profile" class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     Profile
                 </button>
-                <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     Settings
                 </button>
             </nav>
@@ -82,15 +83,15 @@
 
         <!-- Tab 1: My Request -->
         <div id="content-tickets" class="tab-content active px-4 sm:px-0">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                 <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Request History</h2>
-                <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-medium transition-colors">
+                <button onclick="openModal()" class="min-h-11 w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-medium transition-colors">
                     + Request Support
                 </button>
             </div>
             
             <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md transition-colors duration-200">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <table class="hidden md:table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700 transition-colors">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ticket Number</th>
@@ -130,6 +131,40 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for ticket in tickets %}
+                    <article class="p-4 space-y-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
+                                <a href="{% url 'school_ticket_detail' ticket.id %}" class="text-base font-bold text-blue-600 dark:text-blue-400 hover:underline">{{ ticket.ticket_number }}</a>
+                            </div>
+                            {% if ticket.status == "DECLINED" %}
+                                <span class="px-2.5 py-1 text-xs font-bold rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
+                            {% elif ticket.status == "RESOLVED" or ticket.status == "COMPLETED" %}
+                                <span class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{ ticket.get_status_display }}</span>
+                            {% elif ticket.status == "PENDING" %}
+                                <span class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{ ticket.get_status_display }}</span>
+                            {% else %}
+                                <span class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ ticket.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="grid grid-cols-1 gap-2 text-sm">
+                            <div>
+                                <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Title</p>
+                                <p class="text-gray-700 dark:text-gray-300">{{ ticket.title }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Date</p>
+                                <p class="text-gray-700 dark:text-gray-300">{{ ticket.created_at|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        <a href="{% url 'school_ticket_detail' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50">View</a>
+                    </article>
+                    {% empty %}
+                    <div class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No tickets found.</div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
@@ -216,7 +251,7 @@
                     <form method="POST" action="{% url 'school_dashboard' %}">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="update_profile">
-                        <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
                                 <input type="text" name="ict_first_name" value="{{ school.ict_first_name|default:'' }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" required>
@@ -234,7 +269,7 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
                             <input type="email" name="ict_email" value="{{ school.ict_email|default:'' }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" required>
                         </div>
-                        <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Save Details</button>
+                        <button type="submit" class="w-full min-h-11 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Save Details</button>
                     </form>
                 </div>
             </div>
@@ -243,7 +278,7 @@
                 <p class="text-sm text-red-700 dark:text-red-400 mb-4">This permanently deletes the school account.</p>
                 <form method="POST" action="{% url 'delete_school_account' %}" onsubmit="return confirmDeleteSchoolAccount();">
                     {% csrf_token %}
-                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 font-medium transition-colors">
+                    <button type="submit" class="w-full sm:w-auto min-h-11 bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 font-medium transition-colors">
                         Delete Account
                     </button>
                 </form>
@@ -270,18 +305,18 @@
 
     <!-- Footer -->
     <footer class="bg-[#1e3a8a] border-t-4 border-[#eab308] text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 py-6 mt-12 print:hidden transition-colors duration-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center text-sm">
-            <div class="flex items-center gap-4 mb-4 md:mb-0">
-                <div class="w-10 h-10 bg-white/20 rounded flex items-center justify-center font-bold text-white uppercase text-xs">LOGO</div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-5 text-sm text-center md:text-left">
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="ICT Helpdesk Logo" class="h-10 w-auto object-contain">
                 <div>
                     <h2 class="text-white font-semibold">DepEd Division of Valenzuela - ICT Unit</h2>
                     <p class="text-xs">&copy; 2026 All rights reserved.</p>
                 </div>
             </div>
-            <div class="flex gap-4">
-                <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
-                <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
-                <a href="#" class="hover:text-white transition-colors">Contact Support</a>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <a href="#" class="min-h-11 inline-flex items-center justify-center hover:text-white transition-colors">Privacy Policy</a>
+                <a href="#" class="min-h-11 inline-flex items-center justify-center hover:text-white transition-colors">Terms of Service</a>
+                <a href="#" class="min-h-11 inline-flex items-center justify-center hover:text-white transition-colors">Contact Support</a>
             </div>
         </div>
     </footer>
@@ -290,7 +325,7 @@
 
     <!-- Request Support Modal -->
     <div id="ticketModal" class="modal fixed inset-0 z-50 items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm print:hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg overflow-hidden transition-colors duration-200">
+        <div class="bg-white dark:bg-gray-800 sm:rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-lg overflow-y-auto sm:overflow-hidden transition-colors duration-200">
             <div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center transition-colors">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Request Support</h3>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
@@ -299,7 +334,7 @@
                     </svg>
                 </button>
             </div>
-            <form method="POST" action="{% url 'school_dashboard' %}" enctype="multipart/form-data" class="px-6 py-4">
+            <form method="POST" action="{% url 'school_dashboard' %}" enctype="multipart/form-data" class="px-4 sm:px-6 py-4">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_ticket">
                 
@@ -327,9 +362,9 @@
                     <input type="file" name="attachment" class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50 transition-colors">
                 </div>
 
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" onclick="closeModal()" class="bg-white dark:bg-gray-700 border dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 font-medium transition-colors">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Submit Request</button>
+                <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3">
+                    <button type="button" onclick="closeModal()" class="min-h-11 bg-white dark:bg-gray-700 border dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 font-medium transition-colors">Cancel</button>
+                    <button type="submit" class="min-h-11 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Submit Request</button>
                 </div>
             </form>
         </div>
@@ -338,7 +373,7 @@
     <!-- Success Validation Modal -->
     {% if submitted_ticket %}
     <div id="successModal" class="modal fixed inset-0 z-[60] items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm active">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md overflow-hidden transition-colors duration-200">
+        <div class="bg-white dark:bg-gray-800 sm:rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-md overflow-y-auto sm:overflow-hidden transition-colors duration-200 flex items-center">
             <div class="p-6 text-center">
                 <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
                     <svg class="h-10 w-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

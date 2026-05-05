@@ -20,7 +20,7 @@
 
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {% if pending_acceptance_tickets %}
-            <div class="overflow-x-auto">
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                         <tr>
@@ -56,6 +56,42 @@
                     </tbody>
                 </table>
             </div>
+            <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                {% for ticket in pending_acceptance_tickets %}
+                <article id="pending-card-{{ ticket.id }}" class="p-4 space-y-4 bg-yellow-50/50 dark:bg-yellow-900/10">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
+                            <p class="text-base font-bold text-gray-900 dark:text-white">{{ ticket.ticket_number }}</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded text-xs font-bold
+                            {% if ticket.priority == 'URGENT' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                            {% elif ticket.priority == 'HIGH' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400
+                            {% elif ticket.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
+                            {% else %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% endif %}">
+                            {{ ticket.priority }}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3 text-sm">
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">School</p>
+                            <p class="text-gray-700 dark:text-gray-300">{{ ticket.school_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Work Type</p>
+                            <p class="font-medium text-gray-700 dark:text-gray-300">{{ ticket.work_type|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Status</p>
+                            <p class="font-medium text-yellow-700 dark:text-yellow-300">Pending Acceptance</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'employee_ticket_review' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center text-blue-600 hover:text-blue-800 font-bold text-sm transition-colors bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg border border-blue-100 dark:border-blue-800">
+                        View Details
+                    </a>
+                </article>
+                {% endfor %}
+            </div>
             {% else %}
             <div class="flex flex-col items-center justify-center p-8 text-center">
                 <p class="text-gray-500 dark:text-gray-400 font-medium">You have no pending requests to review.</p>
@@ -77,7 +113,7 @@
 
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {% if assigned_tickets %}
-            <div class="overflow-x-auto">
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                         <tr>
@@ -113,6 +149,42 @@
                     </tbody>
                 </table>
             </div>
+            <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                {% for ticket in assigned_tickets %}
+                <article class="p-4 space-y-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
+                            <p class="text-base font-bold text-gray-900 dark:text-white">{{ ticket.ticket_number }}</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded text-xs font-bold
+                            {% if ticket.priority == 'URGENT' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                            {% elif ticket.priority == 'HIGH' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400
+                            {% elif ticket.priority == 'MEDIUM' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400
+                            {% else %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400{% endif %}">
+                            {{ ticket.priority }}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3 text-sm">
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">School</p>
+                            <p class="text-gray-700 dark:text-gray-300">{{ ticket.school_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Work Type</p>
+                            <p class="font-medium text-gray-700 dark:text-gray-300">{{ ticket.work_type|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Status</p>
+                            <p class="font-medium text-blue-600 dark:text-blue-400">{{ ticket.get_status_display }}</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'employee_ticket_review' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 transition-colors">
+                        Review &amp; Action
+                    </a>
+                </article>
+                {% endfor %}
+            </div>
             {% else %}
             <div class="flex flex-col items-center justify-center p-12 text-center">
                 <p class="text-gray-500 dark:text-gray-400 font-medium">You have no active tasks at the moment! 🎉</p>
@@ -134,7 +206,7 @@
 
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {% if resolved_tickets %}
-            <div class="overflow-x-auto">
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                         <tr>
@@ -171,6 +243,39 @@
                     </tbody>
                 </table>
             </div>
+            <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                {% for ticket in resolved_tickets %}
+                <article class="p-4 space-y-4">
+                    <div>
+                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
+                        <p class="text-base font-bold text-gray-900 dark:text-white">{{ ticket.ticket_number }}</p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3 text-sm">
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">School</p>
+                            <p class="text-gray-700 dark:text-gray-300">{{ ticket.school_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Work Type</p>
+                            <p class="font-medium text-gray-700 dark:text-gray-300">{{ ticket.get_support_type_display }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Status</p>
+                            <p class="font-medium text-green-600 dark:text-green-400">Resolved</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2">
+                        <a href="{% url 'employee_ticket_review' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center rounded-lg bg-gray-100 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                            View Details
+                        </a>
+                        <a href="{% url 'employee_receipt' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg transition-colors border border-blue-100 dark:border-blue-800">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            Print Receipt
+                        </a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
             {% else %}
             <div class="flex flex-col items-center justify-center p-12 text-center">
                 <p class="text-gray-500 dark:text-gray-400 font-medium">Your completed tasks will appear here.</p>
@@ -206,6 +311,10 @@
                 if (row) {
                     // Add a tiny animation out before removing if desired, but display: none works perfectly
                     row.style.display = 'none';
+                }
+                const card = document.getElementById(`pending-card-${ticketId}`);
+                if (card) {
+                    card.style.display = 'none';
                 }
 
                 // If it was accepted, let the user know they can check their active queue

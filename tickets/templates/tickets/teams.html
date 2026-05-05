@@ -3,11 +3,11 @@
 {% block title %}Employees - Helpdesk{% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-6">
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
     <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Employee Directory</h1>
 
     {% if request.user.is_superuser %}
-    <a href="{% url 'add_employee' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+    <a href="{% url 'add_employee' %}" class="min-h-11 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
         Add New Employee
     </a>
@@ -19,10 +19,13 @@
         <h2 class="text-xl border-b border-gray-200 dark:border-gray-700 pb-2 mb-4 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide">
             {{ category }}
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for staff in staff_list %}
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
-                <div class="p-5 flex flex-col items-center border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow relative group">
+                {% if staff.user_id %}
+                <a href="{% url 'employee_profile' staff.user_id %}" class="absolute inset-0 z-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="View {{ staff.name }}'s Profile"></a>
+                {% endif %}
+                <div class="p-5 flex flex-col items-center border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 relative z-0">
                     <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 text-xl font-bold mb-3">
                         {{ staff.name|make_list|first|default:"E" }}
                     </div>
@@ -36,13 +39,18 @@
 
                 <div class="p-5">
                     <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold mb-3">Expertise</h4>
-                    <div class="flex flex-wrap gap-2">
+                    <div class="flex flex-wrap gap-2 relative z-0">
                         {% for skill in staff.expertise %}
                             <span class="px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
                                 {{ skill }}
                             </span>
                         {% endfor %}
                     </div>
+                    {% if staff.user_id %}
+                    <div class="mt-4 text-center">
+                        <span class="text-sm text-blue-600 dark:text-blue-400 font-semibold group-hover:underline">View Profile &rarr;</span>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}

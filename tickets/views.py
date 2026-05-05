@@ -1,7 +1,11 @@
-from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type
+from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type, calculate_overall_rating
+from .staff_data import STAFF_LIST
 from django.utils import timezone
-from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP
+from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP, PerformanceReview
+import math
+from datetime import date, timedelta
 from .forms import PublicTicketForm, SubmitForReviewForm, validate_ph_mobile
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.urls import reverse
@@ -34,6 +38,26 @@ def is_employee(user):
 ASSIGNED_REVIEW_STATUSES = ['PENDING_ACCEPTANCE', 'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW']
 ADMIN_KANBAN_STATUSES = {'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW', 'UNRESOLVED', 'RESOLVED'}
 EMPLOYEE_KANBAN_STATUSES = {'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW', 'UNRESOLVED'}
+
+
+def is_employee_available(employee_name, start_date, end_date):
+    """
+    Checks if an employee is available for the proposed date range.
+    Returns True if the employee is free, False if there is a conflict.
+    Two date ranges overlap if: existing_start <= proposed_end AND existing_end >= proposed_start
+    """
+    if not start_date or not end_date:
+        return True
+
+    conflicting_tickets = Ticket.objects.filter(
+        admin_notes__icontains=employee_name,
+        start_date__isnull=False,
+        end_date__isnull=False,
+        start_date__lte=end_date,
+        end_date__gte=start_date,
+    ).exclude(status='RESOLVED').exclude(status='COMPLETED').exclude(status='DECLINED')
+
+    return not conflicting_tickets.exists()
 
 
 def is_email_already_associated(email, exclude_school_id=None, exclude_account_request_id=None):
@@ -110,7 +134,7 @@ def add_employee(request):
                 new_user.save()
             return redirect('teams')
 
-    return render(request, 'tickets/add_employee.html', {'error': error})
+    return render(request, 'tickets/employee_form.html', {'error': error})
 
 # ==========================================
 # AUTHENTICATION VIEWS
@@ -122,34 +146,40 @@ def custom_login(request):
 
     if request.method == 'POST':
         email_input = request.POST.get('email', '').strip()
+        password_input = request.POST.get('password', '')
 
-        if email_input == 'admin@test.com':
-            user, created = User.objects.get_or_create(
-                username='testadmin',
-                defaults={'email': 'admin@test.com', 'first_name': 'Test', 'last_name': 'Admin', 'role': 'ADMIN',
-                          'is_staff': True, 'is_superuser': False}
-            )
+        if not email_input or not password_input:
+            return render(request, 'tickets/login.html', {'error': 'Please provide both email and password.'})
+
+        # HARDCODED ACCOUNTS FOR TESTING ONLY
+        test_accounts = {
+            'superadmin@test.com': {'pass': 'super123', 'role': 'SUPERADMIN'},
+            'admin@test.com': {'pass': 'admin123', 'role': 'ADMIN'},
+            'employee@test.com': {'pass': 'emp123', 'role': 'MEMBER'}
+        }
+
+        if email_input in test_accounts and password_input == test_accounts[email_input]['pass']:
+            role = test_accounts[email_input]['role']
+            user, created = User.objects.get_or_create(email=email_input, defaults={
+                'username': email_input.split('@')[0],
+                'first_name': 'Test',
+                'last_name': role.capitalize(),
+                'role': role if role != 'SUPERADMIN' else 'ADMIN',
+                'is_staff': True if role in ['ADMIN', 'SUPERADMIN'] else False,
+                'is_superuser': True if role == 'SUPERADMIN' else False
+            })
             if created:
-                user.set_password('AdminPass123!')
+                user.set_password(password_input)
                 user.save()
-
-        elif email_input == 'employee@test.com':
-            user, created = User.objects.get_or_create(
-                username='testemployee',
-                defaults={'email': 'employee@test.com', 'first_name': 'Test', 'last_name': 'Employee', 'role': 'MEMBER',
-                          'is_staff': False, 'is_superuser': False}
-            )
-            if created:
-                user.set_password('EmployeePass123!')
-                user.save()
-        else:
-            user = User.objects.filter(is_superuser=True).first()
-            if not user:
-                user = User.objects.first()
-
-        if user:
             login(request, user)
-        return redirect('dashboard')
+            return redirect('dashboard')
+
+        user = User.objects.filter(email__iexact=email_input).first()
+        if user and user.check_password(password_input):
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            return render(request, 'tickets/login.html', {'error': 'Invalid email or password.'})
 
     return render(request, 'tickets/login.html')
 
@@ -229,7 +259,8 @@ def school_dashboard(request):
                     priority='MEDIUM',
                     attachment=request.FILES.get('attachment')
                 )
-                ticket.predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
+                ticket.predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)['predicted_hours']
+                ticket.predicted_days = predict_ticket_duration(ticket.support_type, ticket.priority)['predicted_days']
                 ticket.save()
                 return redirect(f"{reverse('school_dashboard')}?submitted=true&ticket_id={ticket.id}")
             except Exception as e:
@@ -297,11 +328,18 @@ def school_ticket_detail(request, ticket_id):
 # ==========================================
 
 def dashboard(request):
-    tickets = Ticket.objects.all()
+    all_tickets = Ticket.objects.all().order_by('-created_at')
+    
+    # Pagination: 50 tickets per page
+    paginator = Paginator(all_tickets, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'tickets': tickets,
-        'total_tickets': tickets.count(),
-        'resolved_tickets': tickets.filter(status='RESOLVED').count(),
+        'tickets': page_obj,  # Pass the paginated object
+        'page_obj': page_obj, # Explicit page_obj for template controls
+        'total_tickets': all_tickets.count(),
+        'resolved_tickets': all_tickets.filter(status='RESOLVED').count(),
         'staff_data': get_staff_data(),
         'chart_labels': get_mock_chart_data()['labels'],
         'chart_received': get_mock_chart_data()['received'],
@@ -317,7 +355,7 @@ def requests_view(request):
         assignee__isnull=False
     ).order_by('-updated_at')
     unresolved_requests = Ticket.objects.filter(status='UNRESOLVED').order_by('-updated_at')
-    return render(request, 'tickets/requests.html', {
+    return render(request, 'tickets/ticket_requests.html', {
         'pending_requests': pending_requests,
         'reviewed_requests': reviewed_requests,
         'unresolved_requests': unresolved_requests,
@@ -405,7 +443,9 @@ def complete_ticket_ajax(request, ticket_id):
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def ticket_triage_view(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    predicted_hours = predict_ticket_duration(ticket.support_type, ticket.priority)
+    duration = predict_ticket_duration(ticket.support_type, ticket.priority)
+    predicted_hours = duration['predicted_hours']
+    predicted_days = duration['predicted_days']
     staff_rec = recommend_staff(ticket.school_name, ticket.support_type)
     risk_assessment = predict_risk(ticket.support_type, ticket.priority)
     mapped_type = get_mapped_support_type(ticket.support_type)
@@ -436,6 +476,7 @@ def ticket_triage_view(request, ticket_id):
     context = {
         'ticket': ticket,
         'predicted_hours': predicted_hours,
+        'predicted_days': predicted_days,
         'staff_rec': staff_rec,
         'risk_assessment': risk_assessment,
         'staff_data': filtered_staff,
@@ -463,10 +504,22 @@ def approve_request(request, ticket_id):
         if scheduled_end_time_str:
             # Backend Validation
             if scheduled_start_time_str and scheduled_end_time_str <= scheduled_start_time_str:
-                from django.contrib import messages
                 messages.error(request, "Scheduled End Time must be strictly after Start Time.")
                 return redirect('ticket_triage', ticket_id=ticket.id)
             ticket.scheduled_end_time = scheduled_end_time_str
+
+        # Handle start_date and end_date for duration tracking
+        start_date_str = request.POST.get('start_date')
+        end_date_str = request.POST.get('end_date')
+        if start_date_str:
+            ticket.start_date = start_date_str
+        if end_date_str:
+            ticket.end_date = end_date_str
+
+        # Store predicted_days from form or compute
+        predicted_days_str = request.POST.get('predicted_days')
+        if predicted_days_str:
+            ticket.predicted_days = int(predicted_days_str)
 
         assigned_staff_list = request.POST.getlist('assigned_staff')
         if not assigned_staff_list:
@@ -475,6 +528,29 @@ def approve_request(request, ticket_id):
             ticket.status = 'PENDING'
         else:
             unique_staff = list(set(assigned_staff_list))
+
+            # Scheduling conflict check
+            if ticket.start_date and ticket.end_date:
+                unavailable_staff = []
+                for staff_name in unique_staff:
+                    if not is_employee_available(staff_name, ticket.start_date, ticket.end_date):
+                        unavailable_staff.append(staff_name)
+
+                if unavailable_staff:
+                    # Find available alternatives from the same expertise group
+                    mapped_type = get_mapped_support_type(ticket.support_type)
+                    all_staff = get_staff_data()
+                    alternatives = []
+                    for s in all_staff:
+                        normalized_expertise = [str(exp).replace(' ', '_') for exp in s['expertise']]
+                        if mapped_type in normalized_expertise or 'ALL' in normalized_expertise:
+                            if s['name'] not in unique_staff and is_employee_available(s['name'], ticket.start_date, ticket.end_date):
+                                alternatives.append(s['name'])
+
+                    alt_msg = f" Available alternatives: {', '.join(alternatives[:5])}" if alternatives else " No alternatives found in the same expertise group."
+                    messages.error(request, f"Scheduling conflict! The following staff are unavailable for the selected dates: {', '.join(unavailable_staff)}.{alt_msg}")
+                    return redirect('ticket_triage', ticket_id=ticket.id)
+
             assigned_staff_str = ", ".join(unique_staff)
             ticket.assignee = resolve_assignee_from_names(unique_staff) or request.user
             ticket.status = 'PENDING_ACCEPTANCE'
@@ -495,44 +571,28 @@ def approve_request(request, ticket_id):
 # ==========================================
 
 def get_staff_data():
-    staff_list = [
-        {'id': 1, 'name': 'Noel E. Reyes', 'expertise': ['MANAGEMENT', 'SYSTEM ADMIN']},
-        {'id': 2, 'name': 'Marvin M. Cruz', 'expertise': ['CCTV']},
-        {'id': 3, 'name': 'Ariel C. Samosino', 'expertise': ['CCTV']},
-        {'id': 4, 'name': 'Elison D. Carredo', 'expertise': ['CCTV']},
-        {'id': 5, 'name': 'Rolando O. De Castro Jr.', 'expertise': ['CCTV']},
-        {'id': 6, 'name': 'Edgar Manalansan', 'expertise': ['CCTV']},
-        {'id': 7, 'name': 'Ariel Cariaga', 'expertise': ['CCTV']},
-        {'id': 8, 'name': 'Ike Joseph P. Lumaad', 'expertise': ['WEBSITE', 'SYSTEM DEV']},
-        {'id': 9, 'name': 'Niel Ian I. Pariñas', 'expertise': ['WEBSITE', 'SYSTEM DEV']},
-        {'id': 10, 'name': 'Zandro S. Ocampo', 'expertise': ['NETWORK', 'INTERNET']},
-        {'id': 11, 'name': 'Reagan James H. Tayag', 'expertise': ['NETWORK', 'INTERNET']},
-        {'id': 12, 'name': 'Erickson J. Galvez', 'expertise': ['NETWORK', 'INTERNET']},
-        {'id': 13, 'name': 'Edelfonso D. Orig I', 'expertise': ['NETWORK', 'INTERNET']},
-        {'id': 14, 'name': 'Marbie A. Sumbe', 'expertise': ['NETWORK', 'INTERNET']},
-        {'id': 15, 'name': 'Karenshene SD. Malvar', 'expertise': ['ACCOUNT', 'SOFTWARE', 'SECURITY']},
-        {'id': 16, 'name': 'Allenn Raphael F. Gutierrez', 'expertise': ['ACCOUNT', 'SOFTWARE', 'SECURITY']},
-        {'id': 17, 'name': 'Jona A. Siarot', 'expertise': ['GRAPHICS', 'MULTIMEDIA']},
-        {'id': 18, 'name': 'Jerus L. De Jesus', 'expertise': ['GRAPHICS', 'MULTIMEDIA']},
-        {'id': 19, 'name': 'Julian G. Uy', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 20, 'name': 'Mark Joseph C. Sotto', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 21, 'name': 'Sergio Paulo B. Leoncio', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 22, 'name': 'Aquilles S. Capili', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 23, 'name': 'Mark Anthony G. De Guzman', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 24, 'name': 'Raffy R. Del Rosario', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 25, 'name': 'Roel D. Tilo', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 26, 'name': 'Bernie L. De Jesus', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 27, 'name': 'Genesis De Leon Flores', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 28, 'name': 'Christian Angelo A. Navera', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 29, 'name': 'Alvin John Villaseñor', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-        {'id': 30, 'name': 'Test Employee', 'expertise': ['SYSTEM TESTING']},
-    ]
-    for staff in staff_list:
-        active_count = Ticket.objects.filter(
-            admin_notes__icontains=staff['name']
-        ).exclude(status='RESOLVED').count()
+    # Pre-fetch users from DB to map user_ids
+    users_qs = User.objects.all()
+    user_map = {}
+    for u in users_qs:
+        full_name = f"{u.first_name} {u.last_name}".strip()
+        user_map[full_name.lower()] = u.id
+
+    # Optimize N+1 query by fetching all active notes once
+    active_notes = list(Ticket.objects.exclude(status='RESOLVED').exclude(status='COMPLETED').values_list('admin_notes', flat=True))
+
+    staff_list_copy = [dict(s) for s in STAFF_LIST]
+
+    for staff in staff_list_copy:
+        # Count active tickets in python to avoid N+1 queries
+        name_lower = staff['name'].lower()
+        active_count = sum(1 for note in active_notes if note and name_lower in note.lower())
         staff['active_tickets'] = active_count
-    return sorted(staff_list, key=lambda x: x['active_tickets'], reverse=True)
+
+        # Map to DB user_id if it exists
+        staff['user_id'] = user_map.get(name_lower, None)
+
+    return sorted(staff_list_copy, key=lambda x: x['active_tickets'], reverse=True)
 
 def get_mock_chart_data():
     return {'labels': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
@@ -583,7 +643,7 @@ def backlog_view(request):
     context = {
         'audit_logs': audit_logs,
     }
-    return render(request, 'tickets/backlog.html', context)
+    return render(request, 'tickets/audit_trail.html', context)
 
 def move_from_backlog(request, ticket_id):
     if request.method == 'POST':
@@ -672,87 +732,8 @@ def update_ticket_ajax(request, ticket_id):
             return JsonResponse({'success': False, 'message': str(e)}, status=400)
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
 
-def settings_view(request):
-    return render(request, 'tickets/settings.html')
 
-# ==========================================
-# EMPLOYEE SPECIFIC VIEWS
-# ==========================================
 
-@login_required
-def my_tickets(request):
-    user_name = f"{request.user.first_name} {request.user.last_name}".strip()
-
-    pending_acceptance_tickets = Ticket.objects.filter(
-        admin_notes__icontains=user_name,
-        status='PENDING_ACCEPTANCE'
-    ).order_by('-created_at')
-
-    assigned_tickets = Ticket.objects.filter(
-        admin_notes__icontains=user_name
-    ).exclude(status__in=['RESOLVED', 'PENDING_ACCEPTANCE', 'COMPLETED']).order_by('-created_at')
-
-    resolved_tickets = Ticket.objects.filter(
-        admin_notes__icontains=user_name,
-        status='RESOLVED'
-    ).order_by('-actual_completion_date', '-updated_at')
-
-    context = {
-        'pending_acceptance_tickets': pending_acceptance_tickets,
-        'assigned_tickets': assigned_tickets,
-        'resolved_tickets': resolved_tickets
-    }
-    return render(request, 'tickets/my_tickets.html', context)
-
-def employee_receipt_view(request, ticket_id):
-    is_employee = request.user.is_authenticated and getattr(request.user, 'role', '') == 'MEMBER' and not request.user.is_superuser
-    is_admin = request.user.is_authenticated and (getattr(request.user, 'role', '') == 'ADMIN' or request.user.is_superuser)
-    is_school = request.session.get('is_school_authenticated', False)
-    
-    if not (is_employee or is_school or is_admin):
-        from django.contrib import messages
-        messages.error(request, 'You do not have permission to access this document.')
-        return redirect('dashboard' if request.user.is_authenticated else 'school_dashboard')
-        
-    ticket = get_object_or_404(Ticket, id=ticket_id)
-    
-    if is_school and ticket.school_name != request.session.get('school_name'):
-        from django.contrib import messages
-        messages.error(request, 'You do not have permission to access this document.')
-        return redirect('school_dashboard')
-
-    return render(request, 'tickets/employee_receipt.html', {'ticket': ticket})
-
-def school_print_ticket(request, ticket_id):
-    if not request.session.get('is_school_authenticated'):
-        return redirect('school_login')
-    
-    school_name = request.session.get('school_name')
-    ticket = get_object_or_404(Ticket, id=ticket_id, school_name=school_name)
-    return render(request, 'tickets/school_print_ticket.html', {'ticket': ticket})
-
-@login_required
-def employee_ticket_review(request, ticket_id):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
-    return render(request, 'tickets/employee_ticket_review.html', {'ticket': ticket})
-
-@login_required
-def accept_assignment(request, ticket_id):
-    if request.method == 'POST':
-        ticket = get_object_or_404(Ticket, id=ticket_id)
-        ticket.status = 'SCHEDULED'
-        ticket._current_user = request.user
-        ticket.save()
-
-        is_ajax = request.headers.get(
-            'X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '')
-
-def settings_view(request):
-    return render(request, 'tickets/settings.html')
-
-# ==========================================
-# EMPLOYEE SPECIFIC VIEWS
-# ==========================================
 
 @login_required
 def my_tickets(request):
@@ -981,7 +962,7 @@ def schools_management(request):
         'schools': schools,
         'account_requests': account_requests,
     }
-    return render(request, 'tickets/schools_management.html', context)
+    return render(request, 'tickets/schools_directory.html', context)
 
 
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
@@ -1325,3 +1306,147 @@ def admin_delete_school(request, school_id):
 
     messages.success(request, f"ICT personnel account for '{school_name}' has been removed. The school record remains in the system.")
     return redirect('schools_management')
+
+
+# ==========================================
+# SETTINGS
+# ==========================================
+
+def settings_view(request):
+    return render(request, 'tickets/settings.html')
+
+
+# ==========================================
+# PERFORMANCE REVIEW SYSTEM (Phase 4)
+# ==========================================
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def submit_performance_review(request, ticket_id):
+    """Admin/Super Admin submits a performance review for the employee linked to a ticket."""
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    if request.method == 'POST':
+        quality = int(request.POST.get('quality', 3))
+        efficiency = int(request.POST.get('efficiency', 3))
+        timeliness = int(request.POST.get('timeliness', 3))
+        notes = request.POST.get('notes', '').strip()
+
+        # Determine employee from admin_notes "Assigned to:" line
+        employee = None
+        if ticket.admin_notes and 'Assigned to:' in ticket.admin_notes:
+            for line in ticket.admin_notes.split('\n'):
+                if 'Assigned to:' in line:
+                    names_str = line.replace('Assigned to:', '').strip()
+                    if names_str and names_str != 'Unassigned':
+                        first_name = names_str.split(',')[0].strip()
+                        # Try to find the user in the DB
+                        for u in User.objects.all():
+                            full_name = f"{u.first_name} {u.last_name}".strip()
+                            if full_name.lower() == first_name.lower():
+                                employee = u
+                                break
+                    break
+
+        if not employee:
+            messages.error(request, "Could not identify the employee for this ticket.")
+            return redirect('documents')
+
+        # Calculate new scores using rolling average
+        if employee.total_reviews > 0:
+            employee.quality_score = (employee.quality_score + quality) / 2
+            employee.efficiency_score = (employee.efficiency_score + efficiency) / 2
+            employee.timeliness_score = (employee.timeliness_score + timeliness) / 2
+        else:
+            employee.quality_score = float(quality)
+            employee.efficiency_score = float(efficiency)
+            employee.timeliness_score = float(timeliness)
+
+        employee.overall_rating = calculate_overall_rating(
+            int(round(employee.quality_score)),
+            int(round(employee.efficiency_score)),
+            int(round(employee.timeliness_score))
+        )
+        employee.total_reviews += 1
+        employee.save()
+
+        # Create the review record
+        PerformanceReview.objects.create(
+            ticket=ticket,
+            reviewed_by=request.user,
+            employee=employee,
+            quality=quality,
+            efficiency=efficiency,
+            timeliness=timeliness,
+            notes=notes,
+        )
+
+        # Mark ticket as COMPLETED
+        ticket.status = 'COMPLETED'
+        ticket._current_user = request.user
+        ticket.save()
+
+        messages.success(request, f"Performance review submitted and ticket marked as Complete for {employee.get_full_name()}.")
+        return redirect('documents')
+
+    return redirect('documents')
+
+
+# ==========================================
+# EMPLOYEE PROFILE SYSTEM (Phase 5)
+# ==========================================
+
+@login_required
+def employee_profile(request, user_id):
+    """View an employee's profile — accessible by Admin, Super Admin, and the employee themselves."""
+    profile_user = get_object_or_404(User, id=user_id)
+
+    # Access control
+    is_self = request.user.id == profile_user.id
+    is_admin_user = is_admin_or_superuser(request.user)
+    if not (is_self or is_admin_user):
+        messages.error(request, "You do not have permission to view this profile.")
+        return redirect('dashboard')
+
+    # Get recent resolved tickets for this employee
+    user_full_name = f"{profile_user.first_name} {profile_user.last_name}".strip()
+    resolved_tickets = Ticket.objects.filter(
+        admin_notes__icontains=user_full_name,
+        status__in=['RESOLVED', 'COMPLETED']
+    ).order_by('-actual_completion_date', '-updated_at')[:10]
+
+    # Get performance reviews
+    reviews = PerformanceReview.objects.filter(employee=profile_user).order_by('-created_at')[:10]
+
+    context = {
+        'profile_user': profile_user,
+        'resolved_tickets': resolved_tickets,
+        'reviews': reviews,
+        'is_admin_user': is_admin_user,
+    }
+    return render(request, 'tickets/employee_profile.html', context)
+
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def edit_employee_profile(request, user_id):
+    """Admin/Super Admin can edit an employee's profile."""
+    profile_user = get_object_or_404(User, id=user_id)
+
+    if request.method == 'POST':
+        profile_user.first_name = request.POST.get('first_name', profile_user.first_name)
+        profile_user.last_name = request.POST.get('last_name', profile_user.last_name)
+        profile_user.email = request.POST.get('email', profile_user.email)
+        profile_user.role = request.POST.get('role', profile_user.role)
+        profile_user.expertise = request.POST.get('expertise', profile_user.expertise)
+        profile_user.bio = request.POST.get('bio', '')
+
+        if request.FILES.get('profile_picture'):
+            profile_user.profile_picture = request.FILES['profile_picture']
+
+        profile_user.save()
+        messages.success(request, f"Profile for {profile_user.get_full_name()} updated successfully.")
+        return redirect('employee_profile', user_id=profile_user.id)
+
+    context = {
+        'profile_user': profile_user,
+    }
+    return render(request, 'tickets/edit_employee_profile.html', context)

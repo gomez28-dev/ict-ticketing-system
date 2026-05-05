@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,7 +54,7 @@
     <footer class="bg-[#1e3a8a] border-t-4 border-[#eab308] text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 py-6 mt-12 print:hidden transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center text-sm">
             <div class="flex items-center gap-4 mb-4 md:mb-0">
-                <div class="w-10 h-10 bg-white/20 rounded flex items-center justify-center font-bold text-white uppercase text-xs">LOGO</div>
+                <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="ICT Helpdesk Logo" class="h-10 w-auto object-contain">
                 <div>
                     <h2 class="text-white font-semibold">DepEd Division of Valenzuela - ICT Unit</h2>
                     <p class="text-xs">&copy; 2026 All rights reserved.</p>

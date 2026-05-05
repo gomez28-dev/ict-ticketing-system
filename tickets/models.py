@@ -13,17 +13,29 @@ class Team(models.Model):
 
 
 class User(AbstractUser):
-    ROLE_CHOICES = (
-        ('ADMIN', 'Admin'),
-        ('MEMBER', 'Employee'),
-    )
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='MEMBER')
+    class Role(models.TextChoices):
+        ADMIN = 'ADMIN', 'Admin'
+        MEMBER = 'MEMBER', 'Employee'
+
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
+    email = models.EmailField(unique=True, db_index=True)
     team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name='members')
     expertise = models.CharField(
         max_length=255,
         blank=True,
         help_text="Comma-separated skills (e.g., CCTV, NETWORK, PC_MAINTENANCE)"
     )
+
+    # --- Performance Scores ---
+    quality_score = models.FloatField(default=0.0)
+    efficiency_score = models.FloatField(default=0.0)
+    timeliness_score = models.FloatField(default=0.0)
+    overall_rating = models.FloatField(default=0.0)
+    total_reviews = models.IntegerField(default=0)
+
+    # --- Profile Fields ---
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+    bio = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
@@ -121,39 +133,35 @@ class SchoolAccountRequest(models.Model):
 
 
 class Ticket(models.Model):
-    STATUS_CHOICES = (
-        ('PENDING', 'Pending Review'),
-        ('PENDING_ACCEPTANCE', 'Pending Acceptance'),
-        ('SCHEDULED', 'Scheduled'),
-        ('IN_PROGRESS', 'In Progress'),
-        ('UNRESOLVED', 'Unresolved'),
-        ('UNDER_REVIEW', 'Under Review'),
-        ('RESOLVED', 'Resolved'),
-        ('COMPLETED', 'Completed'),
-        ('DECLINED', 'Declined'),
-    )
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending Review'
+        PENDING_ACCEPTANCE = 'PENDING_ACCEPTANCE', 'Pending Acceptance'
+        SCHEDULED = 'SCHEDULED', 'Scheduled'
+        IN_PROGRESS = 'IN_PROGRESS', 'In Progress'
+        UNRESOLVED = 'UNRESOLVED', 'Unresolved'
+        UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
+        RESOLVED = 'RESOLVED', 'Resolved'
+        COMPLETED = 'COMPLETED', 'Completed'
+        DECLINED = 'DECLINED', 'Declined'
 
-    PRIORITY_CHOICES = (
-        ('LOW', 'Low'),
-        ('MEDIUM', 'Medium'),
-        ('HIGH', 'High'),
-        ('URGENT', 'Urgent'),
-    )
+    class Priority(models.TextChoices):
+        LOW = 'LOW', 'Low'
+        MEDIUM = 'MEDIUM', 'Medium'
+        HIGH = 'HIGH', 'High'
+        URGENT = 'URGENT', 'Urgent'
 
-    SUPPORT_CHOICES = (
-        ('CCTV', 'CCTV Maintenance/Check-Up or Repair Request'),
-        ('PC_MAINTENANCE', 'Computer Maintenance/Check-Up or Repair Request'),
-        ('NETWORK_MAINTENANCE', 'Computer Network Maintenance/Check-Up or Repair Request'),
-        ('GOOGLE_ACCOUNT', 'Creation of Google Account'),
-        ('MS_ACCOUNT', 'Creation of Microsoft Account'),
-        ('PASSWORD_RESET', 'Password Reset for Microsoft or Google Account'),
-        ('OTHER', 'Other Support'),
-    )
+    class SupportType(models.TextChoices):
+        CCTV = 'CCTV', 'CCTV Maintenance/Check-Up or Repair Request'
+        PC_MAINTENANCE = 'PC_MAINTENANCE', 'Computer Maintenance/Check-Up or Repair Request'
+        NETWORK_MAINTENANCE = 'NETWORK_MAINTENANCE', 'Computer Network Maintenance/Check-Up or Repair Request'
+        GOOGLE_ACCOUNT = 'GOOGLE_ACCOUNT', 'Creation of Google Account'
+        MS_ACCOUNT = 'MS_ACCOUNT', 'Creation of Microsoft Account'
+        PASSWORD_RESET = 'PASSWORD_RESET', 'Password Reset for Microsoft or Google Account'
+        OTHER = 'OTHER', 'Other Support'
 
-    WORK_TYPE_CHOICES = (
-        ('REMOTE WORK', 'REMOTE WORK (Can be done online or from home)'),
-        ('FIELD WORK', 'FIELD WORK (Outside job/on-site task)'),
-    )
+    class WorkType(models.TextChoices):
+        REMOTE_WORK = 'REMOTE WORK', 'REMOTE WORK (Can be done online or from home)'
+        FIELD_WORK = 'FIELD WORK', 'FIELD WORK (Outside job/on-site task)'
 
     # --- Core Ticket Data ---
     ticket_number = models.CharField(max_length=20, unique=True, blank=True)
@@ -161,18 +169,18 @@ class Ticket(models.Model):
     description = models.TextField(help_text="Request Details")
     attachment = models.FileField(upload_to='ticket_attachments/', null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tickets', null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
-    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='MEDIUM')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True)
+    priority = models.CharField(max_length=20, choices=Priority.choices, default=Priority.LOW)
     decline_reason = models.TextField(blank=True, null=True)
 
     # --- Work Type Field ---
-    work_type = models.CharField(max_length=20, choices=WORK_TYPE_CHOICES, null=True, blank=True,
+    work_type = models.CharField(max_length=20, choices=WorkType.choices, null=True, blank=True,
                                  help_text="Category of task assignment")
 
     # --- Public Form Fields ---
     school_district = models.CharField(max_length=100, null=True, blank=True)
     school_name = models.CharField(max_length=255, null=True, blank=True)
-    support_type = models.CharField(max_length=100, choices=SUPPORT_CHOICES, null=True, blank=True)
+    support_type = models.CharField(max_length=100, choices=SupportType.choices, null=True, blank=True)
 
     # --- Requester Details ---
     first_name = models.CharField(max_length=100, null=True, blank=True)
@@ -182,6 +190,11 @@ class Ticket(models.Model):
     email = models.EmailField(null=True, blank=True)
     admin_notes = models.TextField(blank=True, null=True, help_text="Internal notes for ICT Unit")
     predicted_hours = models.IntegerField(blank=True, null=True, help_text="AI estimated resolution time in hours")
+
+    # --- AI Duration Fields ---
+    predicted_days = models.IntegerField(blank=True, null=True, help_text="AI estimated duration in days")
+    start_date = models.DateField(null=True, blank=True, help_text="Start date for the task")
+    end_date = models.DateField(null=True, blank=True, help_text="End date calculated from predicted_days")
 
     # --- Assignments ---
     reporter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
@@ -195,7 +208,7 @@ class Ticket(models.Model):
 
     # --- AI-Ready Data Fields ---
     complexity = models.IntegerField(default=1, help_text="Story points or complexity scale (e.g., 1-10)")
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     # --- SCHEDULED DATE & TIME FIELDS ---
@@ -245,6 +258,37 @@ class Ticket(models.Model):
             except Exception:
                 pass
         return []
+
+
+class PerformanceReview(models.Model):
+    SCORE_CHOICES = (
+        (2, '2 - Below Average'),
+        (3, '3 - Average'),
+        (4, '4 - Good'),
+        (5, '5 - Excellent'),
+    )
+
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='performance_reviews')
+    reviewed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_given')
+    employee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_received')
+    quality = models.IntegerField(choices=SCORE_CHOICES)
+    efficiency = models.IntegerField(choices=SCORE_CHOICES)
+    timeliness = models.IntegerField(choices=SCORE_CHOICES)
+    overall = models.FloatField(default=0.0)
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        # Auto-compute overall score on save
+        from .ml_service import calculate_overall_rating
+        self.overall = calculate_overall_rating(self.quality, self.efficiency, self.timeliness)
+        super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Review for {self.employee.get_full_name()} on {self.ticket.ticket_number}"
 
 
 class UserSettings(models.Model):

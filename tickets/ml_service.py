@@ -1,56 +1,7 @@
 import random
+import math
 
-# ==========================================
-# STAFF DATABASE
-# ==========================================
-staff_db = {
-    # Head / Officer
-    "Noel E. Reyes": {"expertise": ["MANAGEMENT", "SYSTEM_ADMIN", "ALL"], "current_load": 1, "rating": 5.0},
-
-    # CCTV Team
-    "Marvin M. Cruz": {"expertise": ["CCTV"], "current_load": 2, "rating": 4.8},
-    "Ariel C. Samosino": {"expertise": ["CCTV"], "current_load": 1, "rating": 4.7},
-    "Elison D. Carredo": {"expertise": ["CCTV"], "current_load": 3, "rating": 4.9},
-    "Rolando O. De Castro Jr.": {"expertise": ["CCTV"], "current_load": 0, "rating": 4.6},
-    "Edgar Manalansan": {"expertise": ["CCTV"], "current_load": 2, "rating": 4.8},
-    "Ariel Cariaga": {"expertise": ["CCTV"], "current_load": 1, "rating": 4.7},
-
-    # Website Development
-    "Ike Joseph P. Lumaad": {"expertise": ["WEBSITE", "SYSTEM_DEV"], "current_load": 2, "rating": 4.9},
-    "Niel Ian I. Pariñas": {"expertise": ["WEBSITE", "SYSTEM_DEV"], "current_load": 1, "rating": 4.8},
-
-    # Network Infrastructure
-    "Zandro S. Ocampo": {"expertise": ["NETWORK", "INTERNET"], "current_load": 2, "rating": 4.9},
-    "Reagan James H. Tayag": {"expertise": ["NETWORK", "INTERNET"], "current_load": 3, "rating": 4.7},
-    "Erickson J. Galvez": {"expertise": ["NETWORK", "INTERNET"], "current_load": 1, "rating": 4.8},
-    "Edelfonso D. Orig I": {"expertise": ["NETWORK", "INTERNET"], "current_load": 0, "rating": 4.6},
-    "Marbie A. Sumbe": {"expertise": ["NETWORK", "INTERNET"], "current_load": 2, "rating": 4.9},
-
-    # Information Sec / User Support
-    "Karenshene SD. Malvar": {"expertise": ["ACCOUNT", "SOFTWARE", "SECURITY"], "current_load": 1, "rating": 4.9},
-    "Allenn Raphael F. Gutierrez": {"expertise": ["ACCOUNT", "SOFTWARE", "SECURITY"], "current_load": 2, "rating": 4.8},
-
-    # Graphic Designer
-    "Jona A. Siarot": {"expertise": ["GRAPHICS", "MULTIMEDIA"], "current_load": 1, "rating": 4.9},
-    "Jerus L. De Jesus": {"expertise": ["GRAPHICS", "MULTIMEDIA"], "current_load": 2, "rating": 4.8},
-
-    # Computer Maintenance
-    "Julian G. Uy": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 2, "rating": 4.8},
-    "Mark Joseph C. Sotto": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 1, "rating": 4.9},
-    "Sergio Paulo B. Leoncio": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 3,
-                                "rating": 4.7},
-    "Aquilles S. Capili": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 2, "rating": 4.8},
-    "Mark Anthony G. De Guzman": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 1,
-                                  "rating": 4.9},
-    "Raffy R. Del Rosario": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 2, "rating": 4.7},
-    "Roel D. Tilo": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 0, "rating": 4.8},
-    "Bernie L. De Jesus": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 1, "rating": 4.9},
-    "Genesis De Leon Flores": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 2,
-                               "rating": 4.7},
-    "Christian Angelo A. Navera": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 1,
-                                   "rating": 4.8},
-    "Alvin John Villaseñor": {"expertise": ["PC_MAINTENANCE", "PRINTER", "HARDWARE"], "current_load": 2, "rating": 4.9},
-}
+from .staff_data import STAFF_LIST
 
 
 # ==========================================
@@ -75,7 +26,10 @@ def get_mapped_support_type(support_type):
 
 
 def predict_ticket_duration(support_type, priority):
-    """Predicts task duration in hours."""
+    """
+    Predicts task duration in hours AND days.
+    Returns a dict with 'predicted_hours' and 'predicted_days'.
+    """
     mapped_type = get_mapped_support_type(support_type)
     base_hours = {'ACCOUNT': 1, 'NETWORK': 4, 'HARDWARE': 8, 'PC_MAINTENANCE': 8, 'SOFTWARE': 3, 'CCTV': 4, 'OTHER': 5}
     estimated_time = base_hours.get(mapped_type, 5)
@@ -83,8 +37,16 @@ def predict_ticket_duration(support_type, priority):
     priority_multipliers = {'URGENT': 0.5, 'HIGH': 0.8, 'MEDIUM': 1.0, 'LOW': 1.5}
     multiplier = priority_multipliers.get(priority, 1.0)
 
-    final_prediction = int(estimated_time * multiplier) + random.randint(0, 1)
-    return max(1, final_prediction)
+    final_hours = int(estimated_time * multiplier) + random.randint(0, 1)
+    final_hours = max(1, final_hours)
+
+    # Convert hours to days: divide by 8 working hours per day, round up, minimum 1
+    predicted_days = max(1, math.ceil(final_hours / 8))
+
+    return {
+        'predicted_hours': final_hours,
+        'predicted_days': predicted_days,
+    }
 
 
 def recommend_staff(school_name, support_type):
@@ -97,24 +59,29 @@ def recommend_staff(school_name, support_type):
 
     mapped_type = get_mapped_support_type(support_type)
 
-    for name, info in staff_db.items():
-        # Check if they have the specific skill OR if they are management ("ALL")
-        if mapped_type in info["expertise"] or "ALL" in info["expertise"]:
-            eligible_staff.append(name)
+    for staff in STAFF_LIST:
+        expertise = [e.replace(' ', '_') for e in staff['expertise']]
+        if mapped_type in expertise or "ALL" in expertise or "MANAGEMENT" in expertise:
+            eligible_staff.append(staff)
 
     # 2. Fallback just in case no exact match is found
     if not eligible_staff:
-        eligible_staff = list(staff_db.keys())
+        eligible_staff = STAFF_LIST
 
     # 3. Safely choose a random staff member from our filtered list
-    selected_name = random.choice(eligible_staff)
-    selected_info = staff_db[selected_name]
+    selected_staff = random.choice(eligible_staff)
 
     # 4. Generate the AI reason to display on the UI
-    reason = f"Matches expertise for '{support_type}'. Currently handling {selected_info['current_load']} active tickets."
+    from .models import Ticket
+    # Calculate live current load
+    current_load = Ticket.objects.filter(
+        admin_notes__icontains=selected_staff['name']
+    ).exclude(status__in=['RESOLVED', 'COMPLETED']).count()
+
+    reason = f"Matches expertise for '{support_type}'. Currently handling {current_load} active tickets."
 
     return {
-        "recommended_name": selected_name,
+        "recommended_name": selected_staff['name'],
         "reason": reason
     }
 
@@ -135,3 +102,20 @@ def predict_risk(support_type, priority):
     else:
         return {"level": "Low", "color": "green",
                 "blockers": "Standard procedure. Minimal blockers expected if credentials are correct."}
+
+
+def calculate_overall_rating(quality, efficiency, timeliness):
+    """
+    Calculates an overall performance rating from individual scores.
+    Score to percentage map: 5 → 100%, 4 → 80%, 3 → 60%, 2 → 40%
+    Formula: overall = (quality_pct × 5 × 0.40) + (efficiency_pct × 5 × 0.30) + (timeliness_pct × 5 × 0.30)
+    Returns the overall float value rounded to 2 decimal places.
+    """
+    score_to_pct = {5: 1.0, 4: 0.8, 3: 0.6, 2: 0.4}
+
+    quality_pct = score_to_pct.get(quality, 0.6)
+    efficiency_pct = score_to_pct.get(efficiency, 0.6)
+    timeliness_pct = score_to_pct.get(timeliness, 0.6)
+
+    overall = (quality_pct * 5 * 0.40) + (efficiency_pct * 5 * 0.30) + (timeliness_pct * 5 * 0.30)
+    return round(overall, 2)
