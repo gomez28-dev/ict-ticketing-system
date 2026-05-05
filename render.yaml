@@ -34,3 +34,15 @@ services:
         value: django.core.mail.backends.console.EmailBackend
       - key: WEB_CONCURRENCY
         value: "2"
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
+      - key: DJANGO_SUPERUSER_ROLE
+        value: ADMIN
+      - key: BOOTSTRAP_IMPORT_SCHOOLS
+        value: "True"
+      - key: BOOTSTRAP_SCHOOLS_FILE
+        value: schools.xlsx
