@@ -806,11 +806,11 @@ def school_print_ticket(request, ticket_id):
 
     buffer = io.BytesIO()
     qr_img.save(buffer, format='PNG')
-    qr_code_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    qr_code = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
     return render(request, 'tickets/school_print_ticket.html', {
         'ticket': ticket,
-        'qr_code_base64': qr_code_base64,
+        'qr_code': qr_code,
     })
 
 @login_required

@@ -7,207 +7,121 @@
     <title>Job Request Form - {{ ticket.ticket_number }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @page {
-            size: A4 portrait;
-            margin: 10mm;
-        }
-
-        @media print {
-            html, body {
-                background: #ffffff !important;
-                color: #000000 !important;
-                font-size: 12px !important;
-                line-height: 1.2 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
+        @media print { 
+            @page { 
+                size: A4 portrait; 
+                margin: 10mm; 
+            } 
+            body { 
+                font-size: 12px !important; 
+                line-height: 1.2 !important; 
+            } 
             .no-print { display: none !important; }
-            .no-break { page-break-inside: avoid; }
-            .print-border { border-color: #000 !important; }
-        }
-
-        /* OMR bubble styling for print */
-        .omr-bubble {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            border: 2px solid #000;
-            display: inline-block;
-            background: #fff;
-        }
-
-        /* Alignment marker for OpenCV detection */
-        .alignment-marker {
-            width: 24px;
-            height: 24px;
-            background: #000;
-            position: absolute;
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-900 overflow-x-hidden print:bg-white print:text-black">
+<body class="bg-white text-black">
     <!-- Screen-only toolbar -->
-    <div class="no-print sticky top-0 z-10 border-b border-slate-300 bg-white/95 backdrop-blur">
-        <div class="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 sm:px-6">
-            <a href="{% url 'school_ticket_detail' ticket.id %}" class="min-h-11 inline-flex items-center justify-center gap-2 text-sm font-medium text-slate-700 transition hover:text-slate-900">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Back to Ticket
-            </a>
-            <button onclick="window.print()" class="min-h-11 w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
-                </svg>
-                Print JRF
-            </button>
-        </div>
+    <div class="no-print sticky top-0 z-10 border-b border-gray-300 bg-gray-100 p-4 flex justify-between">
+        <a href="{% url 'school_ticket_detail' ticket.id %}" class="text-blue-600 hover:underline">&larr; Back to Ticket</a>
+        <button onclick="window.print()" class="bg-black text-white px-4 py-2 rounded">Print JRF</button>
     </div>
 
-    <main class="mx-auto max-w-4xl px-3 py-4 sm:px-6 print:max-w-none print:px-0 print:py-0">
-        <section class="mx-auto w-full max-w-[190mm] bg-white shadow-lg shadow-slate-300/60 print:shadow-none">
-            <div class="border border-slate-900 p-4 print:border-black print:p-3 no-break">
+    <main class="w-full max-w-[190mm] mx-auto p-4">
+        <!-- HEADER -->
+        <header class="flex justify-between items-center border-b-2 border-black pb-2 mb-2">
+            <div class="flex items-center">
+                <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="Logo" class="h-10 w-auto mr-3">
+                <div>
+                    <p class="text-[10px] font-bold uppercase">Schools Division Office Valenzuela</p>
+                    <p class="text-[11px] font-bold uppercase">ICT Unit - Job Request Form</p>
+                </div>
+            </div>
+            <div>
+                {% if qr_code %}
+                <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="w-16 h-16">
+                {% endif %}
+            </div>
+        </header>
 
-                <!-- HEADER: Logo + Title + QR Code in one compact row -->
-                <header class="border-b border-slate-900 pb-2 print:border-black flex items-center">
-                    <div class="mr-3 flex-shrink-0">
-                        <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="Logo" class="h-12 w-auto object-contain">
+        <!-- TICKET DETAILS -->
+        <div class="grid grid-cols-2 gap-2 border border-black p-2 mb-4">
+            <div><strong>Requester:</strong> {{ ticket.first_name }} {{ ticket.last_name }}</div>
+            <div><strong>School/Location:</strong> {{ ticket.school_name|default:"N/A" }}</div>
+            <div><strong>Ticket ID:</strong> {{ ticket.ticket_number }}</div>
+            <div><strong>Date Filed:</strong> {{ ticket.created_at|date:"F d, Y h:i A" }}</div>
+            <div><strong>Service:</strong> {{ ticket.get_support_type_display|default:ticket.support_type }}</div>
+            <div><strong>Contact:</strong> {{ ticket.contact_number|default:"" }}</div>
+            <div class="col-span-2 border-t border-black pt-1 mt-1">
+                <strong>Description:</strong> {{ ticket.description|default:"" }}
+            </div>
+        </div>
+
+        <!-- SIGNATURES -->
+        <div class="grid grid-cols-2 gap-8 border border-black p-4 mb-4">
+            <div class="text-center">
+                <div class="border-b border-black mt-8"></div>
+                <p class="mt-1">Requester's Signature</p>
+            </div>
+            <div class="text-center">
+                <div class="border-b border-black mt-8"></div>
+                <p class="mt-1">ICT Staff Signature</p>
+            </div>
+        </div>
+
+        <!-- OMR PERFORMANCE INDICATORS -->
+        <div class="relative border-2 border-black p-4 mt-4">
+            <!-- 4 alignment markers -->
+            <div class="w-6 h-6 bg-black absolute top-0 left-0"></div>
+            <div class="w-6 h-6 bg-black absolute top-0 right-0"></div>
+            <div class="w-6 h-6 bg-black absolute bottom-0 left-0"></div>
+            <div class="w-6 h-6 bg-black absolute bottom-0 right-0"></div>
+
+            <div class="text-center font-bold uppercase mb-4 pt-2">
+                Performance Indicators (Shade one circle per row)
+            </div>
+            <div class="text-center text-[10px] mb-4">
+                5=Excellent &nbsp; 4=Good &nbsp; 3=Average &nbsp; 2=Below Average &nbsp; 1=Poor
+            </div>
+
+            <div class="px-8">
+                <!-- Quality -->
+                <div class="flex justify-between items-center border-b border-gray-400 py-2">
+                    <span class="font-bold w-32">Quality of Work</span>
+                    <div>
+                        <span class="mx-1">5</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">4</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">3</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">2</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">1</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
                     </div>
-                    <div class="flex-1 text-center">
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.15em]">Schools Division Office Valenzuela</p>
-                        <p class="text-[11px] font-bold uppercase tracking-[0.12em]">Information and Communications Technology Unit</p>
-                        <h1 class="mt-1 text-base font-extrabold uppercase tracking-[0.15em]">Job Request Form</h1>
-                    </div>
-                    <div class="ml-3 flex-shrink-0">
-                        {% if qr_code_base64 %}
-                        <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="QR: {{ ticket.ticket_number }}" class="w-16 h-16">
-                        {% endif %}
-                    </div>
-                </header>
-
-                <!-- TICKET DETAILS: Compact 2-column grid -->
-                <section class="mt-2 text-[11px] no-break">
-                    <div class="border border-slate-900 print:border-black">
-                        <div class="grid grid-cols-2">
-                            <div class="border-b border-r border-slate-900 p-2 print:border-black">
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-gray-500">Requester Name</p>
-                                <p class="font-medium">{{ ticket.first_name }} {{ ticket.last_name }}</p>
-                            </div>
-                            <div class="border-b border-slate-900 p-2 print:border-black">
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-gray-500">School / Location</p>
-                                <p class="font-medium">{{ ticket.school_name|default:"N/A" }}</p>
-                            </div>
-                            <div class="border-b border-r border-slate-900 p-2 print:border-black">
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-gray-500">Ticket ID</p>
-                                <p class="font-medium">{{ ticket.ticket_number }}</p>
-                            </div>
-                            <div class="border-b border-slate-900 p-2 print:border-black">
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-gray-500">Date Filed</p>
-                                <p class="font-medium">{{ ticket.created_at|date:"F d, Y h:i A" }}</p>
-                            </div>
-                            <div class="border-r border-slate-900 p-2 print:border-black">
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-gray-500">Service Requested</p>
-                                <p class="font-medium">{{ ticket.get_support_type_display|default:ticket.support_type }}</p>
-                            </div>
-                            <div class="p-2">
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-gray-500">Contact / Email</p>
-                                <p class="font-medium">{{ ticket.contact_number|default:"" }} {{ ticket.email|default:"" }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Description -->
-                    <div class="border border-t-0 border-slate-900 p-2 print:border-black">
-                        <p class="text-[9px] font-bold uppercase tracking-wide text-gray-500">Description / Details</p>
-                        <div class="mt-1 min-h-[100px] whitespace-pre-wrap leading-5 text-[11px]">{{ ticket.description|default:"" }}</div>
-                    </div>
-                </section>
-
-                <!-- SIGNATURE LINE -->
-                <section class="mt-3 no-break">
-                    <div class="border border-slate-900 print:border-black p-2">
-                        <div class="grid grid-cols-2 gap-8">
-                            <div>
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-gray-500 mb-6">Requester's Signature</p>
-                                <div class="border-b border-slate-900 print:border-black"></div>
-                                <p class="text-[9px] text-center mt-1 text-gray-400">{{ ticket.first_name }} {{ ticket.last_name }}</p>
-                            </div>
-                            <div>
-                                <p class="text-[9px] font-bold uppercase tracking-wide text-gray-500 mb-6">ICT Staff Signature</p>
-                                <div class="border-b border-slate-900 print:border-black"></div>
-                                <p class="text-[9px] text-center mt-1 text-gray-400">Assigned Staff</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- OMR PERFORMANCE INDICATORS SECTION -->
-                <section class="mt-3 no-break">
-                    <div class="border-2 border-black p-0 relative" id="omr-region">
-                        <!-- 4 Alignment Markers at corners -->
-                        <div class="alignment-marker" style="top: 0; left: 0;"></div>
-                        <div class="alignment-marker" style="top: 0; right: 0;"></div>
-                        <div class="alignment-marker" style="bottom: 0; left: 0;"></div>
-                        <div class="alignment-marker" style="bottom: 0; right: 0;"></div>
-
-                        <!-- OMR Section Title -->
-                        <div class="text-center py-1 bg-black text-white">
-                            <p class="text-[10px] font-bold uppercase tracking-[0.2em]">Performance Indicators — Shade the Appropriate Circle</p>
-                        </div>
-
-                        <!-- Rating Scale Legend -->
-                        <div class="text-center py-1 border-b border-black">
-                            <p class="text-[9px] text-gray-600">5 = Excellent &nbsp; 4 = Good &nbsp; 3 = Average &nbsp; 2 = Below Average &nbsp; 1 = Poor</p>
-                        </div>
-
-                        <!-- OMR Bubble Rows -->
-                        <div class="px-8 py-3" style="margin-left: 28px; margin-right: 28px;">
-                            <!-- Quality Row -->
-                            <div class="flex items-center justify-between py-2 border-b border-gray-300">
-                                <span class="text-[11px] font-bold uppercase tracking-wide w-32">Quality of Work</span>
-                                <div class="flex items-center gap-4">
-                                    <span class="text-[10px] font-medium w-4 text-center">5</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">4</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">3</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">2</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">1</span><div class="omr-bubble"></div>
-                                </div>
-                            </div>
-
-                            <!-- Efficiency Row -->
-                            <div class="flex items-center justify-between py-2 border-b border-gray-300">
-                                <span class="text-[11px] font-bold uppercase tracking-wide w-32">Efficiency</span>
-                                <div class="flex items-center gap-4">
-                                    <span class="text-[10px] font-medium w-4 text-center">5</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">4</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">3</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">2</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">1</span><div class="omr-bubble"></div>
-                                </div>
-                            </div>
-
-                            <!-- Timeliness Row -->
-                            <div class="flex items-center justify-between py-2">
-                                <span class="text-[11px] font-bold uppercase tracking-wide w-32">Timeliness</span>
-                                <div class="flex items-center gap-4">
-                                    <span class="text-[10px] font-medium w-4 text-center">5</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">4</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">3</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">2</span><div class="omr-bubble"></div>
-                                    <span class="text-[10px] font-medium w-4 text-center">1</span><div class="omr-bubble"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Footer -->
-                <div class="mt-2 text-center text-[8px] text-gray-400">
-                    <p>This is a system-generated Job Request Form from the DepEd Valenzuela ICT Helpdesk.</p>
                 </div>
 
+                <!-- Efficiency -->
+                <div class="flex justify-between items-center border-b border-gray-400 py-2">
+                    <span class="font-bold w-32">Efficiency</span>
+                    <div>
+                        <span class="mx-1">5</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">4</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">3</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">2</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">1</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                    </div>
+                </div>
+
+                <!-- Timeliness -->
+                <div class="flex justify-between items-center py-2 pb-4">
+                    <span class="font-bold w-32">Timeliness</span>
+                    <div>
+                        <span class="mx-1">5</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">4</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">3</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">2</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                        <span class="mx-1 ml-4">1</span><div class="w-5 h-5 rounded-full border-2 border-black inline-block align-middle ml-2"></div>
+                    </div>
+                </div>
             </div>
-        </section>
+        </div>
     </main>
 </body>
 </html>
