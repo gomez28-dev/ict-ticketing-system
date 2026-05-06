@@ -793,7 +793,25 @@ def school_print_ticket(request, ticket_id):
     
     school_name = request.session.get('school_name')
     ticket = get_object_or_404(Ticket, id=ticket_id, school_name=school_name)
-    return render(request, 'tickets/school_print_ticket.html', {'ticket': ticket})
+
+    # Generate QR code encoding the ticket ID for scanner lookup
+    import qrcode
+    import io
+    import base64
+
+    qr = qrcode.QRCode(version=1, box_size=4, border=2)
+    qr.add_data(str(ticket.id))
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+
+    buffer = io.BytesIO()
+    qr_img.save(buffer, format='PNG')
+    qr_code_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    return render(request, 'tickets/school_print_ticket.html', {
+        'ticket': ticket,
+        'qr_code_base64': qr_code_base64,
+    })
 
 @login_required
 def employee_ticket_review(request, ticket_id):
@@ -1458,3 +1476,133 @@ def edit_employee_profile(request, user_id):
         'profile_user': profile_user,
     }
     return render(request, 'tickets/edit_employee_profile.html', context)
+
+
+# ==========================================
+# OMR SCANNER SYSTEM (Phase 6)
+# ==========================================
+
+@login_required
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def mobile_scanner(request):
+    """Render the mobile OMR scanner page (Admin only)."""
+    return render(request, 'tickets/scanner.html')
+
+
+@login_required
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def api_process_scan(request):
+    """
+    API endpoint that receives either:
+    - A camera image + ticket_id (OMR scan)
+    - Manual scores + ticket_id (fallback entry)
+    Processes the scores, creates a PerformanceReview, and marks the ticket COMPLETED.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'POST required.'}, status=405)
+
+    ticket_id = request.POST.get('ticket_id', '').strip()
+    if not ticket_id:
+        return JsonResponse({'success': False, 'message': 'Ticket ID is required.'})
+
+    try:
+        ticket = Ticket.objects.get(id=int(ticket_id))
+    except (Ticket.DoesNotExist, ValueError):
+        return JsonResponse({'success': False, 'message': f'Ticket ID "{ticket_id}" not found.'})
+
+    # Check if ticket already completed
+    if ticket.status == 'COMPLETED':
+        return JsonResponse({'success': False, 'message': 'This ticket has already been completed.'})
+
+    # Determine scores: manual entry or OMR scan
+    manual_q = request.POST.get('manual_quality')
+    manual_e = request.POST.get('manual_efficiency')
+    manual_t = request.POST.get('manual_timeliness')
+
+    if manual_q and manual_e and manual_t:
+        # Manual fallback path
+        scores = {
+            'quality': int(manual_q),
+            'efficiency': int(manual_e),
+            'timeliness': int(manual_t),
+        }
+    elif request.FILES.get('image'):
+        # OMR scan path
+        from .omr_engine import process_omr_image
+        image_file = request.FILES['image']
+        image_bytes = image_file.read()
+        scores = process_omr_image(image_bytes)
+        if scores is None:
+            return JsonResponse({
+                'success': False,
+                'message': 'Could not detect the OMR bubbles. Make sure the form is well-lit and all 4 corner markers are visible. Use manual entry as fallback.'
+            })
+    else:
+        return JsonResponse({'success': False, 'message': 'No image or manual scores provided.'})
+
+    # Validate score range
+    for key in ('quality', 'efficiency', 'timeliness'):
+        if scores.get(key, 0) not in range(1, 6):
+            scores[key] = 3  # Default to average if out of range
+
+    quality = scores['quality']
+    efficiency = scores['efficiency']
+    timeliness = scores['timeliness']
+
+    # Find the assigned employee
+    employee = ticket.assignee
+    if not employee and ticket.admin_notes:
+        for line in ticket.admin_notes.split('\n'):
+            if 'Assigned to:' in line:
+                names_str = line.replace('Assigned to:', '').strip()
+                if names_str and names_str != 'Unassigned':
+                    first_name = names_str.split(',')[0].strip()
+                    for u in User.objects.all():
+                        full_name = f"{u.first_name} {u.last_name}".strip()
+                        if full_name.lower() == first_name.lower():
+                            employee = u
+                            break
+                break
+
+    if not employee:
+        return JsonResponse({'success': False, 'message': 'Could not identify the assigned employee for this ticket.'})
+
+    # Update employee scores (rolling average)
+    if employee.total_reviews > 0:
+        employee.quality_score = (employee.quality_score + quality) / 2
+        employee.efficiency_score = (employee.efficiency_score + efficiency) / 2
+        employee.timeliness_score = (employee.timeliness_score + timeliness) / 2
+    else:
+        employee.quality_score = float(quality)
+        employee.efficiency_score = float(efficiency)
+        employee.timeliness_score = float(timeliness)
+
+    employee.overall_rating = calculate_overall_rating(
+        int(round(employee.quality_score)),
+        int(round(employee.efficiency_score)),
+        int(round(employee.timeliness_score))
+    )
+    employee.total_reviews += 1
+    employee.save()
+
+    # Create the review record
+    PerformanceReview.objects.create(
+        ticket=ticket,
+        reviewed_by=request.user,
+        employee=employee,
+        quality=quality,
+        efficiency=efficiency,
+        timeliness=timeliness,
+        notes=f"Scanned via OMR Scanner by {request.user.get_full_name()}",
+    )
+
+    # Mark ticket as COMPLETED
+    ticket.status = 'COMPLETED'
+    ticket._current_user = request.user
+    ticket.save()
+
+    return JsonResponse({
+        'success': True,
+        'scores': scores,
+        'message': f'Performance review saved and ticket #{ticket.ticket_number} marked as Complete for {employee.get_full_name()}.'
+    })

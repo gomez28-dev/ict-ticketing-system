@@ -72,6 +72,10 @@ urlpatterns = [
     # Employee Profile (Phase 5)
     path('admin-dashboard/employee/<int:user_id>/profile/', views.employee_profile, name='employee_profile'),
     path('admin-dashboard/employee/<int:user_id>/edit/', views.edit_employee_profile, name='edit_employee_profile'),
+
+    # OMR Scanner (Phase 6)
+    path('admin-dashboard/scanner/', views.mobile_scanner, name='mobile_scanner'),
+    path('admin-dashboard/api/process-scan/', views.api_process_scan, name='api_process_scan'),
 ]
 
 if settings.DEBUG or getattr(settings, 'SERVE_MEDIA_FILES', False):
