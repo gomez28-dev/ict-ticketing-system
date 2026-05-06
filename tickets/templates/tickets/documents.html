@@ -1,18 +1,26 @@
 {% extends 'tickets/base_admin.html' %}
 
+{% extends 'tickets/base_admin.html' %}
+
 {% block title %}Documents Archive - Helpdesk{% endblock %}
 
 {% block content %}
 {% csrf_token %}
 
 <div class="max-w-7xl mx-auto">
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Documents Archive
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Review resolved tickets and archive them as completed.</p>
+        </div>
+        <div>
+            <a href="{% url 'mobile_scanner' %}" class="inline-flex items-center justify-center gap-2 rounded-lg border border-transparent bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-purple-700 focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-900 shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Open OMR Scanner
+            </a>
         </div>
     </div>
 
