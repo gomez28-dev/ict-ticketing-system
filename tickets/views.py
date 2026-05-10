@@ -785,7 +785,7 @@ def employee_receipt_view(request, ticket_id):
         messages.error(request, 'You do not have permission to access this document.')
         return redirect('school_dashboard')
 
-    return render(request, 'tickets/employee_receipt.html', {'ticket': ticket})
+    return render(request, 'tickets/print_jrf.html', {'ticket': ticket})
 
 def school_print_ticket(request, ticket_id):
     if not request.session.get('is_school_authenticated'):
@@ -794,21 +794,23 @@ def school_print_ticket(request, ticket_id):
     school_name = request.session.get('school_name')
     ticket = get_object_or_404(Ticket, id=ticket_id, school_name=school_name)
 
-    # Generate QR code encoding the ticket ID for scanner lookup
-    import qrcode
-    import io
-    import base64
+    # Generate QR code — graceful fallback if qrcode is not installed
+    qr_code = None
+    try:
+        import qrcode
+        import io
+        import base64
+        qr = qrcode.QRCode(version=1, box_size=4, border=2)
+        qr.add_data(str(ticket.ticket_number))
+        qr.make(fit=True)
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        buffer = io.BytesIO()
+        qr_img.save(buffer, format='PNG')
+        qr_code = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    except Exception:
+        pass  # QR code is optional; page will render without it
 
-    qr = qrcode.QRCode(version=1, box_size=4, border=2)
-    qr.add_data(str(ticket.id))
-    qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="black", back_color="white")
-
-    buffer = io.BytesIO()
-    qr_img.save(buffer, format='PNG')
-    qr_code = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-    return render(request, 'tickets/school_print_ticket.html', {
+    return render(request, 'tickets/print_receipt.html', {
         'ticket': ticket,
         'qr_code': qr_code,
     })

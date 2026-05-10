@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt - {{ ticket.ticket_number }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print { 
+            @page { 
+                size: A4 portrait; 
+                margin: 10mm; 
+            } 
+            body { 
+                font-size: 14px !important; 
+                line-height: 1.4 !important; 
+            } 
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-white text-black">
+    <!-- Screen-only toolbar -->
+    <div class="no-print sticky top-0 z-10 border-b border-gray-300 bg-gray-100 p-4 flex justify-between">
+        <a href="{% url 'school_ticket_detail' ticket.id %}" class="text-blue-600 hover:underline">&larr; Back to Ticket</a>
+        <button onclick="window.print()" class="bg-black text-white px-4 py-2 rounded">Print Receipt</button>
+    </div>
+
+    <main class="w-full max-w-[190mm] mx-auto p-4">
+        <!-- HEADER -->
+        <header class="flex justify-between items-center border-b-2 border-black pb-4 mb-6">
+            <div class="flex items-center">
+                <img src="{% static 'tickets/images/ICT_Helpdesk_Logo.jpeg' %}" alt="Logo" class="h-16 w-auto mr-4">
+                <div>
+                    <p class="text-sm font-bold uppercase">Schools Division Office Valenzuela</p>
+                    <p class="text-lg font-bold uppercase">ICT Helpdesk Receipt</p>
+                </div>
+            </div>
+            <div>
+                {% if qr_code %}
+                <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="w-20 h-20">
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- DETAILS -->
+        <div class="border border-black p-4 mb-8">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <span class="text-gray-600 text-xs font-bold uppercase tracking-wide">Requester Name</span>
+                    <p class="font-medium text-lg">{{ ticket.first_name }} {{ ticket.last_name }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-600 text-xs font-bold uppercase tracking-wide">Date Filed</span>
+                    <p class="font-medium text-lg">{{ ticket.created_at|date:"F d, Y h:i A" }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-600 text-xs font-bold uppercase tracking-wide">Ticket ID</span>
+                    <p class="font-medium text-lg">{{ ticket.ticket_number }}</p>
+                </div>
+                <div>
+                    <span class="text-gray-600 text-xs font-bold uppercase tracking-wide">School / Location</span>
+                    <p class="font-medium text-lg">{{ ticket.school_name|default:"N/A" }}</p>
+                </div>
+                <div class="col-span-2">
+                    <span class="text-gray-600 text-xs font-bold uppercase tracking-wide">Service Type</span>
+                    <p class="font-medium text-lg">{{ ticket.get_support_type_display|default:ticket.support_type }}</p>
+                </div>
+                <div class="col-span-2 border-t border-gray-300 pt-4 mt-2">
+                    <span class="text-gray-600 text-xs font-bold uppercase tracking-wide">Description</span>
+                    <p class="mt-1 whitespace-pre-wrap">{{ ticket.description|default:"" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="mt-16 pt-8">
+            <div class="inline-block text-left w-64">
+                <div class="border-b border-black w-full mb-1"></div>
+                <p class="text-sm">Received by / Date</p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
