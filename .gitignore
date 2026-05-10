@@ -1,9 +1,46 @@
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Python
 db.sqlite3
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Project-specific
 media/
 staticfiles/
-.env
-.venv/
-.idea/
-.vscode/
+/static/
+.coverage
+htmlcov/
+
+# OS-specific
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
