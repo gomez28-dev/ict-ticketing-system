@@ -10,8 +10,8 @@
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Task Review</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">Review the details of this assignment.</p>
         </div>
-        <a href="{% url 'my_tickets' %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
-            &larr; Back to My Tickets
+        <a href="{% if request.user.role == 'ADMIN' or request.user.is_superuser %}{% url 'documents' %}{% else %}{% url 'my_tickets' %}{% endif %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
+            &larr; Back to {% if request.user.role == 'ADMIN' or request.user.is_superuser %}List{% else %}My Tickets{% endif %}
         </a>
     </div>
 
@@ -104,7 +104,7 @@
 
         <div class="px-8 py-5 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 flex justify-end gap-4 items-center">
 
-            <a href="{% url 'my_tickets' %}" class="px-6 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg font-bold shadow-sm transition-colors cursor-pointer">
+            <a href="{% if request.user.role == 'ADMIN' or request.user.is_superuser %}{% url 'documents' %}{% else %}{% url 'my_tickets' %}{% endif %}" class="px-6 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg font-bold shadow-sm transition-colors cursor-pointer">
                 Back to List
             </a>
 

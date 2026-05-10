@@ -7,23 +7,33 @@
     <title>Job Request Form - {{ ticket.ticket_number }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @page {
-            size: A4;
-            margin: 0.5in;
+        .print-safe-box {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         @media print {
-            html, body {
+            @page {
+                size: A4 portrait;
+                margin: 10mm; /* Small printable margin */
+            }
+            body {
                 background: #ffffff !important;
                 color: #000000 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                margin: 0;
+                padding: 0;
+                /* Scale the document down slightly to ensure it fits vertically */
+                zoom: 0.85; 
+                /* For Firefox compatibility */
+                -moz-transform: scale(0.85); 
+                -moz-transform-origin: top center;
             }
-        }
-
-        .print-safe-box {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            /* Prevent sections from splitting across pages */
+            .avoid-page-break {
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>

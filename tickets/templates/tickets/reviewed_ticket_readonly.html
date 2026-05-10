@@ -9,8 +9,8 @@
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Reviewed Ticket Details</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">Read-only view for reviewed and assigned tickets.</p>
         </div>
-        <a href="{% url 'requests' %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
-            &larr; Back to Requests
+        <a href="{% if request.user.role == 'ADMIN' or request.user.is_superuser %}{% url 'documents' %}{% else %}{% url 'my_tickets' %}{% endif %}" class="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 transition-colors">
+            &larr; Back to {% if request.user.role == 'ADMIN' or request.user.is_superuser %}List{% else %}My Tickets{% endif %}
         </a>
     </div>
 
