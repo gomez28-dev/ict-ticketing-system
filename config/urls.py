@@ -76,6 +76,7 @@ urlpatterns = [
     # OMR Scanner (Phase 6)
     path('admin-dashboard/scanner/', views.mobile_scanner, name='mobile_scanner'),
     path('admin-dashboard/api/process-scan/', views.api_process_scan, name='api_process_scan'),
+    path('admin-dashboard/api/save-review/', views.api_save_review, name='api_save_review'),
 ]
 
 if settings.DEBUG or getattr(settings, 'SERVE_MEDIA_FILES', False):

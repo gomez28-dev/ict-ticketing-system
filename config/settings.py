@@ -1,7 +1,10 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 import dj_database_url
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,6 +35,9 @@ SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-=oa5q@%l9%x6dhc+(frcr*aog!++)9m@kgz6!)dcko_j99uw#('
 )
+
+# Gemini API Key
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production.
 DEBUG = env_bool('DEBUG', default=not IS_PRODUCTION)

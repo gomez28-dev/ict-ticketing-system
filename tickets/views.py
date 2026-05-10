@@ -1478,10 +1478,39 @@ def mobile_scanner(request):
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def api_process_scan(request):
     """
-    API endpoint that receives either:
-    - A camera image + ticket_id (OMR scan)
-    - Manual scores + ticket_id (fallback entry)
-    Processes the scores, creates a PerformanceReview, and marks the ticket COMPLETED.
+    API endpoint that receives a camera image, sends it to Gemini API,
+    and returns the extracted ticket ID and scores.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'POST required.'}, status=405)
+
+    if not request.FILES.get('image'):
+        return JsonResponse({'success': False, 'message': 'No image provided.'})
+
+    from .omr_engine import analyze_jrf_image
+    image_file = request.FILES['image']
+    image_bytes = image_file.read()
+    
+    extracted_data = analyze_jrf_image(image_bytes)
+    
+    if extracted_data is None:
+        return JsonResponse({
+            'success': False,
+            'message': 'AI failed to analyze the document. Please try again or enter manually.'
+        })
+
+    return JsonResponse({
+        'success': True,
+        'data': extracted_data,
+        'message': 'Image analyzed successfully.'
+    })
+
+
+@login_required
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def api_save_review(request):
+    """
+    API endpoint that receives final, verified scores and saves them to the DB.
     """
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'POST required.'}, status=405)
@@ -1490,49 +1519,26 @@ def api_process_scan(request):
     if not ticket_id:
         return JsonResponse({'success': False, 'message': 'Ticket ID is required.'})
 
+    # Clean up ticket_id if it has 'TKT-' prefix
+    if ticket_id.upper().startswith('TKT-'):
+        ticket_id = ticket_id[4:]
+
     try:
         ticket = Ticket.objects.get(id=int(ticket_id))
     except (Ticket.DoesNotExist, ValueError):
         return JsonResponse({'success': False, 'message': f'Ticket ID "{ticket_id}" not found.'})
 
-    # Check if ticket already completed
     if ticket.status == 'COMPLETED':
         return JsonResponse({'success': False, 'message': 'This ticket has already been completed.'})
 
-    # Determine scores: manual entry or OMR scan
-    manual_q = request.POST.get('manual_quality')
-    manual_e = request.POST.get('manual_efficiency')
-    manual_t = request.POST.get('manual_timeliness')
-
-    if manual_q and manual_e and manual_t:
-        # Manual fallback path
-        scores = {
-            'quality': int(manual_q),
-            'efficiency': int(manual_e),
-            'timeliness': int(manual_t),
-        }
-    elif request.FILES.get('image'):
-        # OMR scan path
-        from .omr_engine import process_omr_image
-        image_file = request.FILES['image']
-        image_bytes = image_file.read()
-        scores = process_omr_image(image_bytes)
-        if scores is None:
-            return JsonResponse({
-                'success': False,
-                'message': 'Could not detect the OMR bubbles. Make sure the form is well-lit and all 4 corner markers are visible. Use manual entry as fallback.'
-            })
-    else:
-        return JsonResponse({'success': False, 'message': 'No image or manual scores provided.'})
+    quality = int(request.POST.get('quality', 3))
+    efficiency = int(request.POST.get('efficiency', 3))
+    timeliness = int(request.POST.get('timeliness', 3))
 
     # Validate score range
-    for key in ('quality', 'efficiency', 'timeliness'):
-        if scores.get(key, 0) not in range(1, 6):
-            scores[key] = 3  # Default to average if out of range
-
-    quality = scores['quality']
-    efficiency = scores['efficiency']
-    timeliness = scores['timeliness']
+    quality = max(1, min(5, quality))
+    efficiency = max(1, min(5, efficiency))
+    timeliness = max(1, min(5, timeliness))
 
     # Find the assigned employee
     employee = ticket.assignee
@@ -1578,7 +1584,7 @@ def api_process_scan(request):
         quality=quality,
         efficiency=efficiency,
         timeliness=timeliness,
-        notes=f"Scanned via OMR Scanner by {request.user.get_full_name()}",
+        notes=f"AI-Assisted OMR Scan verified by {request.user.get_full_name()}",
     )
 
     # Mark ticket as COMPLETED
@@ -1588,6 +1594,5 @@ def api_process_scan(request):
 
     return JsonResponse({
         'success': True,
-        'scores': scores,
         'message': f'Performance review saved and ticket #{ticket.ticket_number} marked as Complete for {employee.get_full_name()}.'
     })

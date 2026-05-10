@@ -3,8 +3,8 @@
 
 {% block content %}
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">📷 OMR Performance Scanner</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Scan a printed Job Request Form to automatically read performance ratings.</p>
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">📷 AI OMR Performance Scanner</h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Scan a printed Job Request Form to automatically read performance ratings using Google Gemini Vision AI.</p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -38,104 +38,62 @@
                 </button>
                 <button id="captureBtn" onclick="captureAndProcess()" disabled class="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    Capture &amp; Process
+                    Scan Document
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- RIGHT: Ticket ID Input & Results -->
+    <!-- RIGHT: Extracted Data Form -->
     <div class="space-y-6">
-        <!-- Ticket ID Input -->
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="font-bold text-blue-600 dark:text-blue-400">Ticket Identification</h3>
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-blue-600 dark:text-blue-400">Extracted Data</h3>
+                <span id="aiStatusBadge" class="hidden bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-purple-900 dark:text-purple-300">AI Populated</span>
             </div>
-            <div class="p-4">
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Enter the Ticket ID manually or scan the QR code on the form.</p>
-                <div class="flex gap-3">
-                    <input type="number" id="ticketIdInput" placeholder="Enter Ticket ID (e.g. 42)"
-                           class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <button id="qrScanBtn" onclick="toggleQrScanner()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm">
-                        QR Scan
-                    </button>
-                </div>
-                <!-- QR Scanner region (hidden by default) -->
-                <div id="qrScannerRegion" class="hidden mt-3">
-                    <div id="qr-reader" style="width: 100%;"></div>
-                </div>
-            </div>
-        </div>
+            <div class="p-4 space-y-4">
+                <p class="text-xs text-gray-500 dark:text-gray-400">Verify the AI-extracted data. You can edit the values manually if the AI made a mistake.</p>
+                
+                <div class="space-y-3">
+                    <!-- Ticket ID -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Ticket ID</label>
+                        <input type="text" id="ticketId" placeholder="e.g. TKT-42 or 42"
+                               class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
 
-        <!-- Manual Score Input (Fallback) -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="font-bold text-blue-600 dark:text-blue-400">Manual Score Entry (Fallback)</h3>
-            </div>
-            <div class="p-4 space-y-3">
-                <p class="text-xs text-gray-500 dark:text-gray-400">If the camera scan fails, you can enter scores manually.</p>
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Quality</label>
-                        <select id="manualQuality" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white">
-                            <option value="">—</option>
-                            <option value="5">5 - Excellent</option>
-                            <option value="4">4 - Good</option>
-                            <option value="3">3 - Average</option>
-                            <option value="2">2 - Below Avg</option>
-                            <option value="1">1 - Poor</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Efficiency</label>
-                        <select id="manualEfficiency" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white">
-                            <option value="">—</option>
-                            <option value="5">5 - Excellent</option>
-                            <option value="4">4 - Good</option>
-                            <option value="3">3 - Average</option>
-                            <option value="2">2 - Below Avg</option>
-                            <option value="1">1 - Poor</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Timeliness</label>
-                        <select id="manualTimeliness" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white">
-                            <option value="">—</option>
-                            <option value="5">5 - Excellent</option>
-                            <option value="4">4 - Good</option>
-                            <option value="3">3 - Average</option>
-                            <option value="2">2 - Below Avg</option>
-                            <option value="1">1 - Poor</option>
-                        </select>
+                    <!-- Scores -->
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Quality</label>
+                            <input type="number" id="scoreQuality" min="1" max="5" placeholder="1-5"
+                                   class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Efficiency</label>
+                            <input type="number" id="scoreEfficiency" min="1" max="5" placeholder="1-5"
+                                   class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Timeliness</label>
+                            <input type="number" id="scoreTimeliness" min="1" max="5" placeholder="1-5"
+                                   class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">
+                        </div>
                     </div>
                 </div>
-                <button onclick="submitManualScores()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm mt-2">
-                    Submit Manual Scores
+
+                <button id="verifySaveBtn" onclick="verifyAndSave()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-sm mt-4 shadow-md flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Verify &amp; Save to Database
                 </button>
             </div>
         </div>
 
-        <!-- Results Panel -->
-        <div id="resultsPanel" class="hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="font-bold text-green-600 dark:text-green-400">✅ Scan Results</h3>
-            </div>
-            <div class="p-4">
-                <div class="grid grid-cols-3 gap-3 mb-4">
-                    <div class="text-center p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                        <p class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase">Quality</p>
-                        <p id="resultQuality" class="text-2xl font-extrabold text-blue-800 dark:text-blue-200">—</p>
-                    </div>
-                    <div class="text-center p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
-                        <p class="text-xs font-bold text-green-600 dark:text-green-400 uppercase">Efficiency</p>
-                        <p id="resultEfficiency" class="text-2xl font-extrabold text-green-800 dark:text-green-200">—</p>
-                    </div>
-                    <div class="text-center p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-                        <p class="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase">Timeliness</p>
-                        <p id="resultTimeliness" class="text-2xl font-extrabold text-purple-800 dark:text-purple-200">—</p>
-                    </div>
-                </div>
-                <p id="resultMessage" class="text-sm text-green-700 dark:text-green-300 text-center font-medium"></p>
+        <!-- Success Message -->
+        <div id="successPanel" class="hidden bg-green-50 dark:bg-green-900/30 rounded-xl border border-green-200 dark:border-green-800 shadow-sm p-4">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p id="successMessage" class="text-sm text-green-700 dark:text-green-300 font-bold"></p>
             </div>
         </div>
 
@@ -146,12 +104,8 @@
     </div>
 </div>
 
-<!-- html5-qrcode CDN -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
 <script>
     let cameraStream = null;
-    let qrScanner = null;
 
     const getCookie = (name) => {
         let cookieValue = null;
@@ -174,7 +128,6 @@
         const captureBtn = document.getElementById('captureBtn');
 
         try {
-            // Prefer back-facing camera on mobile devices
             cameraStream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } }
             });
@@ -185,36 +138,30 @@
             document.getElementById('startCameraBtn').classList.add('bg-gray-500');
             document.getElementById('startCameraBtn').classList.remove('bg-blue-600', 'hover:bg-blue-700');
         } catch (err) {
-            showError('Camera access denied or not available. Use the manual entry form instead.');
+            showError('Camera access denied or not available. You can enter data manually.');
             console.error('Camera error:', err);
         }
     }
 
     async function captureAndProcess() {
-        const ticketId = document.getElementById('ticketIdInput').value.trim();
-        if (!ticketId) {
-            showError('Please enter a Ticket ID first (or scan the QR code).');
-            return;
-        }
-
         const video = document.getElementById('cameraFeed');
         const canvas = document.getElementById('captureCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Capture the current video frame
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
 
-        // Convert canvas to JPEG Blob
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
             formData.append('image', blob, 'scan.jpg');
-            formData.append('ticket_id', ticketId);
 
             const captureBtn = document.getElementById('captureBtn');
             captureBtn.disabled = true;
-            captureBtn.textContent = 'Processing...';
+            captureBtn.textContent = 'AI Analyzing...';
+            document.getElementById('aiStatusBadge').classList.add('hidden');
+            document.getElementById('successPanel').classList.add('hidden');
+            document.getElementById('errorPanel').classList.add('hidden');
 
             try {
                 const response = await fetch('{% url "api_process_scan" %}', {
@@ -224,44 +171,55 @@
                 });
                 const data = await response.json();
 
-                if (data.success) {
-                    showResults(data.scores, data.message);
+                if (data.success && data.data) {
+                    // Populate Form
+                    document.getElementById('ticketId').value = data.data.ticket_id || '';
+                    document.getElementById('scoreQuality').value = data.data.quality || '';
+                    document.getElementById('scoreEfficiency').value = data.data.efficiency || '';
+                    document.getElementById('scoreTimeliness').value = data.data.timeliness || '';
+                    
+                    document.getElementById('aiStatusBadge').classList.remove('hidden');
                 } else {
-                    showError(data.message || 'OMR processing failed. Try the manual entry form.');
+                    showError(data.message || 'AI processing failed. Please try again or enter manually.');
                 }
             } catch (err) {
-                showError('Network error. Please try again.');
+                showError('Network error connecting to AI backend.');
                 console.error(err);
             } finally {
                 captureBtn.disabled = false;
-                captureBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Capture & Process';
+                captureBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Scan Document';
             }
         }, 'image/jpeg', 0.9);
     }
 
-    async function submitManualScores() {
-        const ticketId = document.getElementById('ticketIdInput').value.trim();
-        const quality = document.getElementById('manualQuality').value;
-        const efficiency = document.getElementById('manualEfficiency').value;
-        const timeliness = document.getElementById('manualTimeliness').value;
+    async function verifyAndSave() {
+        const ticketId = document.getElementById('ticketId').value.trim();
+        const quality = document.getElementById('scoreQuality').value;
+        const efficiency = document.getElementById('scoreEfficiency').value;
+        const timeliness = document.getElementById('scoreTimeliness').value;
 
         if (!ticketId) {
-            showError('Please enter a Ticket ID first.');
+            showError('Please provide a Ticket ID.');
             return;
         }
         if (!quality || !efficiency || !timeliness) {
-            showError('Please select all three scores.');
+            showError('Please provide all three performance scores.');
             return;
         }
 
         const formData = new FormData();
         formData.append('ticket_id', ticketId);
-        formData.append('manual_quality', quality);
-        formData.append('manual_efficiency', efficiency);
-        formData.append('manual_timeliness', timeliness);
+        formData.append('quality', quality);
+        formData.append('efficiency', efficiency);
+        formData.append('timeliness', timeliness);
+
+        const btn = document.getElementById('verifySaveBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
 
         try {
-            const response = await fetch('{% url "api_process_scan" %}', {
+            const response = await fetch('{% url "api_save_review" %}', {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCookie('csrftoken') },
                 body: formData
@@ -269,69 +227,39 @@
             const data = await response.json();
 
             if (data.success) {
-                showResults(data.scores, data.message);
+                document.getElementById('errorPanel').classList.add('hidden');
+                document.getElementById('successPanel').classList.remove('hidden');
+                document.getElementById('successMessage').textContent = data.message;
+                
+                // Reset form
+                document.getElementById('ticketId').value = '';
+                document.getElementById('scoreQuality').value = '';
+                document.getElementById('scoreEfficiency').value = '';
+                document.getElementById('scoreTimeliness').value = '';
+                document.getElementById('aiStatusBadge').classList.add('hidden');
             } else {
-                showError(data.message || 'Failed to submit scores.');
+                showError(data.message || 'Failed to save to database.');
             }
         } catch (err) {
             showError('Network error. Please try again.');
             console.error(err);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
         }
-    }
-
-    function toggleQrScanner() {
-        const region = document.getElementById('qrScannerRegion');
-        if (region.classList.contains('hidden')) {
-            region.classList.remove('hidden');
-            if (!qrScanner) {
-                qrScanner = new Html5Qrcode("qr-reader");
-            }
-            qrScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 200, height: 200 } },
-                (decodedText) => {
-                    document.getElementById('ticketIdInput').value = decodedText;
-                    qrScanner.stop();
-                    region.classList.add('hidden');
-                    showError('');
-                    document.getElementById('errorPanel').classList.add('hidden');
-                },
-                () => {} // ignore scan failures
-            ).catch(err => {
-                console.error('QR scanner error:', err);
-                showError('QR scanner could not start. Enter ticket ID manually.');
-            });
-        } else {
-            if (qrScanner) qrScanner.stop().catch(() => {});
-            region.classList.add('hidden');
-        }
-    }
-
-    function showResults(scores, message) {
-        document.getElementById('errorPanel').classList.add('hidden');
-        const panel = document.getElementById('resultsPanel');
-        panel.classList.remove('hidden');
-        document.getElementById('resultQuality').textContent = scores.quality;
-        document.getElementById('resultEfficiency').textContent = scores.efficiency;
-        document.getElementById('resultTimeliness').textContent = scores.timeliness;
-        document.getElementById('resultMessage').textContent = message || 'Scores saved successfully!';
     }
 
     function showError(msg) {
         if (!msg) return;
-        document.getElementById('resultsPanel').classList.add('hidden');
+        document.getElementById('successPanel').classList.add('hidden');
         const panel = document.getElementById('errorPanel');
         panel.classList.remove('hidden');
         document.getElementById('errorMessage').textContent = msg;
     }
 
-    // Clean up camera on page leave
     window.addEventListener('beforeunload', () => {
         if (cameraStream) {
             cameraStream.getTracks().forEach(track => track.stop());
-        }
-        if (qrScanner) {
-            qrScanner.stop().catch(() => {});
         }
     });
 </script>
