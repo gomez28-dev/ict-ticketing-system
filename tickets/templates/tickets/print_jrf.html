@@ -13,31 +13,29 @@
         }
 
         @media print {
-            @page {
-                size: A4 portrait;
-                margin: 10mm; /* Small printable margin */
+            @page { 
+                margin: 5mm; 
+                size: A4 portrait; 
             }
-            body {
+            body { 
+                font-size: 11pt !important; 
+                line-height: 1.2 !important; 
+                zoom: 0.85; 
+                -moz-transform: scale(0.85); 
+                transform-origin: top left; 
                 background: #ffffff !important;
                 color: #000000 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
-                margin: 0;
-                padding: 0;
-                /* Scale the document down slightly to ensure it fits vertically */
-                zoom: 0.85; 
-                /* For Firefox compatibility */
-                -moz-transform: scale(0.85); 
-                -moz-transform-origin: top center;
             }
-            /* Prevent sections from splitting across pages */
-            .avoid-page-break {
-                page-break-inside: avoid;
+            .page-break-avoid { 
+                page-break-inside: avoid; 
             }
         }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 overflow-x-hidden print:bg-white print:text-black">
+    <!-- Screen-only toolbar -->
     <div class="print:hidden sticky top-0 z-10 border-b border-slate-300 bg-white/95 backdrop-blur">
         <div class="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-4 py-3 sm:px-6">
             <a href="javascript:history.back()" class="min-h-11 inline-flex items-center justify-center gap-2 text-sm font-medium text-slate-700 transition hover:text-slate-900">
@@ -73,222 +71,196 @@
 
     <main class="mx-auto max-w-5xl px-3 py-4 sm:px-6 print:max-w-none print:px-0 print:py-0">
         <section class="mx-auto w-full max-w-[210mm] bg-white shadow-lg shadow-slate-300/60 print:shadow-none">
-            <div class="border border-slate-900 p-6 text-slate-900 print:border-black print:text-black sm:p-8">
-                <header class="border-b border-slate-900 pb-4 flex flex-col sm:flex-row items-center print:border-black">
-                    <div class="sm:mr-4 mb-3 sm:mb-0">
-                        <img src="{% static 'tickets/images/ICT_Logo.png' %}" alt="ICT Helpdesk Logo" class="h-14 w-auto object-contain">
+            <div class="border-2 border-slate-900 p-6 print:p-2 text-slate-900 print:border-black print:text-black sm:p-4">
+                
+                <!-- HEADER -->
+                <header class="border-b-2 border-slate-900 print:border-black pb-2 print:pb-1 mb-4 print:mb-2 flex items-center justify-between">
+                    <div class="flex items-center flex-1">
+                        <img src="{% static 'tickets/images/ICT_Logo.png' %}" alt="ICT Helpdesk Logo" class="h-16 w-auto object-contain print:h-12 mr-4 print:mr-2">
+                        <div class="text-center flex-1">
+                            <p class="text-xs print:text-[10px] font-semibold uppercase tracking-widest">Republic of the Philippines</p>
+                            <p class="text-sm print:text-xs font-bold uppercase tracking-widest">Department of Education</p>
+                            <p class="text-sm print:text-xs font-semibold uppercase tracking-wider">Schools Division Office Valenzuela</p>
+                            <p class="text-sm print:text-xs font-semibold uppercase tracking-wider">Information and Communications Technology Unit</p>
+                            <h1 class="mt-1 text-lg print:text-base font-extrabold uppercase tracking-widest">Job Request Form (JRF)</h1>
+                        </div>
                     </div>
-                    <div class="flex-1 text-center sm:pr-14">
-                        <p class="text-xs font-semibold uppercase tracking-[0.2em]">Republic of the Philippines</p>
-                    <p class="mt-1 text-sm font-bold uppercase tracking-[0.16em]">Department of Education</p>
-                    <p class="mt-1 text-sm font-semibold uppercase tracking-[0.1em]">Schools Division Office Valenzuela</p>
-                    <p class="mt-1 text-sm font-semibold uppercase tracking-[0.1em]">Information and Communications Technology Unit</p>
-                    <h1 class="mt-4 text-xl font-extrabold uppercase tracking-[0.18em]">Job Request Form (JRF)</h1>
+                    <div class="text-right ml-4">
+                        <p class="text-2xl print:text-xl font-extrabold uppercase">{{ ticket.ticket_number }}</p>
                     </div>
                 </header>
 
-                <section class="mt-4 border border-slate-900 print:border-black">
-                    <div class="grid grid-cols-2 border-b border-slate-900 text-xs print:border-black sm:grid-cols-4">
-                        <div class="border-r border-slate-900 p-2 print:border-black">
+                <!-- TICKET DETAILS -->
+                <section class="border-2 border-slate-900 print:border-black mb-4 print:mb-2 text-sm print:text-xs">
+                    <div class="grid grid-cols-3 border-b border-slate-900 print:border-black">
+                        <div class="border-r border-slate-900 print:border-black p-2 print:p-1">
                             <span class="font-bold uppercase">Date:</span>
-                            <span class="ml-2 font-medium">{{ ticket.created_at|date:"m/d/Y" }}</span>
+                            <span class="ml-1 font-medium">{{ ticket.created_at|date:"m/d/Y" }}</span>
                         </div>
-                        <div class="border-r border-slate-900 p-2 print:border-black">
+                        <div class="border-r border-slate-900 print:border-black p-2 print:p-1">
                             <span class="font-bold uppercase">Time:</span>
-                            <span class="ml-2 font-medium">{{ ticket.created_at|date:"h:i A" }}</span>
+                            <span class="ml-1 font-medium">{{ ticket.created_at|date:"h:i A" }}</span>
                         </div>
-                        <div class="border-r border-slate-900 p-2 print:border-black">
-                            <span class="font-bold uppercase">Ticket No:</span>
-                            <span class="ml-2 font-medium">{{ ticket.ticket_number }}</span>
-                        </div>
-                        <div class="p-2">
+                        <div class="p-2 print:p-1">
                             <span class="font-bold uppercase">Contact No:</span>
-                            <span class="ml-2 font-medium">{{ ticket.contact_number|default:"N/A" }}</span>
+                            <span class="ml-1 font-medium">{{ ticket.contact_number|default:"N/A" }}</span>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 border-b border-slate-900 text-xs print:border-black sm:grid-cols-2">
-                        <div class="border-b border-slate-900 p-2 print:border-black sm:border-b-0 sm:border-r">
+                    <div class="grid grid-cols-2 border-b border-slate-900 print:border-black">
+                        <div class="border-r border-slate-900 print:border-black p-2 print:p-1">
                             <span class="font-bold uppercase">Name of Requestor:</span>
-                            <span class="ml-2 font-medium">{{ ticket.first_name }} {{ ticket.last_name }}</span>
+                            <span class="ml-1 font-medium">{{ ticket.first_name }} {{ ticket.last_name }}</span>
                         </div>
-                        <div class="p-2">
+                        <div class="p-2 print:p-1">
                             <span class="font-bold uppercase">Office/School:</span>
-                            <span class="ml-2 font-medium">{{ ticket.school_name|default:"N/A" }}</span>
+                            <span class="ml-1 font-medium">{{ ticket.school_name|default:"N/A" }}</span>
                         </div>
                     </div>
 
-                    <div class="p-2 text-xs">
+                    <div class="p-2 print:p-1">
                         <span class="font-bold uppercase">Job Request Description:</span>
-                        <span class="ml-2 font-medium">{{ ticket.get_support_type_display|default:ticket.support_type }}</span>
+                        <span class="ml-1 font-medium">{{ ticket.get_support_type_display|default:ticket.support_type }}</span>
                     </div>
                 </section>
 
-                <section class="mt-4 break-inside-avoid">
-                    <div class="grid grid-cols-1 border border-slate-900 print:border-black md:grid-cols-2">
-                        <div class="min-h-[260px] border-b border-slate-900 p-3 print:border-black md:border-b-0 md:border-r">
-                            <h2 class="border-b border-slate-900 pb-2 text-center text-xs font-bold uppercase tracking-[0.14em] print:border-black">
-                                Recommendation/Action Taken
-                            </h2>
-                            <div class="min-h-[220px]"></div>
-                        </div>
-                        <div class="min-h-[260px] p-3">
-                            <h2 class="border-b border-slate-900 pb-2 text-center text-xs font-bold uppercase tracking-[0.14em] print:border-black">
-                                Problem/s
-                            </h2>
-                            <div class="pt-3 text-sm leading-6 whitespace-pre-wrap">
-                                {{ ticket.description|default:"" }}
-                            </div>
+                <!-- PROBLEM & RESOLUTION -->
+                <section class="grid grid-cols-2 border-2 border-slate-900 print:border-black mb-4 print:mb-2 page-break-avoid">
+                    <div class="border-r border-slate-900 print:border-black p-3 print:p-1.5 min-h-[120px] print:min-h-[80px]">
+                        <h2 class="border-b border-slate-900 print:border-black pb-1 mb-2 text-center text-xs print:text-[10px] font-bold uppercase tracking-widest">
+                            Recommendation/Action Taken
+                        </h2>
+                        <!-- Blank space for admin to write -->
+                    </div>
+                    <div class="p-3 print:p-1.5 min-h-[120px] print:min-h-[80px]">
+                        <h2 class="border-b border-slate-900 print:border-black pb-1 mb-2 text-center text-xs print:text-[10px] font-bold uppercase tracking-widest">
+                            Problem/s
+                        </h2>
+                        <div class="text-sm print:text-xs leading-tight whitespace-pre-wrap">
+                            {{ ticket.description|default:"" }}
                         </div>
                     </div>
                 </section>
 
-                <section class="mt-6 grid grid-cols-1 gap-10 text-center text-sm md:grid-cols-2">
-                    <div>
-                        <p class="mb-10 text-left font-semibold">Inspected by:</p>
-                        <div class="border-t border-slate-900 pt-2 font-semibold uppercase print:border-black">
+                <!-- SIGNATURES -->
+                <section class="flex justify-between border-2 border-slate-900 print:border-black p-4 print:p-2 mb-4 print:mb-2 page-break-avoid text-sm print:text-xs text-center">
+                    <div class="w-1/2 px-4">
+                        <p class="text-left font-semibold mb-8 print:mb-6">Action Taken by:</p>
+                        <div class="border-t border-slate-900 print:border-black pt-1 font-semibold uppercase">
                             {{ ticket.assignee.get_full_name|default:"(Assigned Employee)" }}
                         </div>
+                        <p class="text-[10px] uppercase tracking-wide">ICT Staff</p>
                     </div>
-                    <div>
-                        <p class="mb-10 text-left font-semibold">Attested by:</p>
-                        <div class="border-t border-slate-900 pt-2 font-semibold uppercase print:border-black">
+                    <div class="w-1/2 px-4 border-l border-slate-900 print:border-black">
+                        <p class="text-left font-semibold mb-8 print:mb-6">Conforme:</p>
+                        <div class="border-t border-slate-900 print:border-black pt-1 font-semibold uppercase">
                             {{ ticket.first_name }} {{ ticket.last_name }}
                         </div>
-                        <p class="mt-1 text-xs uppercase tracking-wide">Client's Name</p>
+                        <p class="text-[10px] uppercase tracking-wide">Signature over printed name</p>
                     </div>
                 </section>
 
-                <section class="mt-8 break-inside-avoid">
-                    <div class="grid grid-cols-1 gap-8 text-center text-sm md:grid-cols-2">
-                        <div>
-                            <p class="mb-10 text-left font-semibold">Reviewed by:</p>
-                            <div class="border-t border-slate-900 pt-2 font-semibold uppercase print:border-black">
-                                KARESHENE SD. MALVAR
-                            </div>
-                            <p class="mt-1 text-xs uppercase tracking-wide">Administrative Aide IV</p>
-                        </div>
-                        <div>
-                            <p class="mb-10 text-left font-semibold">Noted by:</p>
-                            <div class="border-t border-slate-900 pt-2 font-semibold uppercase print:border-black">
-                                NOEL E. REYES
-                            </div>
-                            <p class="mt-1 text-xs uppercase tracking-wide">Information Technology Officer I</p>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="mt-8 break-inside-avoid">
-                    <h2 class="mb-2 text-center text-sm font-bold uppercase tracking-[0.14em]">Performance Indicators</h2>
-                    <div class="overflow-x-auto border border-slate-900 print:border-black">
-                        <table class="w-full min-w-[720px] border-collapse text-[11px] leading-5 print:text-black">
+                <!-- PERFORMANCE INDICATORS (OMR) -->
+                <div class="page-break-avoid">
+                    <h2 class="mb-1 text-center text-sm print:text-xs font-bold uppercase tracking-widest">Performance Indicators</h2>
+                    <div class="overflow-hidden border-2 border-gray-800">
+                        <table class="w-full border-collapse text-[11px] print:text-[10px] leading-tight text-black">
                             <thead>
                                 <tr>
-                                    <th class="w-[8%] border border-slate-900 p-2 text-center font-bold print:border-black">Pts.</th>
-                                    <th class="w-[25%] border border-slate-900 p-2 text-left font-bold print:border-black">Quality (Kalidad ng gawa) 40%</th>
-                                    <th class="w-[8%] border border-slate-900 p-2 text-center font-bold print:border-black">Pts.</th>
-                                    <th class="w-[25%] border border-slate-900 p-2 text-left font-bold print:border-black">Efficiency (Pagka epektibo) 30%</th>
-                                    <th class="w-[8%] border border-slate-900 p-2 text-center font-bold print:border-black">Pts.</th>
-                                    <th class="w-[26%] border border-slate-900 p-2 text-left font-bold print:border-black">Timeliness (Pagtugon sa takdang oras) 30%</th>
+                                    <th class="w-[8%] border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-bold">Pts.</th>
+                                    <th class="w-[25%] border border-gray-800 p-2 print:py-0.5 print:px-1 text-left font-bold">Quality (Kalidad ng gawa) 40%</th>
+                                    <th class="w-[8%] border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-bold">Pts.</th>
+                                    <th class="w-[25%] border border-gray-800 p-2 print:py-0.5 print:px-1 text-left font-bold">Efficiency (Pagka epektibo) 30%</th>
+                                    <th class="w-[8%] border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-bold">Pts.</th>
+                                    <th class="w-[26%] border border-gray-800 p-2 print:py-0.5 print:px-1 text-left font-bold">Timeliness (Pagtugon) 30%</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="break-inside-avoid">
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>5</span>
+                                <tr>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 5
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Napaka husay ng pagkakagawa, maaayos ang mga kable, malinis ang mga peripherals, at wasto ang pagbibigay solusyon sa problem, at sinuri pa ang ibang problema</td>
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>5</span>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Napaka husay ng pagkakagawa, maaayos ang mga kable, malinis, at wasto ang solusyon</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 5
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Hindi na naulit ang problema at lalong gumanda ang technical processing ng isang computer or system</td>
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>5</span>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Hindi na naulit ang problema at lalong gumanda ang processing ng computer</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 5
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Mas maaga ang pagtugon sa technical assistance request</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Mas maaga ang pagtugon sa technical assistance request</td>
                                 </tr>
-                                <tr class="break-inside-avoid">
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>4</span>
+                                <tr>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 4
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Maayos ang pagbibigay solusyon sa technical problema at nilinis ang mga computer o computer peripherals, at sinuri pa ang ibang problema.</td>
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>4</span>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Maayos ang solusyon, nilinis ang computer, at sinuri pa ang ibang problema</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 4
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Gumada ang technical processing buhat ng ayusin ang technical problem</td>
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>4</span>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Gumanda ang processing buhat ng ayusin ang technical problem</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 4
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Pinilit agahan ang pagtugon sa technical assistance request</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Pinilit agahan ang pagtugon sa technical assistance request</td>
                                 </tr>
-                                <tr class="break-inside-avoid">
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>3</span>
+                                <tr>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 3
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Inayos ang inulat na technical problem</td>
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>3</span>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Inayos ang inulat na technical problem</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 3
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Naayos ang technical problem</td>
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>3</span>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Naayos ang technical problem</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 3
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Tumugon sangayon sa schedule ng technical assistance</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Tumugon sangayon sa schedule ng technical assistance</td>
                                 </tr>
-                                <tr class="break-inside-avoid">
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>2</span>
+                                <tr>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 2
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Mali ang solusyon na ginawa</td>
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>2</span>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Mali ang solusyon na ginawa</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 2
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Hindi naayos ng mabuti ang technical problem</td>
-                                    <td class="border border-slate-900 p-2 text-center font-semibold print:border-black">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="inline-block rounded-full h-4 w-4 border border-black align-middle print:border-black print-safe-box"></div>
-                                            <span>2</span>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Hindi naayos ng mabuti ang technical problem</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 text-center font-semibold">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <div class="inline-block rounded-full h-3 w-3 border border-black print-safe-box"></div> 2
                                         </div>
                                     </td>
-                                    <td class="border border-slate-900 p-2 align-top print:border-black">Delay na pagtugon sa technical assistance request</td>
+                                    <td class="border border-gray-800 p-2 print:py-0.5 print:px-1 align-top">Delay na pagtugon sa technical assistance request</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                </section>
+                </div>
+
             </div>
         </section>
     </main>
