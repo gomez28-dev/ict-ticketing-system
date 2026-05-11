@@ -1479,31 +1479,18 @@ def mobile_scanner(request):
 def api_process_scan(request):
     """
     API endpoint that receives a camera image, sends it to Gemini API,
-    and returns the extracted ticket ID and scores.
+    and returns the extracted ticket ID and scores for admin verification.
     """
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'message': 'POST required.'}, status=405)
+        return JsonResponse({'error': 'POST required.'}, status=405)
 
-    if not request.FILES.get('image'):
-        return JsonResponse({'success': False, 'message': 'No image provided.'})
+    image_data = request.POST.get('image')
+    if not image_data:
+        return JsonResponse({'error': 'No image provided.'})
 
     from .omr_engine import analyze_jrf_image
-    image_file = request.FILES['image']
-    image_bytes = image_file.read()
-    
-    extracted_data = analyze_jrf_image(image_bytes)
-    
-    if extracted_data is None:
-        return JsonResponse({
-            'success': False,
-            'message': 'AI failed to analyze the document. Please try again or enter manually.'
-        })
-
-    return JsonResponse({
-        'success': True,
-        'data': extracted_data,
-        'message': 'Image analyzed successfully.'
-    })
+    extracted_data = analyze_jrf_image(image_data)
+    return JsonResponse(extracted_data)
 
 
 @login_required

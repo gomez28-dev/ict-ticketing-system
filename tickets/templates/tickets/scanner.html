@@ -51,42 +51,37 @@
                 <h3 class="font-bold text-blue-600 dark:text-blue-400">Extracted Data</h3>
                 <span id="aiStatusBadge" class="hidden bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded dark:bg-purple-900 dark:text-purple-300">AI Populated</span>
             </div>
-            <div class="p-4 space-y-4">
-                <p class="text-xs text-gray-500 dark:text-gray-400">Verify the AI-extracted data. You can edit the values manually if the AI made a mistake.</p>
-                
-                <div class="space-y-3">
-                    <!-- Ticket ID -->
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Ticket ID</label>
-                        <input type="text" id="ticketId" placeholder="e.g. TKT-42 or 42"
-                               class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
+            <form id="verificationForm" method="post" action="{% url 'api_save_review' %}" class="p-4 space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label for="ticket_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Ticket ID</label>
+                    <input type="text" id="ticket_id" name="ticket_id" placeholder="e.g. TKT-42 or 42"
+                           class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
 
-                    <!-- Scores -->
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Quality</label>
-                            <input type="number" id="scoreQuality" min="1" max="5" placeholder="1-5"
-                                   class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Efficiency</label>
-                            <input type="number" id="scoreEfficiency" min="1" max="5" placeholder="1-5"
-                                   class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Timeliness</label>
-                            <input type="number" id="scoreTimeliness" min="1" max="5" placeholder="1-5"
-                                   class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">
-                        </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label for="quality" class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Quality</label>
+                        <input type="number" id="quality" name="quality" min="1" max="5" placeholder="1-5"
+                               class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label for="efficiency" class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Efficiency</label>
+                        <input type="number" id="efficiency" name="efficiency" min="1" max="5" placeholder="1-5"
+                               class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label for="timeliness" class="block text-xs font-bold text-gray-600 dark:text-gray-300 mb-1">Timeliness</label>
+                        <input type="number" id="timeliness" name="timeliness" min="1" max="5" placeholder="1-5"
+                               class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-center text-lg font-bold text-gray-900 dark:text-white">
                     </div>
                 </div>
 
-                <button id="verifySaveBtn" onclick="verifyAndSave()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-sm mt-4 shadow-md flex items-center justify-center gap-2">
+                <button id="verifySaveBtn" type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors text-sm mt-4 shadow-md flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    Verify &amp; Save to Database
+                    Submit Verification
                 </button>
-            </div>
+            </form>
         </div>
 
         <!-- Success Message -->
@@ -148,55 +143,62 @@
         const canvas = document.getElementById('captureCanvas');
         const ctx = canvas.getContext('2d');
 
+        if (!video.videoWidth || !video.videoHeight) {
+            showError('Camera is not ready yet. Please try again.');
+            return;
+        }
+
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
 
-        canvas.toBlob(async (blob) => {
-            const formData = new FormData();
-            formData.append('image', blob, 'scan.jpg');
+        const formData = new FormData();
+        formData.append('image', canvas.toDataURL('image/jpeg', 0.9));
 
-            const captureBtn = document.getElementById('captureBtn');
-            captureBtn.disabled = true;
-            captureBtn.textContent = 'AI Analyzing...';
-            document.getElementById('aiStatusBadge').classList.add('hidden');
-            document.getElementById('successPanel').classList.add('hidden');
-            document.getElementById('errorPanel').classList.add('hidden');
+        const captureBtn = document.getElementById('captureBtn');
+        const originalHtml = captureBtn.innerHTML;
+        captureBtn.disabled = true;
+        captureBtn.textContent = 'AI Analyzing...';
+        document.getElementById('aiStatusBadge').classList.add('hidden');
+        document.getElementById('successPanel').classList.add('hidden');
+        document.getElementById('errorPanel').classList.add('hidden');
 
-            try {
-                const response = await fetch('{% url "api_process_scan" %}', {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
-                    body: formData
-                });
-                const data = await response.json();
+        try {
+            const response = await fetch('{% url "api_process_scan" %}', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                body: formData
+            });
+            const data = await response.json();
 
-                if (data.success && data.data) {
-                    // Populate Form
-                    document.getElementById('ticketId').value = data.data.ticket_id || '';
-                    document.getElementById('scoreQuality').value = data.data.quality || '';
-                    document.getElementById('scoreEfficiency').value = data.data.efficiency || '';
-                    document.getElementById('scoreTimeliness').value = data.data.timeliness || '';
-                    
-                    document.getElementById('aiStatusBadge').classList.remove('hidden');
-                } else {
-                    showError(data.message || 'AI processing failed. Please try again or enter manually.');
-                }
-            } catch (err) {
-                showError('Network error connecting to AI backend.');
-                console.error(err);
-            } finally {
-                captureBtn.disabled = false;
-                captureBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg> Scan Document';
+            if (data.error) {
+                alert(data.error);
+                showError(data.error);
+                return;
             }
-        }, 'image/jpeg', 0.9);
+
+            document.getElementById('ticket_id').value = data.ticket_id || '';
+            document.getElementById('quality').value = data.quality || '';
+            document.getElementById('efficiency').value = data.efficiency || '';
+            document.getElementById('timeliness').value = data.timeliness || '';
+            document.getElementById('aiStatusBadge').classList.remove('hidden');
+        } catch (err) {
+            showError('Network error connecting to AI backend.');
+            console.error(err);
+        } finally {
+            captureBtn.disabled = false;
+            captureBtn.innerHTML = originalHtml;
+        }
     }
 
-    async function verifyAndSave() {
-        const ticketId = document.getElementById('ticketId').value.trim();
-        const quality = document.getElementById('scoreQuality').value;
-        const efficiency = document.getElementById('scoreEfficiency').value;
-        const timeliness = document.getElementById('scoreTimeliness').value;
+    async function verifyAndSave(event) {
+        event.preventDefault();
+
+        const form = document.getElementById('verificationForm');
+        const ticketId = document.getElementById('ticket_id').value.trim();
+        const quality = document.getElementById('quality').value;
+        const efficiency = document.getElementById('efficiency').value;
+        const timeliness = document.getElementById('timeliness').value;
 
         if (!ticketId) {
             showError('Please provide a Ticket ID.');
@@ -207,11 +209,7 @@
             return;
         }
 
-        const formData = new FormData();
-        formData.append('ticket_id', ticketId);
-        formData.append('quality', quality);
-        formData.append('efficiency', efficiency);
-        formData.append('timeliness', timeliness);
+        const formData = new FormData(form);
 
         const btn = document.getElementById('verifySaveBtn');
         const originalText = btn.innerHTML;
@@ -231,11 +229,7 @@
                 document.getElementById('successPanel').classList.remove('hidden');
                 document.getElementById('successMessage').textContent = data.message;
                 
-                // Reset form
-                document.getElementById('ticketId').value = '';
-                document.getElementById('scoreQuality').value = '';
-                document.getElementById('scoreEfficiency').value = '';
-                document.getElementById('scoreTimeliness').value = '';
+                form.reset();
                 document.getElementById('aiStatusBadge').classList.add('hidden');
             } else {
                 showError(data.message || 'Failed to save to database.');
@@ -248,6 +242,8 @@
             btn.innerHTML = originalText;
         }
     }
+
+    document.getElementById('verificationForm').addEventListener('submit', verifyAndSave);
 
     function showError(msg) {
         if (!msg) return;
