@@ -32,7 +32,7 @@ def analyze_jrf_image(image_data):
         image_bytes = base64.b64decode(image_data)
         image_part = {"mime_type": "image/jpeg", "data": image_bytes}
 
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         prompt = (
             "You are a strict data extraction assistant. Analyze this scanned Job Request Form. "
             "1. Find the 'Ticket ID' text (usually starts with TKT-). "
