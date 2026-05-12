@@ -13,20 +13,21 @@ logger = logging.getLogger(__name__)
 if genai:
     genai.configure(api_key=settings.GEMINI_API_KEY)
 
-# A local OpenCV fallback could be added here later if needed.
-
 def analyze_jrf_image(image_data):
     """
     Analyze a base64-encoded JRF image using Gemini generative model.
-    Cycles through candidate models until one succeeds.
-    Returns a parsed JSON dict on success, or {'error': ..., 'raw': ...} on failure.
+    Cycles through candidate models to ensure the scanner never crashes
+    if a specific model tier is unavailable.
+    Returns a parsed JSON dict on success, or {'error': ...} on failure.
     """
+    # A local OpenCV fallback could be added here later if needed.
+
     if genai is None:
         logger.error("google.generativeai client not installed or import failed.")
         return {"error": "Generative AI client not available on server"}
 
     try:
-        # Strip data URI prefix if present from the frontend camera
+        # Strip data URI if present from the frontend camera
         if ',' in image_data:
             image_data = image_data.split(',', 1)[1]
 
@@ -41,37 +42,28 @@ def analyze_jrf_image(image_data):
             "The keys must be exact: {\"ticket_id\": \"...\", \"quality\": X, \"efficiency\": X, \"timeliness\": X}"
         )
 
-        # Prioritize the fastest, most capable multimodal flash models.
-        # The loop tries each in order and falls back if a model is unavailable.
+        # Prioritize the fastest, most capable multimodal flash models available
         candidate_models = [
-            'gemini-2.5-flash-preview-05-20',
+            'gemini-2.5-flash',
             'gemini-2.0-flash',
-            'gemini-1.5-flash',
+            'gemini-flash-latest',
         ]
 
         last_error = None
 
         for model_name in candidate_models:
             try:
-                logger.debug("Attempting Gemini model: %s", model_name)
                 model = genai.GenerativeModel(model_name)
                 response = model.generate_content(
                     [prompt, image_part],
                     generation_config={"response_mime_type": "application/json"}
                 )
 
-                # Debug: log raw response for troubleshooting (no secrets logged)
-                try:
-                    logger.debug("Gemini raw response (%s): %s", model_name, getattr(response, "__dict__", str(response)))
-                except Exception:
-                    logger.debug("Gemini raw response (str): %s", str(response))
-
-                # Extract text robustly across different client versions
+                # Extract text robustly depending on client version
                 raw_text = None
                 if hasattr(response, "text") and response.text:
                     raw_text = response.text.strip()
                 elif hasattr(response, "output") and response.output:
-                    # Some client versions nest the textual output
                     try:
                         raw_text = response.output[0].content[0].text
                     except Exception:
@@ -79,29 +71,28 @@ def analyze_jrf_image(image_data):
                 else:
                     raw_text = str(response)
 
-                # Strip Markdown fences if Gemini added them despite the mime type config
+                # Strip markdown fences if Gemini added them
                 if isinstance(raw_text, str):
                     raw_text = raw_text.strip()
                     if raw_text.startswith("```json") and raw_text.endswith("```"):
                         raw_text = raw_text[len("```json"):-len("```")].strip()
-                    elif raw_text.startswith("```") and raw_text.endswith("```"):
-                        raw_text = raw_text[3:-3].strip()
 
-                # Attempt JSON parse
+                # Parse JSON
                 try:
                     parsed = json.loads(raw_text)
-                    logger.info("OMR extraction succeeded using model: %s", model_name)
+                    logger.info("Gemini OMR success with model: %s", model_name)
                     return parsed
-                except Exception:
-                    logger.error("Failed to parse JSON from model %s. Raw: %s", model_name, raw_text)
-                    return {"error": "Invalid JSON returned from Gemini", "raw": raw_text}
+                except json.JSONDecodeError:
+                    logger.warning("Model %s returned unparseable JSON: %s", model_name, raw_text)
+                    last_error = f"Invalid JSON from {model_name}"
+                    continue
 
-            except Exception as model_exc:
-                logger.warning("Model %s failed: %s — trying next model.", model_name, model_exc)
-                last_error = model_exc
-                continue  # Try the next candidate
+            except Exception as model_err:
+                logger.warning("Model %s failed: %s", model_name, model_err)
+                last_error = str(model_err)
+                continue
 
-        # All models exhausted
+        # All candidate models exhausted
         logger.error("All Gemini candidate models failed. Last error: %s", last_error)
         return {"error": f"All AI models failed. Last error: {last_error}"}
 
