@@ -940,6 +940,12 @@ def submit_for_review(request, ticket_id):
 
         ticket.resolution_notes = form.cleaned_data['resolution_notes']
         ticket.resolution_attachment = form.cleaned_data['resolution_attachment']
+
+        # Capture client signature (Base64 from canvas pad)
+        client_sig = request.POST.get('client_signature', '').strip()
+        if client_sig:
+            ticket.client_signature = client_sig
+
         ticket.status = 'UNDER_REVIEW'
         ticket._current_user = request.user
         ticket.save()
@@ -1502,18 +1508,25 @@ def api_save_review(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'POST required.'}, status=405)
 
-    ticket_id = request.POST.get('ticket_id', '').strip()
-    if not ticket_id:
+    ticket_id_raw = request.POST.get('ticket_id', '').strip()
+    if not ticket_id_raw:
         return JsonResponse({'success': False, 'message': 'Ticket ID is required.'})
 
-    # Clean up ticket_id if it has 'TKT-' prefix
-    if ticket_id.upper().startswith('TKT-'):
-        ticket_id = ticket_id[4:]
+    # Support both numeric IDs and ticket_number formats (e.g. TKT-2026-0001)
+    ticket = None
+    if ticket_id_raw.upper().startswith('TKT-'):
+        # Try exact ticket_number match first
+        ticket = Ticket.objects.filter(ticket_number__iexact=ticket_id_raw).first()
 
-    try:
-        ticket = Ticket.objects.get(id=int(ticket_id))
-    except (Ticket.DoesNotExist, ValueError):
-        return JsonResponse({'success': False, 'message': f'Ticket ID "{ticket_id}" not found.'})
+    if not ticket:
+        # Fallback: try parsing as a numeric ID
+        try:
+            ticket = Ticket.objects.get(id=int(ticket_id_raw))
+        except (Ticket.DoesNotExist, ValueError):
+            pass
+
+    if not ticket:
+        return JsonResponse({'success': False, 'message': f'Ticket "{ticket_id_raw}" not found.'})
 
     if ticket.status == 'COMPLETED':
         return JsonResponse({'success': False, 'message': 'This ticket has already been completed.'})

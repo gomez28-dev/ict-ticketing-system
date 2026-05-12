@@ -79,5 +79,6 @@ urlpatterns = [
     path('admin-dashboard/api/save-review/', views.api_save_review, name='api_save_review'),
 ]
 
-if settings.DEBUG or getattr(settings, 'SERVE_MEDIA_FILES', False):
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Always register media routes so uploaded attachments are accessible.
+# In high-traffic production, serve media via nginx/CDN instead.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

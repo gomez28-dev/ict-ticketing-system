@@ -205,6 +205,7 @@ class Ticket(models.Model):
     # --- Resolution Details ---
     resolution_notes = models.TextField(blank=True, null=True)
     resolution_attachment = models.FileField(upload_to='resolutions/', null=True, blank=True)
+    client_signature = models.TextField(blank=True, null=True, help_text="Base64-encoded client signature image")
 
     # --- AI-Ready Data Fields ---
     complexity = models.IntegerField(default=1, help_text="Story points or complexity scale (e.g., 1-10)")
