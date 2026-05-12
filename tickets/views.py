@@ -1513,20 +1513,29 @@ def api_save_review(request):
         return JsonResponse({'success': False, 'message': 'Ticket ID is required.'})
 
     # Support both numeric IDs and ticket_number formats (e.g. TKT-2026-0001)
+    # Normalize: collapse extra spaces Gemini may insert around hyphens
+    ticket_id_normalized = ' '.join(ticket_id_raw.split())
+
     ticket = None
-    if ticket_id_raw.upper().startswith('TKT-'):
-        # Try exact ticket_number match first
-        ticket = Ticket.objects.filter(ticket_number__iexact=ticket_id_raw).first()
+    if ticket_id_normalized.upper().startswith('TKT-'):
+        # 1. Try exact ticket_number match (case-insensitive)
+        ticket = Ticket.objects.filter(ticket_number__iexact=ticket_id_normalized).first()
+
+        # 2. Fuzzy fallback: match on the trailing sequence number only
+        #    (handles AI returning 'TKT-2026-1' vs 'TKT-2026-0001')
+        if not ticket:
+            suffix = ticket_id_normalized.split('-')[-1].lstrip('0') or '0'
+            ticket = Ticket.objects.filter(ticket_number__iendswith=suffix).first()
 
     if not ticket:
-        # Fallback: try parsing as a numeric ID
+        # 3. Fallback: try parsing as a numeric primary-key ID
         try:
-            ticket = Ticket.objects.get(id=int(ticket_id_raw))
+            ticket = Ticket.objects.get(id=int(ticket_id_normalized))
         except (Ticket.DoesNotExist, ValueError):
             pass
 
     if not ticket:
-        return JsonResponse({'success': False, 'message': f'Ticket "{ticket_id_raw}" not found.'})
+        return JsonResponse({'success': False, 'message': f'Ticket "{ticket_id_raw}" not found. Please verify the Ticket ID and try again.'})
 
     if ticket.status == 'COMPLETED':
         return JsonResponse({'success': False, 'message': 'This ticket has already been completed.'})
