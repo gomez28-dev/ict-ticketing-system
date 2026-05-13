@@ -33,6 +33,12 @@ class User(AbstractUser):
     overall_rating = models.FloatField(default=0.0)
     total_reviews = models.IntegerField(default=0)
 
+    # --- Password Change Tracking ---
+    has_changed_password = models.BooleanField(
+        default=False,
+        help_text="Set to True after the user changes or dismisses the default password prompt."
+    )
+
     # --- Profile Fields ---
     profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     bio = models.TextField(blank=True, null=True)

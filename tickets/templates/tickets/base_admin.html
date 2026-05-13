@@ -112,7 +112,53 @@
             </div>
         </header>
 
-        <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 flex flex-col relative w-full">
+        <div class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-8 flex flex-col relative w-full max-w-full">
+            {% if request.user.is_authenticated and not request.user.has_changed_password %}
+            <div id="passwordChangeBanner" class="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300">
+                <div class="flex items-start gap-3 min-w-0">
+                    <svg class="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+                    <div class="min-w-0">
+                        <p class="text-sm font-bold text-amber-800 dark:text-amber-300">Default Password Detected</p>
+                        <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">You are currently using the default system password. For your security, we highly recommend updating it.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+                    <a href="{% url 'change_password' %}" class="min-h-10 flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                        Change Password
+                    </a>
+                    <button type="button" onclick="dismissPasswordBanner()" class="min-h-10 flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 bg-amber-100 hover:bg-amber-200 dark:bg-amber-800/30 dark:hover:bg-amber-800/50 text-amber-800 dark:text-amber-300 text-xs font-bold rounded-lg transition-colors">
+                        Skip for Now
+                    </button>
+                </div>
+            </div>
+            <script>
+                function dismissPasswordBanner() {
+                    const banner = document.getElementById('passwordChangeBanner');
+                    const csrftoken = document.querySelector('meta[name="csrf-token"]')?.content
+                        || (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+                    fetch('{% url "dismiss_password_change" %}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrftoken,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }).then(r => r.json()).then(data => {
+                        if (data.success) {
+                            banner.style.transition = 'opacity 0.3s, max-height 0.3s';
+                            banner.style.opacity = '0';
+                            banner.style.maxHeight = '0';
+                            banner.style.overflow = 'hidden';
+                            banner.style.marginBottom = '0';
+                            banner.style.padding = '0';
+                            setTimeout(() => banner.remove(), 350);
+                        }
+                    }).catch(() => {
+                        banner.remove();
+                    });
+                }
+            </script>
+            {% endif %}
             {% block content %}{% endblock %}
             
             <footer class="mt-auto pt-10 pb-2 w-full">

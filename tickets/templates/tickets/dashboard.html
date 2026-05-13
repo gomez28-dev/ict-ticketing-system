@@ -308,11 +308,9 @@
 
 <script>
     window.DashboardData = {
-        isAdminUser: {% if request.user.is_superuser or request.user.role == 'ADMIN' %}true{% else %}false{% endif %},
-        chartLabels: {{ chart_labels|safe|default:"['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" }},
-        chartReceived: {{ chart_received|safe|default:"[0, 0, 0, 0, 0, 0, 0]" }},
-        chartResolved: {{ chart_resolved|safe|default:"[0, 0, 0, 0, 0, 0, 0]" }}
+        isAdminUser: {% if request.user.is_superuser or request.user.role == 'ADMIN' %}true{% else %}false{% endif %}
     };
 </script>
+{{ graph_data|json_script:"activity-data" }}
 <script src="{% static 'tickets/js/dashboard.js' %}"></script>
 {% endblock %}

@@ -9,12 +9,14 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.urls import reverse
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.db.models.functions import TruncDate
 import json
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
+from .email_utils import send_new_account_email, DEFAULT_PASSWORD
 
 User = get_user_model()
 
@@ -115,7 +117,6 @@ def add_employee(request):
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         role = request.POST.get('role', 'MEMBER')
-        password = request.POST.get('password')
         expertise = request.POST.get('expertise', '')
 
         username = email.split('@')[0] if email else f"{first_name.lower()}.{last_name.lower()}"
@@ -126,12 +127,22 @@ def add_employee(request):
             error = "An employee with this email or username already exists."
         else:
             new_user = User.objects.create_user(
-                username=username, email=email, password=password,
+                username=username, email=email, password=DEFAULT_PASSWORD,
                 first_name=first_name, last_name=last_name, role=role, expertise=expertise
             )
+            new_user.has_changed_password = False
             if role == 'ADMIN':
                 new_user.is_staff = True
-                new_user.save()
+            new_user.save()
+
+            # Send welcome email with default credentials
+            try:
+                login_url = request.build_absolute_uri(reverse('login'))
+                send_new_account_email(email, first_name, login_url)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to send welcome email: {e}")
+
             return redirect('teams')
 
     return render(request, 'tickets/employee_form.html', {'error': error})
@@ -343,15 +354,16 @@ def dashboard(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Real chart data for last 7 days
+    chart_data = get_activity_chart_data()
+
     context = {
         'tickets': page_obj,  # Pass the paginated object
         'page_obj': page_obj, # Explicit page_obj for template controls
         'total_tickets': all_tickets.count(),
         'resolved_tickets': all_tickets.filter(status='RESOLVED').count(),
         'staff_data': get_staff_data(),
-        'chart_labels': get_mock_chart_data()['labels'],
-        'chart_received': get_mock_chart_data()['received'],
-        'chart_resolved': get_mock_chart_data()['resolved'],
+        'graph_data': json.dumps(chart_data),
     }
     return render(request, 'tickets/dashboard.html', context)
 
@@ -602,9 +614,45 @@ def get_staff_data():
 
     return sorted(staff_list_copy, key=lambda x: x['active_tickets'], reverse=True)
 
-def get_mock_chart_data():
-    return {'labels': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-            'received': [8, 12, 15, 9, 14, 5, 3], 'resolved': [6, 10, 18, 12, 11, 8, 4]}
+def get_activity_chart_data():
+    """
+    Returns real ticket activity data for the last 7 days.
+    Groups tickets by date: received (created_at) vs resolved (actual_completion_date).
+    """
+    now = timezone.now()
+    seven_days_ago = (now - timedelta(days=6)).date()  # inclusive of today = 7 days
+
+    # Build a list of the last 7 calendar dates
+    date_range = [seven_days_ago + timedelta(days=i) for i in range(7)]
+    labels = [d.strftime('%a %m/%d') for d in date_range]
+
+    # Tickets received per day (by created_at)
+    received_qs = (
+        Ticket.objects.filter(created_at__date__gte=seven_days_ago)
+        .annotate(day=TruncDate('created_at'))
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+    received_map = {entry['day']: entry['count'] for entry in received_qs}
+
+    # Tickets resolved per day (by actual_completion_date)
+    resolved_qs = (
+        Ticket.objects.filter(
+            actual_completion_date__date__gte=seven_days_ago,
+            status__in=['RESOLVED', 'COMPLETED']
+        )
+        .annotate(day=TruncDate('actual_completion_date'))
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+    resolved_map = {entry['day']: entry['count'] for entry in resolved_qs}
+
+    received = [received_map.get(d, 0) for d in date_range]
+    resolved = [resolved_map.get(d, 0) for d in date_range]
+
+    return {'labels': labels, 'received': received, 'resolved': resolved}
 
 def analytics_dashboard(request):
     return render(request, 'tickets/analytics.html')
@@ -1605,3 +1653,50 @@ def api_save_review(request):
         'success': True,
         'message': f'Performance review saved and ticket #{ticket.ticket_number} marked as Complete for {employee.get_full_name()}.'
     })
+
+
+# ==========================================
+# PASSWORD CHANGE SYSTEM
+# ==========================================
+
+@login_required
+def change_password(request):
+    """Standard password change form. Sets has_changed_password=True on success."""
+    if request.method == 'POST':
+        old_password = request.POST.get('old_password', '')
+        new_password1 = request.POST.get('new_password1', '')
+        new_password2 = request.POST.get('new_password2', '')
+
+        if not request.user.check_password(old_password):
+            messages.error(request, 'Your current password is incorrect.')
+            return render(request, 'tickets/change_password.html')
+
+        if not new_password1 or len(new_password1) < 8:
+            messages.error(request, 'New password must be at least 8 characters long.')
+            return render(request, 'tickets/change_password.html')
+
+        if new_password1 != new_password2:
+            messages.error(request, 'The two new passwords do not match.')
+            return render(request, 'tickets/change_password.html')
+
+        request.user.set_password(new_password1)
+        request.user.has_changed_password = True
+        request.user.save()
+
+        # Keep the user logged in after password change
+        update_session_auth_hash(request, request.user)
+
+        messages.success(request, 'Your password has been updated successfully!')
+        return redirect('dashboard')
+
+    return render(request, 'tickets/change_password.html')
+
+
+@login_required
+def dismiss_password_change(request):
+    """Lightweight AJAX view that flips has_changed_password to True so the banner goes away."""
+    if request.method == 'POST':
+        request.user.has_changed_password = True
+        request.user.save(update_fields=['has_changed_password'])
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'message': 'POST required.'}, status=405)

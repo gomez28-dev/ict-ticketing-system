@@ -24,13 +24,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 1. INITIALIZE CHART ---
     const ctx = document.getElementById('activityChart');
     if (ctx) {
+        // Read dynamic data from the json_script tag injected by Django
+        const activityDataEl = document.getElementById('activity-data');
+        let chartLabels = [];
+        let chartReceived = [];
+        let chartResolved = [];
+
+        if (activityDataEl) {
+            try {
+                const activityData = JSON.parse(activityDataEl.textContent);
+                chartLabels = activityData.labels || [];
+                chartReceived = activityData.received || [];
+                chartResolved = activityData.resolved || [];
+            } catch (e) {
+                console.warn('Failed to parse activity data:', e);
+            }
+        }
+
         new Chart(ctx.getContext('2d'), {
             type: 'line',
             data: {
-                labels: window.DashboardData.chartLabels,
+                labels: chartLabels,
                 datasets: [{
                     label: 'Tickets Received',
-                    data: window.DashboardData.chartReceived,
+                    data: chartReceived,
                     borderColor: 'rgba(78, 115, 223, 1)',
                     backgroundColor: 'rgba(78, 115, 223, 0.05)',
                     borderWidth: 2,
@@ -38,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     fill: true
                 }, {
                     label: 'Tickets Resolved',
-                    data: window.DashboardData.chartResolved,
+                    data: chartResolved,
                     borderColor: 'rgba(28, 200, 138, 1)',
                     backgroundColor: 'rgba(28, 200, 138, 0.05)',
                     borderWidth: 2,

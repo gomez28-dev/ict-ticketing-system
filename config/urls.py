@@ -77,6 +77,10 @@ urlpatterns = [
     path('admin-dashboard/scanner/', views.mobile_scanner, name='mobile_scanner'),
     path('admin-dashboard/api/process-scan/', views.api_process_scan, name='api_process_scan'),
     path('admin-dashboard/api/save-review/', views.api_save_review, name='api_save_review'),
+
+    # Password Change (Phase 7)
+    path('admin-dashboard/change-password/', views.change_password, name='change_password'),
+    path('admin-dashboard/dismiss-password-change/', views.dismiss_password_change, name='dismiss_password_change'),
 ]
 
 # Always register media routes so uploaded attachments are accessible.
