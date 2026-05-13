@@ -12,15 +12,15 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {% if audit_logs %}
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <table class="w-full min-w-[860px] text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                     <tr>
-                        <th scope="col" class="px-6 py-4 font-bold">Ticket Number</th>
-                        <th scope="col" class="px-6 py-4 font-bold">Action</th>
-                        <th scope="col" class="px-6 py-4 font-bold">Changed By</th>
-                        <th scope="col" class="px-6 py-4 font-bold">Old Value</th>
-                        <th scope="col" class="px-6 py-4 font-bold">New Value</th>
-                        <th scope="col" class="px-6 py-4 font-bold">Timestamp</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Ticket Number</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Action</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Changed By</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Old Value</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">New Value</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Timestamp</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -35,10 +35,10 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             {{ log.changed_by.get_full_name|default:log.changed_by.username|default:"System" }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             {{ log.old_value|default:"-" }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             {{ log.new_value|default:"-" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">

@@ -24,11 +24,11 @@
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                         <tr>
-                            <th scope="col" class="px-6 py-4 font-bold">Ticket ID</th>
-                            <th scope="col" class="px-6 py-4 font-bold">Priority</th>
-                            <th scope="col" class="px-6 py-4 font-bold">School</th>
-                            <th scope="col" class="px-6 py-4 font-bold">Work Type</th>
-                            <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Ticket ID</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Priority</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">School</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Work Type</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-right whitespace-nowrap sticky right-0 bg-gray-50 dark:bg-gray-700/50 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -46,8 +46,8 @@
                             </td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ ticket.school_name }}</td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300 font-medium">{{ ticket.work_type|default:"N/A" }}</td>
-                            <td class="px-6 py-4 text-right">
-                                <a href="{% url 'employee_ticket_review' ticket.id %}" class="text-blue-600 hover:text-blue-800 font-bold text-sm transition-colors bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg border border-blue-100 dark:border-blue-800">
+                            <td class="px-6 py-4 text-right sticky right-0 bg-yellow-50/50 dark:bg-yellow-900/10 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
+                                <a href="{% url 'employee_ticket_review' ticket.id %}" class="text-blue-600 hover:text-blue-800 font-bold text-sm transition-colors bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg border border-blue-100 dark:border-blue-800 whitespace-nowrap">
                                     View Details
                                 </a>
                             </td>
@@ -117,12 +117,12 @@
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                         <tr>
-                            <th scope="col" class="px-6 py-4 font-bold">Ticket ID</th>
-                            <th scope="col" class="px-6 py-4 font-bold">Priority</th>
-                            <th scope="col" class="px-6 py-4 font-bold">School</th>
-                            <th scope="col" class="px-6 py-4 font-bold">Work Type</th>
-                            <th scope="col" class="px-6 py-4 font-bold">Status</th>
-                            <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Ticket ID</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Priority</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">School</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Work Type</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Status</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-right whitespace-nowrap sticky right-0 bg-gray-50 dark:bg-gray-700/50 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -141,12 +141,14 @@
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ ticket.school_name }}</td>
                             <td class="px-6 py-4 text-gray-600 dark:text-gray-300 font-medium">{{ ticket.work_type|default:"N/A" }}</td>
                             <td class="px-6 py-4 font-medium text-blue-600 dark:text-blue-400">{{ ticket.get_status_display }}</td>
-                            <td class="px-6 py-4 text-right whitespace-nowrap">
-                                <a href="{% url 'employee_receipt' ticket.id %}" target="_blank" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-colors border border-blue-100 dark:border-blue-800 mr-2">
+                            <td class="px-6 py-4 text-right whitespace-nowrap sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
+                                <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'employee_receipt' ticket.id %}" target="_blank" class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-colors border border-blue-100 dark:border-blue-800 whitespace-nowrap">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                     Print Form
                                 </a>
-                                <a href="{% url 'employee_ticket_review' ticket.id %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm">Review & Action &rarr;</a>
+                                <a href="{% url 'employee_ticket_review' ticket.id %}" class="text-blue-600 hover:text-blue-800 font-medium text-sm whitespace-nowrap">Review & Action &rarr;</a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -218,11 +220,11 @@
                 <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                         <tr>
-                            <th scope="col" class="px-6 py-4 font-bold">Ticket ID</th>
-                            <th scope="col" class="px-6 py-4 font-bold">School</th>
-                            <th scope="col" class="px-6 py-4 font-bold">Support Type</th>
-                            <th scope="col" class="px-6 py-4 font-bold">Date Resolved</th>
-                            <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Ticket ID</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">School</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Support Type</th>
+                            <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Date Resolved</th>
+                            <th scope="col" class="px-6 py-4 font-bold text-right whitespace-nowrap sticky right-0 bg-gray-50 dark:bg-gray-700/50 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -236,15 +238,17 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-gray-500">{{ ticket.actual_completion_date|date:"M d, Y"|default:ticket.updated_at|date:"M d, Y" }}</td>
-                            <td class="px-6 py-4 text-right flex justify-end gap-3 items-center">
-                                <a href="{% url 'employee_ticket_review' ticket.id %}" class="text-blue-600 hover:text-blue-800 text-xs font-bold transition-colors">View Details</a>
+                            <td class="px-6 py-4 text-right sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
+                                <div class="flex items-center justify-end gap-3">
+                                <a href="{% url 'employee_ticket_review' ticket.id %}" class="text-blue-600 hover:text-blue-800 text-xs font-bold transition-colors whitespace-nowrap">View Details</a>
 
                                 <span class="text-gray-300 dark:text-gray-600">|</span>
 
-                                <a href="{% url 'employee_receipt' ticket.id %}" class="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-colors border border-blue-100 dark:border-blue-800">
+                                <a href="{% url 'employee_receipt' ticket.id %}" class="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg transition-colors border border-blue-100 dark:border-blue-800 whitespace-nowrap">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                     Print Form
                                 </a>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}

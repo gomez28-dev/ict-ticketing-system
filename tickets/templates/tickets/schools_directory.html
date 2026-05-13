@@ -40,40 +40,40 @@
             <table class="w-full min-w-[980px] text-sm text-left text-gray-500 dark:text-gray-400" id="schoolsTable">
                 <thead class="text-xs text-gray-700 uppercase bg-white dark:bg-gray-800 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-4 font-bold">School ID</th>
-                        <th scope="col" class="px-6 py-4 font-bold">Name & District</th>
-                        <th scope="col" class="px-6 py-4 font-bold">ICT Personnel</th>
-                        <th scope="col" class="px-6 py-4 font-bold">Contact Number</th>
-                        <th scope="col" class="px-6 py-4 font-bold">Email</th>
-                        <th scope="col" class="px-6 py-4 font-bold text-right">Action</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">School ID</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Name & District</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">ICT Personnel</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Contact Number</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Email</th>
+                        <th scope="col" class="px-6 py-4 font-bold text-right whitespace-nowrap sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     {% for school in schools %}
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors school-row">
                         <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap school-id-col">{{ school.school_id }}</td>
-                        <td class="px-6 py-4 school-name-col">
+                        <td class="px-6 py-4 whitespace-nowrap school-name-col">
                             <span class="font-bold text-gray-800 dark:text-gray-200 block">{{ school.name }}</span>
                             <span class="text-xs text-gray-500 dark:text-gray-400">{{ school.district|default:"No District" }}</span>
                         </td>
-                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300">
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300 whitespace-nowrap">
                             {% if school.ict_first_name or school.ict_last_name %}
                                 {{ school.ict_first_name|default:"" }} {{ school.ict_last_name|default:"" }}
                             {% else %}
                                 <span class="text-xs italic text-gray-400">Not Provided</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ school.ict_contact_number|default:"-" }}</td>
-                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300">{{ school.ict_email|default:"-" }}</td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
-                                <button onclick="openForceResetModal('{{ school.id }}', '{{ school.name|escapejs }}')" class="min-h-11 inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-lg transition-colors">
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ school.ict_contact_number|default:"-" }}</td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ school.ict_email|default:"-" }}</td>
+                        <td class="px-6 py-4 text-right sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
+                            <div class="flex items-center justify-end gap-2">
+                                <button onclick="openForceResetModal('{{ school.id }}', '{{ school.name|escapejs }}')" class="min-h-11 inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-lg transition-colors whitespace-nowrap">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                                     Force Reset
                                 </button>
                                 <form method="POST" action="{% url 'admin_delete_school' school.id %}" onsubmit="return confirmDeleteSchool();">
                                     {% csrf_token %}
-                                    <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                                    <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors whitespace-nowrap">
                                         Delete Account
                                     </button>
                                 </form>
@@ -100,12 +100,12 @@
             <table class="w-full min-w-[860px] text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-white dark:bg-gray-800 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-4 font-bold">Date</th>
-                        <th scope="col" class="px-6 py-4 font-bold">School</th>
-                        <th scope="col" class="px-6 py-4 font-bold">ICT Coordinator</th>
-                        <th scope="col" class="px-6 py-4 font-bold">Contact</th>
-                        <th scope="col" class="px-6 py-4 font-bold text-center">Domain</th>
-                        <th scope="col" class="px-6 py-4 font-bold text-right">Actions</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Date</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">School</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">ICT Coordinator</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Contact</th>
+                        <th scope="col" class="px-6 py-4 font-bold text-center whitespace-nowrap">Domain</th>
+                        <th scope="col" class="px-6 py-4 font-bold text-right whitespace-nowrap sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -128,15 +128,15 @@
                                 <span class="bg-yellow-100 text-yellow-700 text-xs font-bold px-2.5 py-0.5 rounded-full dark:bg-yellow-900/30 dark:text-yellow-400">⚠ Unverified</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-right">
-                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
+                        <td class="px-6 py-4 text-right sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
+                            <div class="flex items-center justify-end gap-2">
                                 <form method="POST" action="{% url 'approve_account_request' req.id %}" onsubmit="return confirm('Approve this request and create the school account?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">✓ Approve</button>
+                                    <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors whitespace-nowrap">✓ Approve</button>
                                 </form>
                                 <form method="POST" action="{% url 'reject_account_request' req.id %}" onsubmit="return confirm('Reject and delete this access request?');">
                                     {% csrf_token %}
-                                    <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">✗ Reject</button>
+                                    <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors whitespace-nowrap">✗ Reject</button>
                                 </form>
                             </div>
                         </td>
