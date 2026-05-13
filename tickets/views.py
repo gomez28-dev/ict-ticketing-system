@@ -363,7 +363,7 @@ def dashboard(request):
         'total_tickets': all_tickets.count(),
         'resolved_tickets': all_tickets.filter(status='RESOLVED').count(),
         'staff_data': get_staff_data(),
-        'graph_data': json.dumps(chart_data),
+        'graph_data': chart_data,
     }
     return render(request, 'tickets/dashboard.html', context)
 
@@ -616,17 +616,19 @@ def get_staff_data():
 
 def get_activity_chart_data():
     """
-    Returns real ticket activity data for the last 7 days.
-    Groups tickets by date: received (created_at) vs resolved (actual_completion_date).
+    Returns real ticket activity data for the last 7 calendar days.
+    Generates a strict zero-filled timeline so the X-axis always renders all 7 days.
+    - Received: tickets created (by created_at date).
+    - Resolved: tickets resolved or completed (by updated_at date).
     """
-    now = timezone.now()
-    seven_days_ago = (now - timedelta(days=6)).date()  # inclusive of today = 7 days
+    today = timezone.now().date()
+    seven_days_ago = today - timedelta(days=6)  # inclusive of today = 7 days
 
-    # Build a list of the last 7 calendar dates
+    # 1. Build a strict list of the last 7 calendar dates
     date_range = [seven_days_ago + timedelta(days=i) for i in range(7)]
-    labels = [d.strftime('%a %m/%d') for d in date_range]
+    labels = [d.strftime('%b %d') for d in date_range]  # e.g. "May 10", "May 11"
 
-    # Tickets received per day (by created_at)
+    # 2a. Tickets RECEIVED per day (all tickets created in the window)
     received_qs = (
         Ticket.objects.filter(created_at__date__gte=seven_days_ago)
         .annotate(day=TruncDate('created_at'))
@@ -636,23 +638,24 @@ def get_activity_chart_data():
     )
     received_map = {entry['day']: entry['count'] for entry in received_qs}
 
-    # Tickets resolved per day (by actual_completion_date)
+    # 2b. Tickets RESOLVED/COMPLETED per day (by updated_at for broader coverage)
     resolved_qs = (
         Ticket.objects.filter(
-            actual_completion_date__date__gte=seven_days_ago,
+            updated_at__date__gte=seven_days_ago,
             status__in=['RESOLVED', 'COMPLETED']
         )
-        .annotate(day=TruncDate('actual_completion_date'))
+        .annotate(day=TruncDate('updated_at'))
         .values('day')
         .annotate(count=Count('id'))
         .order_by('day')
     )
     resolved_map = {entry['day']: entry['count'] for entry in resolved_qs}
 
-    received = [received_map.get(d, 0) for d in date_range]
-    resolved = [resolved_map.get(d, 0) for d in date_range]
+    # 3. Zero-fill: iterate through every day in the range
+    received_data = [received_map.get(d, 0) for d in date_range]
+    resolved_data = [resolved_map.get(d, 0) for d in date_range]
 
-    return {'labels': labels, 'received': received, 'resolved': resolved}
+    return {'labels': labels, 'received': received_data, 'resolved': resolved_data}
 
 def analytics_dashboard(request):
     return render(request, 'tickets/analytics.html')
