@@ -80,15 +80,6 @@ class Command(BaseCommand):
             self.stdout.write("Skipping performance import (BOOTSTRAP_IMPORT_PERFORMANCE disabled).")
             return
 
-        self.stdout.write(self.style.HTTP_INFO("Running performance data import..."))
-        try:
-            call_command("import_performance")
-            self.stdout.write(self.style.SUCCESS("Performance data imported successfully."))
-        except CommandError as exc:
-            self.stdout.write(
-                self.style.WARNING(f"Performance import failed (non-fatal): {exc}")
-            )
-        except Exception as exc:
-            self.stdout.write(
-                self.style.WARNING(f"Performance import error (non-fatal): {exc}")
-            )
+        self.stdout.write(self.style.WARNING("!!! STARTING EMPLOYEE IMPORT SCRIPT !!!"))
+        call_command("import_performance")
+        self.stdout.write(self.style.SUCCESS("Performance data imported successfully."))

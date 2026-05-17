@@ -76,12 +76,20 @@ def make_username(first, last):
 class Command(BaseCommand):
     help = 'Import employee performance metrics and task history from CSVs in data/ folder.'
 
-    def _find_file(self, data_dir, keyword):
-        """Scan data/ for a CSV file whose name contains the keyword (case-insensitive)."""
-        keyword_lower = keyword.lower()
+    def _find_file(self, data_dir, keywords):
+        """Scan data/ for a CSV file whose name contains any of the keywords (case-insensitive)."""
+        if isinstance(keywords, str):
+            keywords = [keywords]
+        keywords_lower = [k.lower() for k in keywords]
+        
         for fname in os.listdir(data_dir):
-            if keyword_lower in fname.lower() and fname.lower().endswith('.csv'):
-                return os.path.join(data_dir, fname)
+            fname_lower = fname.lower()
+            if not fname_lower.endswith('.csv'):
+                continue
+            
+            for kw in keywords_lower:
+                if kw in fname_lower:
+                    return os.path.join(data_dir, fname)
         return None
 
     def handle(self, *args, **options):
@@ -92,8 +100,8 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR(f"Data directory not found: {data_dir}"))
             return
 
-        perf_path = self._find_file(data_dir, 'PERFORMANCE')
-        task_path = self._find_file(data_dir, 'TASK HISTORY')
+        perf_path = self._find_file(data_dir, ['performance'])
+        task_path = self._find_file(data_dir, ['task history', 'task_history'])
 
         if not perf_path:
             self.stderr.write(self.style.ERROR("No CSV with 'PERFORMANCE' in name found in data/ folder."))
