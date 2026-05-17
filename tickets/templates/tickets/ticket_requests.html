@@ -6,8 +6,8 @@
     <p class="text-sm text-gray-500 dark:text-gray-400">User-submitted requests awaiting review. Move to board or delete.</p>
 </div>
 
-<div class="mb-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
-    <nav class="-mb-px flex min-w-max space-x-6 sm:space-x-8" aria-label="Tabs">
+<div class="mb-6 border-b border-gray-200 dark:border-gray-700 flex overflow-x-auto whitespace-nowrap hide-scrollbar pb-0">
+    <nav class="-mb-px flex min-w-max space-x-4 sm:space-x-8" aria-label="Tabs">
         <button onclick="switchTab('pending')" id="tab-pending" class="tab-btn active whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-[#0078d4] text-[#0078d4] font-medium text-sm transition-colors">
             Pending Requests
         </button>
@@ -310,6 +310,8 @@
 
 <style>
     .tab-content.hidden { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
 </style>
 
 <script>
