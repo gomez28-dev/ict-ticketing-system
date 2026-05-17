@@ -1,0 +1,77 @@
+{% extends 'tickets/base_admin.html' %}
+
+{% block title %}Employees - Helpdesk{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Employee Directory</h1>
+
+    {% if request.user.is_superuser %}
+    <a href="{% url 'add_employee' %}" class="min-h-11 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        Add New Employee
+    </a>
+    {% endif %}
+</div>
+
+{% if grouped_employees %}
+{% for category, emp_list in grouped_employees.items %}
+    <div class="mb-10 w-full">
+        <h2 class="text-xl border-b border-gray-200 dark:border-gray-700 pb-2 mb-4 font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide">
+            {{ category }}
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for employee in emp_list %}
+            <a href="{% url 'employee_profile' employee.id %}" class="block cursor-pointer bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all group">
+                <div class="p-5 flex flex-col items-center border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+                    <div class="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 text-xl font-bold mb-3 overflow-hidden">
+                        {% if employee.profile_picture %}
+                            <img src="{{ employee.profile_picture.url }}" alt="{{ employee.get_full_name }}" class="w-full h-full object-cover">
+                        {% else %}
+                            {{ employee.first_name|make_list|first|default:"E" }}{{ employee.last_name|make_list|first|default:"" }}
+                        {% endif %}
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white text-center group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{{ employee.get_full_name }}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-full">{{ employee.email }}</p>
+
+                    {% if employee.overall_rating > 0 %}
+                    <div class="mt-2 flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
+                        <svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        {{ employee.overall_rating|floatformat:1 }} / 5.0
+                    </div>
+                    {% endif %}
+
+                    {% if employee.total_tasks_done > 0 %}
+                    <div class="mt-2 flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        {{ employee.total_tasks_done }} Tasks Done
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="p-5">
+                    <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold mb-3">Expertise</h4>
+                    <div class="flex flex-wrap gap-2">
+                        {% if employee.expertise %}
+                            {% for skill in employee.expertise|truncatechars:80 %}
+                                <span class="px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">{{ skill }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-xs text-gray-400 italic">No expertise listed</span>
+                        {% endif %}
+                    </div>
+                    <div class="mt-4 text-center">
+                        <span class="text-sm text-blue-600 dark:text-blue-400 font-semibold group-hover:underline">View Profile &rarr;</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+{% else %}
+<div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+    <p class="text-gray-500 dark:text-gray-400 font-medium">No employees found. Add staff members to get started.</p>
+</div>
+{% endif %}
+{% endblock %}

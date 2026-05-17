@@ -32,7 +32,7 @@ urlpatterns = [
          name='complete_ticket_ajax'),
 
     path('admin-dashboard/backlog/', views.backlog_view, name='backlog'),
-    path('admin-dashboard/teams/', views.teams_view, name='teams'),
+    path('admin-dashboard/employees/', views.employee_directory, name='employee_directory'),
     path('admin-dashboard/schools/', views.schools_management, name='schools_management'),
     path('admin-dashboard/schools/force-reset/<int:school_id>/', views.admin_force_reset_password, name='admin_force_reset_password'),
     path('admin-dashboard/schools/delete/<int:school_id>/', views.admin_delete_school, name='admin_delete_school'),
@@ -70,8 +70,8 @@ urlpatterns = [
     path('admin-dashboard/documents/review/<int:ticket_id>/', views.submit_performance_review, name='submit_performance_review'),
 
     # Employee Profile (Phase 5)
-    path('admin-dashboard/employee/<int:user_id>/profile/', views.employee_profile, name='employee_profile'),
-    path('admin-dashboard/employee/<int:user_id>/edit/', views.edit_employee_profile, name='edit_employee_profile'),
+    path('admin-dashboard/employees/<int:user_id>/profile/', views.employee_profile, name='employee_profile'),
+    path('admin-dashboard/employees/<int:user_id>/edit/', views.edit_employee_profile, name='edit_employee_profile'),
 
     # OMR Scanner (Phase 6)
     path('admin-dashboard/scanner/', views.mobile_scanner, name='mobile_scanner'),

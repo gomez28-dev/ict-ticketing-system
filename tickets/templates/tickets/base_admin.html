@@ -60,7 +60,7 @@
                 {% if request.user.role == 'MEMBER' and not request.user.is_superuser %}
                     {% include 'tickets/includes/nav_item.html' with url_pattern='my_tickets' active_urls='my_tickets,employee_ticket_review' label='My Tickets' badge_count=my_ticket_count %}
                 {% else %}
-                    {% include 'tickets/includes/nav_item.html' with url_pattern='teams' active_urls='teams' label='Employees' %}
+                    {% include 'tickets/includes/nav_item.html' with url_pattern='employee_directory' active_urls='employee_directory' label='Employees' %}
                     {% include 'tickets/includes/nav_item.html' with url_pattern='schools_management' active_urls='schools_management' label='Schools' badge_count=pending_schools_count %}
                     {% include 'tickets/includes/nav_item.html' with url_pattern='requests' active_urls='requests,ticket_triage' label='Requests' badge_count=pending_count %}
                     {% include 'tickets/includes/nav_item.html' with url_pattern='documents' active_urls='documents' label='Documents' badge_count=under_review_docs_count %}

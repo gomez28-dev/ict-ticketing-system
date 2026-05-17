@@ -76,19 +76,34 @@ def make_username(first, last):
 class Command(BaseCommand):
     help = 'Import employee performance metrics and task history from CSVs in data/ folder.'
 
+    def _find_file(self, data_dir, keyword):
+        """Scan data/ for a CSV file whose name contains the keyword (case-insensitive)."""
+        keyword_lower = keyword.lower()
+        for fname in os.listdir(data_dir):
+            if keyword_lower in fname.lower() and fname.lower().endswith('.csv'):
+                return os.path.join(data_dir, fname)
+        return None
+
     def handle(self, *args, **options):
         data_dir = os.path.join(os.path.dirname(os.path.dirname(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'data')
 
-        perf_path = os.path.join(data_dir, 'employee_performance.csv')
-        task_path = os.path.join(data_dir, 'employee_task_history.csv')
+        if not os.path.isdir(data_dir):
+            self.stderr.write(self.style.ERROR(f"Data directory not found: {data_dir}"))
+            return
 
-        if not os.path.exists(perf_path):
-            self.stderr.write(self.style.ERROR(f"Not found: {perf_path}"))
+        perf_path = self._find_file(data_dir, 'PERFORMANCE')
+        task_path = self._find_file(data_dir, 'TASK HISTORY')
+
+        if not perf_path:
+            self.stderr.write(self.style.ERROR("No CSV with 'PERFORMANCE' in name found in data/ folder."))
             return
-        if not os.path.exists(task_path):
-            self.stderr.write(self.style.ERROR(f"Not found: {task_path}"))
+        if not task_path:
+            self.stderr.write(self.style.ERROR("No CSV with 'TASK HISTORY' in name found in data/ folder."))
             return
+
+        self.stdout.write(f"  Found performance file: {os.path.basename(perf_path)}")
+        self.stdout.write(f"  Found task history file: {os.path.basename(task_path)}")
 
         # ── Phase 1: Import Performance & Create Users ──
         self.stdout.write(self.style.HTTP_INFO("\n[Phase 1] Importing Employee Performance...\n"))

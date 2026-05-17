@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="mb-6">
-    <a href="{% url 'teams' %}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2 inline-block">&larr; Back to Employees</a>
+    <a href="{% url 'employee_directory' %}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2 inline-block">&larr; Back to Employees</a>
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Add New Employee</h1>
     <p class="text-sm text-gray-500 dark:text-gray-400">Create a new staff account and assign their role level.</p>
 </div>
@@ -60,7 +60,7 @@
         </div>
 
         <div class="pt-6 mt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
-            <a href="{% url 'teams' %}" class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">Cancel</a>
+            <a href="{% url 'employee_directory' %}" class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">Cancel</a>
             <button type="submit" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-sm transition-colors">Create Employee</button>
         </div>
     </form>

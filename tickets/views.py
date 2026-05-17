@@ -660,9 +660,9 @@ def get_activity_chart_data():
 def analytics_dashboard(request):
     return render(request, 'tickets/analytics.html')
 
-def teams_view(request):
-    staff_list = get_staff_data()
-    
+def employee_directory(request):
+    employees = User.objects.filter(is_staff=True).exclude(is_superuser=True).order_by('first_name', 'last_name')
+
     category_map = {
         'MANAGEMENT': 'Management / Officers',
         'SYSTEM ADMIN': 'Management / Officers',
@@ -681,17 +681,21 @@ def teams_view(request):
         'HARDWARE': 'Computer Maintenance',
         'SYSTEM TESTING': 'System Testing',
     }
-    
-    grouped_staff = {}
-    for staff in staff_list:
-        primary_expertise = staff['expertise'][0] if staff['expertise'] else 'OTHER'
-        category = category_map.get(primary_expertise, 'Other / General')
-        
-        if category not in grouped_staff:
-            grouped_staff[category] = []
-        grouped_staff[category].append(staff)
-        
-    return render(request, 'tickets/teams.html', {'grouped_staff': grouped_staff})
+
+    grouped_employees = {}
+    for emp in employees:
+        skills = [s.strip().upper() for s in emp.expertise.split(',') if s.strip()] if emp.expertise else []
+        primary = skills[0] if skills else 'OTHER'
+        category = category_map.get(primary, 'Other / General')
+
+        if category not in grouped_employees:
+            grouped_employees[category] = []
+        grouped_employees[category].append(emp)
+
+    return render(request, 'tickets/employee_directory.html', {
+        'grouped_employees': grouped_employees,
+        'employees': employees,
+    })
 
 # ==========================================
 # UTILITY VIEWS

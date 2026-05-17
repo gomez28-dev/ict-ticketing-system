@@ -46,3 +46,5 @@ services:
         value: "True"
       - key: BOOTSTRAP_SCHOOLS_FILE
         value: schools.xlsx
+      - key: BOOTSTRAP_IMPORT_PERFORMANCE
+        value: "True"
