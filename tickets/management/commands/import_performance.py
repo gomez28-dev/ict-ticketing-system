@@ -1,105 +1,236 @@
 """
-Import employee performance data from CSV files in the data/ folder.
+Import employee performance data and task history from CSVs exported from
+the 'ICT HELPDESK DATA.xlsx' workbook.
 
 Usage:
-    python manage.py import_performance data/employee_performance.csv
+    python manage.py import_performance
 
-CSV Format (expected columns):
-    first_name, last_name, quality_score, efficiency_score, timeliness_score, overall_rating, total_tasks_done
+Expected files in data/ folder:
+    - employee_performance.csv  (headers: Employee, Tasks Done, Quality (%), Efficiency (%), Timeliness (%), Overall (5))
+    - employee_task_history.csv (headers: Employee, Task Type, School, District)
 """
 import csv
 import os
+import re
 
-from django.core.management.base import BaseCommand, CommandError
-from tickets.models import User
+from django.core.management.base import BaseCommand
+from django.contrib.auth.hashers import make_password
+from django.utils import timezone
+
+from tickets.models import User, Ticket
+
+
+# Map CSV task type strings to Ticket.SupportType values
+TASK_TYPE_MAP = {
+    'cctv maintenance': 'CCTV',
+    'cctv': 'CCTV',
+    'computer maintenance': 'PC_MAINTENANCE',
+    'network maintenance': 'NETWORK_MAINTENANCE',
+    'network support': 'NETWORK_MAINTENANCE',
+    'software support': 'OTHER',
+    'other support': 'OTHER',
+    'password reset': 'PASSWORD_RESET',
+    'account / password support': 'PASSWORD_RESET',
+    'account/password support': 'PASSWORD_RESET',
+}
+
+
+def parse_name(full_name):
+    """
+    Parse 'MARVIN M. CRUZ' into (first_name, last_name).
+    Strategy: first token = first name, last token = last name.
+    Middle initials/tokens are discarded.
+    Handles special cases like 'ROLANDO JR. O. DE CASTRO'.
+    """
+    parts = full_name.strip().split()
+    if not parts:
+        return '', ''
+    if len(parts) == 1:
+        return parts[0].title(), ''
+
+    first = parts[0].title()
+    # Handle 'JR.' as part of first name
+    idx = 1
+    if idx < len(parts) and parts[idx].upper().rstrip('.') in ('JR', 'SR', 'II', 'III', 'IV'):
+        first = f"{first} {parts[idx].title()}"
+        idx += 1
+
+    last = ' '.join(parts[-1:]).title()
+    # Handle compound last names like 'DE CASTRO', 'DE GUZMAN', 'DE JESUS'
+    for i in range(len(parts) - 2, idx - 1, -1):
+        if parts[i].upper() in ('DE', 'DEL', 'DELA', 'SAN', 'VAN', 'LOS'):
+            last = ' '.join(p.title() for p in parts[i:])
+            break
+
+    return first, last
+
+
+def make_username(first, last):
+    """Generate a clean username from first+last name."""
+    base = f"{first}.{last}".lower().replace(' ', '')
+    # Remove non-alphanumeric except dots
+    base = re.sub(r'[^a-z0-9.]', '', base)
+    return base or 'employee'
 
 
 class Command(BaseCommand):
-    help = 'Import employee performance metrics from a CSV file into User model fields.'
-
-    def add_arguments(self, parser):
-        parser.add_argument('csv_path', type=str, help='Path to the CSV file (e.g., data/performance.csv)')
+    help = 'Import employee performance metrics and task history from CSVs in data/ folder.'
 
     def handle(self, *args, **options):
-        csv_path = options['csv_path']
+        data_dir = os.path.join(os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'data')
 
-        if not os.path.exists(csv_path):
-            raise CommandError(f"File not found: {csv_path}")
+        perf_path = os.path.join(data_dir, 'employee_performance.csv')
+        task_path = os.path.join(data_dir, 'employee_task_history.csv')
 
-        updated = 0
-        skipped = 0
-        errors = 0
+        if not os.path.exists(perf_path):
+            self.stderr.write(self.style.ERROR(f"Not found: {perf_path}"))
+            return
+        if not os.path.exists(task_path):
+            self.stderr.write(self.style.ERROR(f"Not found: {task_path}"))
+            return
 
-        self.stdout.write(self.style.HTTP_INFO(f"\n📂 Reading: {csv_path}\n"))
+        # ── Phase 1: Import Performance & Create Users ──
+        self.stdout.write(self.style.HTTP_INFO("\n[Phase 1] Importing Employee Performance...\n"))
+        user_cache = {}  # full_name_upper -> User object
+        created_count = 0
+        updated_count = 0
 
-        with open(csv_path, newline='', encoding='utf-8-sig') as f:
-            reader = csv.DictReader(f)
-
-            # Validate required columns
-            required = {'first_name', 'last_name'}
-            if not required.issubset(set(reader.fieldnames or [])):
-                raise CommandError(
-                    f"CSV must have at least these columns: {required}. "
-                    f"Found: {reader.fieldnames}"
-                )
-
-            for row_num, row in enumerate(reader, start=2):
-                first = row.get('first_name', '').strip()
-                last = row.get('last_name', '').strip()
-
-                if not first or not last:
-                    self.stdout.write(self.style.WARNING(f"  Row {row_num}: Skipped — missing name."))
-                    skipped += 1
+        with open(perf_path, newline='', encoding='utf-8-sig') as f:
+            for row in csv.DictReader(f):
+                name = row.get('Employee', '').strip()
+                if not name:
                     continue
 
+                first, last = parse_name(name)
+                if not first:
+                    continue
+
+                # Try to find existing user
+                user = None
                 try:
                     user = User.objects.get(first_name__iexact=first, last_name__iexact=last)
                 except User.DoesNotExist:
-                    self.stdout.write(self.style.WARNING(
-                        f"  Row {row_num}: No user found for '{first} {last}' — skipped."
-                    ))
-                    skipped += 1
-                    continue
+                    pass
                 except User.MultipleObjectsReturned:
-                    self.stdout.write(self.style.WARNING(
-                        f"  Row {row_num}: Multiple users match '{first} {last}' — skipped."
-                    ))
-                    skipped += 1
+                    user = User.objects.filter(
+                        first_name__iexact=first, last_name__iexact=last
+                    ).first()
+
+                if not user:
+                    username = make_username(first, last)
+                    # Ensure unique username
+                    base_username = username
+                    counter = 1
+                    while User.objects.filter(username=username).exists():
+                        username = f"{base_username}{counter}"
+                        counter += 1
+
+                    user = User.objects.create(
+                        username=username,
+                        first_name=first,
+                        last_name=last,
+                        email=f"{username}@ict.deped.gov.ph",
+                        role='MEMBER',
+                        is_staff=True,
+                        password=make_password('Employee123!'),
+                    )
+                    created_count += 1
+                    self.stdout.write(self.style.SUCCESS(f"  + Created user: {first} {last} ({username})"))
+
+                # Update performance metrics
+                try:
+                    tasks_done = int(float(row.get('Tasks Done', '0').strip() or '0'))
+                    quality = float(row.get('Quality (%)', '0').strip() or '0')
+                    efficiency = float(row.get('Efficiency (%)', '0').strip() or '0')
+                    timeliness = float(row.get('Timeliness (%)', '0').strip() or '0')
+                    overall = float(row.get('Overall (5)', '0').strip() or '0')
+
+                    # Quality/Efficiency/Timeliness are 0-100 in CSV, store as 0-5 scale
+                    user.quality_score = round(quality / 20, 2)
+                    user.efficiency_score = round(efficiency / 20, 2)
+                    user.timeliness_score = round(timeliness / 20, 2)
+                    user.overall_rating = round(overall, 2)
+                    user.total_tasks_done = tasks_done
+                    user.total_reviews = tasks_done  # Use tasks as proxy for reviews
+                    user.save()
+                    updated_count += 1
+
+                    self.stdout.write(
+                        f"  > {first} {last} -- Q:{user.quality_score} "
+                        f"E:{user.efficiency_score} T:{user.timeliness_score} "
+                        f"R:{user.overall_rating} Tasks:{tasks_done}"
+                    )
+                except (ValueError, TypeError) as e:
+                    self.stderr.write(self.style.ERROR(f"  X {name}: {e}"))
+
+                user_cache[name.upper()] = user
+
+        self.stdout.write(self.style.SUCCESS(
+            f"\n  Users created: {created_count} | Updated: {updated_count}\n"
+        ))
+
+        # ── Phase 2: Import Task History as Completed Tickets ──
+        self.stdout.write(self.style.HTTP_INFO("[Phase 2] Importing Task History as Tickets...\n"))
+        tickets_created = 0
+        tickets_skipped = 0
+
+        with open(task_path, newline='', encoding='utf-8-sig') as f:
+            for row in csv.DictReader(f):
+                emp_name = row.get('Employee', '').strip()
+                task_type = row.get('Task Type', '').strip()
+                school = row.get('School', '').strip()
+                district = row.get('District', '').strip()
+
+                if not emp_name or not task_type or task_type.lower() == 'no task':
+                    tickets_skipped += 1
                     continue
 
-                try:
-                    changed = False
-                    for field in ['quality_score', 'efficiency_score', 'timeliness_score', 'overall_rating']:
-                        val = row.get(field, '').strip()
-                        if val:
-                            setattr(user, field, float(val))
-                            changed = True
+                # Clean encoding artifacts
+                school = school.replace('\ufffd', '').strip()
+                district = district.replace('\ufffd', '').strip()
 
-                    tasks_val = row.get('total_tasks_done', '').strip()
-                    if tasks_val:
-                        user.total_tasks_done = int(tasks_val)
-                        changed = True
+                if not school or school in ('—', '-', '�'):
+                    tickets_skipped += 1
+                    continue
 
-                    reviews_val = row.get('total_reviews', '').strip()
-                    if reviews_val:
-                        user.total_reviews = int(reviews_val)
-                        changed = True
-
-                    if changed:
-                        user.save()
-                        updated += 1
-                        self.stdout.write(self.style.SUCCESS(
-                            f"  ✓ {first} {last} — updated "
-                            f"(Q:{user.quality_score} E:{user.efficiency_score} "
-                            f"T:{user.timeliness_score} R:{user.overall_rating})"
+                # Find the user from cache
+                user = user_cache.get(emp_name.upper())
+                if not user:
+                    first, last = parse_name(emp_name)
+                    try:
+                        user = User.objects.get(first_name__iexact=first, last_name__iexact=last)
+                        user_cache[emp_name.upper()] = user
+                    except (User.DoesNotExist, User.MultipleObjectsReturned):
+                        self.stdout.write(self.style.WARNING(
+                            f"  ! No user for '{emp_name}' -- skipping ticket."
                         ))
-                    else:
-                        skipped += 1
-                        self.stdout.write(f"  – {first} {last} — no data columns to update.")
+                        tickets_skipped += 1
+                        continue
 
-                except (ValueError, TypeError) as e:
-                    errors += 1
-                    self.stdout.write(self.style.ERROR(f"  ✗ Row {row_num} ({first} {last}): {e}"))
+                # Map task type to SupportType
+                support_type = TASK_TYPE_MAP.get(task_type.lower(), 'OTHER')
 
-        self.stdout.write("")
-        self.stdout.write(self.style.SUCCESS(f"✅ Done. Updated: {updated} | Skipped: {skipped} | Errors: {errors}"))
+                # Build descriptive admin_notes for the employee matching query
+                user_full_name = f"{user.first_name} {user.last_name}"
+
+                ticket = Ticket.objects.create(
+                    title=f"{task_type} - {school}",
+                    description=f"Completed {task_type} at {school}, {district}.",
+                    status='COMPLETED',
+                    support_type=support_type,
+                    school_name=school,
+                    school_district=district,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                    assignee=user,
+                    admin_notes=f"Assigned to: {user_full_name}",
+                    actual_completion_date=timezone.now(),
+                )
+                tickets_created += 1
+                self.stdout.write(f"  > {ticket.ticket_number} -> {user_full_name} | {task_type} @ {school}")
+
+        self.stdout.write(self.style.SUCCESS(
+            f"\n  Tickets created: {tickets_created} | Skipped: {tickets_skipped}"
+        ))
+        self.stdout.write(self.style.SUCCESS("\nImport complete!\n"))
