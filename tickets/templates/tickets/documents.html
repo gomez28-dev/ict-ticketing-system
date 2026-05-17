@@ -25,7 +25,7 @@
     <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Under Review Queue</h2>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-10">
         {% if under_review_tickets %}
-        <div class="overflow-x-auto">
+        <div class="hidden md:block overflow-x-auto w-full">
             <table class="w-full min-w-[760px] text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                     <tr>
@@ -46,22 +46,39 @@
                         <td class="px-6 py-4 text-gray-600 dark:text-gray-300 max-w-xs truncate">{{ ticket.resolution_notes|default:"No resolution notes were submitted." }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if ticket.resolution_attachment %}
-                            <a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium">
-                                View File
-                            </a>
+                            <a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium">View File</a>
                             {% else %}
                             <span class="text-xs text-gray-400 dark:text-gray-500">No file</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 text-right sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
-                            <a href="{% url 'employee_ticket_review' ticket.id %}" class="min-h-11 inline-flex items-center justify-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm whitespace-nowrap">
-                                Open Review
-                            </a>
+                            <a href="{% url 'employee_ticket_review' ticket.id %}" class="min-h-11 inline-flex items-center justify-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm whitespace-nowrap">Open Review</a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+        <div class="grid grid-cols-1 gap-4 p-3 sm:p-4 md:hidden">
+            {% for ticket in under_review_tickets %}
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-start gap-2">
+                    <p class="font-bold text-gray-900 dark:text-white text-base">{{ ticket.ticket_number }}</p>
+                    <span class="inline-flex px-2.5 py-1 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-xs font-semibold whitespace-nowrap">Under Review</span>
+                </div>
+                <div class="flex flex-col gap-1.5 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg><span>{{ ticket.first_name }} {{ ticket.last_name }}</span></div>
+                    <div class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg><span>{{ ticket.school_name }}</span></div>
+                    {% if ticket.resolution_attachment %}
+                    <div class="flex items-center gap-2"><svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg><a href="{{ ticket.resolution_attachment.url }}" target="_blank" class="text-green-600 dark:text-green-400 font-medium">View File</a></div>
+                    {% endif %}
+                </div>
+                <hr class="border-gray-100 dark:border-gray-700 mt-2">
+                <div class="grid grid-cols-1 gap-2 mt-2">
+                    <a href="{% url 'employee_ticket_review' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors border border-blue-100 dark:border-blue-800">Open Review</a>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         {% else %}
         <div class="flex flex-col items-center justify-center p-8 text-center">
@@ -74,7 +91,7 @@
     <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Resolved Documents (Action Required)</h2>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-10">
         {% if resolved_tickets %}
-        <div class="overflow-x-auto">
+        <div class="hidden md:block overflow-x-auto w-full">
             <table class="w-full min-w-[980px] text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                     <tr>
@@ -144,6 +161,32 @@
                 </tbody>
             </table>
         </div>
+        <div class="grid grid-cols-1 gap-4 p-3 sm:p-4 md:hidden">
+            {% for ticket in resolved_tickets %}
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-start gap-2">
+                    <p class="font-bold text-gray-900 dark:text-white text-base">{{ ticket.ticket_number }}</p>
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded dark:bg-blue-900/30 dark:text-blue-300 whitespace-nowrap">{{ ticket.get_support_type_display }}</span>
+                </div>
+                <div class="flex flex-col gap-1.5 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg><span>{{ ticket.first_name }} {{ ticket.last_name }}</span></div>
+                    <div class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg><span>{{ ticket.school_name }}</span></div>
+                    <div class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span>{{ ticket.actual_completion_date|date:"M d, Y"|default:ticket.updated_at|date:"M d, Y" }}</span></div>
+                </div>
+                <hr class="border-gray-100 dark:border-gray-700 mt-2">
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <a href="{% url 'employee_receipt' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors border border-blue-100 dark:border-blue-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        View
+                    </a>
+                    <button onclick="openReviewModal({{ ticket.id }}, '{{ ticket.ticket_number }}')" class="min-h-11 w-full inline-flex items-center justify-center gap-1 text-green-600 hover:text-green-800 font-bold text-sm bg-green-50 dark:bg-green-900/30 rounded-lg transition-colors border border-green-100 dark:border-green-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Verify
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
         {% else %}
         <div class="flex flex-col items-center justify-center p-8 text-center">
             <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -155,7 +198,7 @@
     <h2 class="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Completed Documents (Archived)</h2>
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {% if completed_tickets %}
-        <div class="overflow-x-auto">
+        <div class="hidden md:block overflow-x-auto w-full">
             <table class="w-full min-w-[840px] text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700/50 dark:text-gray-300">
                     <tr>
@@ -207,6 +250,28 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+        <div class="grid grid-cols-1 gap-4 p-3 sm:p-4 md:hidden">
+            {% for ticket in completed_tickets %}
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-start gap-2">
+                    <p class="font-bold text-gray-900 dark:text-white text-base">{{ ticket.ticket_number }}</p>
+                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded dark:bg-green-900/30 dark:text-green-300 whitespace-nowrap">{{ ticket.get_support_type_display }}</span>
+                </div>
+                <div class="flex flex-col gap-1.5 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg><span>{{ ticket.first_name }} {{ ticket.last_name }}</span></div>
+                    <div class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg><span>{{ ticket.school_name }}</span></div>
+                    <div class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span>{{ ticket.actual_completion_date|date:"M d, Y"|default:ticket.updated_at|date:"M d, Y" }}</span></div>
+                </div>
+                <hr class="border-gray-100 dark:border-gray-700 mt-2">
+                <div class="grid grid-cols-1 gap-2 mt-2">
+                    <a href="{% url 'employee_receipt' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors border border-blue-100 dark:border-blue-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        View
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         {% else %}
         <div class="flex flex-col items-center justify-center p-12 text-center">
