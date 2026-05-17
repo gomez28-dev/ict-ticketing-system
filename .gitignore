@@ -44,3 +44,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Data dumps
+data/*.xlsx
+data/*.csv

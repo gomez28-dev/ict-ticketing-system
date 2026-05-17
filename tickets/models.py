@@ -32,6 +32,7 @@ class User(AbstractUser):
     timeliness_score = models.FloatField(default=0.0)
     overall_rating = models.FloatField(default=0.0)
     total_reviews = models.IntegerField(default=0)
+    total_tasks_done = models.IntegerField(default=0)
 
     # --- Password Change Tracking ---
     has_changed_password = models.BooleanField(

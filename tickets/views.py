@@ -1475,21 +1475,34 @@ def employee_profile(request, user_id):
         messages.error(request, "You do not have permission to view this profile.")
         return redirect('dashboard')
 
-    # Get recent resolved tickets for this employee
+    # Get ALL resolved/completed tickets for this employee (full task history)
     user_full_name = f"{profile_user.first_name} {profile_user.last_name}".strip()
-    resolved_tickets = Ticket.objects.filter(
+    task_history = Ticket.objects.filter(
         admin_notes__icontains=user_full_name,
         status__in=['RESOLVED', 'COMPLETED']
-    ).order_by('-actual_completion_date', '-updated_at')[:10]
+    ).order_by('-actual_completion_date', '-updated_at')
+
+    # Live task count (use stored value, fallback to query count)
+    total_tasks = profile_user.total_tasks_done or task_history.count()
 
     # Get performance reviews
     reviews = PerformanceReview.objects.filter(employee=profile_user).order_by('-created_at')[:10]
 
+    # Radar chart data — scores are 0-5 in DB, convert to 0-100 for chart
+    import json
+    radar_data = json.dumps({
+        'quality': round(profile_user.quality_score * 20, 1),
+        'efficiency': round(profile_user.efficiency_score * 20, 1),
+        'timeliness': round(profile_user.timeliness_score * 20, 1),
+    })
+
     context = {
         'profile_user': profile_user,
-        'resolved_tickets': resolved_tickets,
+        'task_history': task_history,
+        'total_tasks': total_tasks,
         'reviews': reviews,
         'is_admin_user': is_admin_user,
+        'radar_data': radar_data,
     }
     return render(request, 'tickets/employee_profile.html', context)
 
