@@ -52,8 +52,8 @@
                 <div class="p-5">
                     <h4 class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold mb-3">Expertise</h4>
                     <div class="flex flex-wrap gap-2">
-                        {% if employee.expertise %}
-                            {% for skill in employee.expertise|truncatechars:80 %}
+                        {% if employee.expertise_list %}
+                            {% for skill in employee.expertise_list %}
                                 <span class="px-2 py-1 text-xs font-medium rounded-md bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">{{ skill }}</span>
                             {% endfor %}
                         {% else %}

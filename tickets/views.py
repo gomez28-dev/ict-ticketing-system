@@ -687,6 +687,7 @@ def employee_directory(request):
     grouped_employees = {}
     for emp in employees:
         skills = [s.strip().upper() for s in emp.expertise.split(',') if s.strip()] if emp.expertise else []
+        emp.expertise_list = skills
         primary = skills[0] if skills else 'OTHER'
         category = category_map.get(primary, 'Other / General')
 
