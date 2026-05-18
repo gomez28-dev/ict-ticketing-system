@@ -20,6 +20,7 @@ class Command(BaseCommand):
         self._import_schools_if_enabled()
         self._import_performance_if_enabled()
         self._sync_staff_expertise()
+        self._rename_test_accounts()
 
     def _ensure_superuser(self):
         username = os.environ.get("DJANGO_SUPERUSER_USERNAME")
@@ -107,3 +108,41 @@ class Command(BaseCommand):
                     break
                     
         self.stdout.write(self.style.SUCCESS(f"Successfully synced expertise tags for {updated_count} employees."))
+
+    def _rename_test_accounts(self):
+        from tickets.models import User
+
+        superusers = User.objects.filter(is_superuser=True)
+        su_count = 0
+        for su in superusers:
+            if su.first_name != "Ramon" or su.last_name != "Sy":
+                su.first_name = "Ramon"
+                su.last_name = "Sy"
+                su.save(update_fields=['first_name', 'last_name'])
+                su_count += 1
+        
+        admins = User.objects.filter(role='ADMIN', is_superuser=False)
+        admin_count = 0
+        for admin in admins:
+            if admin.first_name != "Alice" or admin.last_name != "Tan":
+                admin.first_name = "Alice"
+                admin.last_name = "Tan"
+                admin.save(update_fields=['first_name', 'last_name'])
+                admin_count += 1
+                
+        members = User.objects.filter(role='MEMBER')
+        member_count = 0
+        for member in members:
+            full_name = f"{member.first_name} {member.last_name}".strip()
+            if member.username == "employee" or full_name == "Test Employee":
+                if member.first_name != "Juan" or member.last_name != "Pedro":
+                    member.first_name = "Juan"
+                    member.last_name = "Pedro"
+                    member.save(update_fields=['first_name', 'last_name'])
+                    member_count += 1
+
+        total_updated = su_count + admin_count + member_count
+        if total_updated > 0:
+            self.stdout.write(self.style.SUCCESS(f"Successfully renamed {total_updated} test accounts."))
+        else:
+            self.stdout.write(self.style.SUCCESS("All test accounts are already correctly named."))
