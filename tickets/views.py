@@ -719,6 +719,12 @@ def move_from_backlog(request, ticket_id):
         ticket.save()
     return redirect('backlog')
 
+def terms(request):
+    return render(request, 'tickets/terms.html')
+
+def privacy(request):
+    return render(request, 'tickets/privacy.html')
+
 def search_tickets(request):
     query = request.GET.get('q', '')
     results = []

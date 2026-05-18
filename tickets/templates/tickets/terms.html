@@ -1,0 +1,228 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - ICT Helpdesk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans text-gray-200">
+    
+    <!-- Header / Nav (Optional clean bar) -->
+    <div class="w-full bg-[#1e293b]/80 border-b border-white/10 py-4 px-6 flex items-center justify-between">
+        <a href="{% url 'login' %}" class="flex items-center gap-3">
+            <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-8 w-auto">
+            <span class="font-bold tracking-wide text-white">ICT UNIT</span>
+        </a>
+        <a href="{% url 'login' %}" class="text-sm font-medium text-blue-400 hover:text-blue-300">Return to Login</a>
+    </div>
+
+    <!-- Document Container -->
+    <div class="flex-grow flex py-10 px-4 items-start justify-center">
+        <div class="max-w-4xl w-full mx-auto prose prose-blue p-8 md:p-12 bg-white rounded-xl shadow-2xl mt-4">
+            
+            <h1 class="text-gray-900">Terms of Service</h1>
+            <p class="text-gray-500 font-medium">ICT Helpdesk Management System</p>
+            <p class="text-sm text-gray-400">Last Updated: May 2026</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Introduction</h2>
+            <p>Welcome to the ICT Helpdesk Management System. These Terms of Service govern your access to and use of the system. By registering an account and using our services, you agree to comply with these terms. If you do not agree, please do not use the system.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">User Accounts</h2>
+            <p><strong>Account Registration</strong></p>
+            <p>To use the system, users must create an account using valid organizational information (e.g., official DepEd email). Users must:</p>
+            <ul>
+                <li>Provide accurate and complete information</li>
+                <li>Submit valid account requests for approval</li>
+            </ul>
+            <p>The administration reserves the right to approve, deny, suspend, or remove accounts when necessary.</p>
+
+            <p><strong>Account Security</strong></p>
+            <p>Users are responsible for:</p>
+            <ul>
+                <li>Keeping login credentials confidential</li>
+                <li>Preventing unauthorized access to their accounts</li>
+                <li>Logging out after each session on shared devices</li>
+            </ul>
+            <p>Any activity performed under a user account is considered the responsibility of the account owner.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Acceptable Use</h2>
+            <p>Users agree to use the system responsibly and professionally.</p>
+            <p>Users must NOT:</p>
+            <ul>
+                <li>Submit false or misleading tickets</li>
+                <li>Upload malicious files, viruses, or harmful content</li>
+                <li>Attempt unauthorized access to system data</li>
+                <li>Interfere with system operations or security</li>
+                <li>Use the system for personal, illegal, or non-work-related activities</li>
+                <li>Share confidential information without authorization</li>
+            </ul>
+            <p>Violation of these rules may result in account suspension or disciplinary action.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Ticket Management</h2>
+            <p><strong>Ticket Submission</strong></p>
+            <p>Users must provide clear and accurate details when creating tickets to ensure proper assistance and resolution.</p>
+            <p><strong>Ticket Assignment</strong></p>
+            <p>The system may automatically or manually assign tickets to ICT personnel based on availability, workload, or responsibility.</p>
+            <p><strong>Ticket Status</strong></p>
+            <p>Users can monitor ticket progress through statuses such as:</p>
+            <ul>
+                <li>Pending</li>
+                <li>Ongoing</li>
+                <li>Resolved</li>
+                <li>Closed</li>
+            </ul>
+            <p>Administrators may update or modify ticket records when necessary for operational purposes.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Roles and Permissions</h2>
+            <ul>
+                <li><strong>ICT Head:</strong> Full administrative access. Manage users, tickets, and reports. Monitor employee performance and activity.</li>
+                <li><strong>ICT Secretary:</strong> Assist in ticket monitoring and documentation. Manage communications and records.</li>
+                <li><strong>Employee:</strong> Handle assigned tickets and provide technical assistance. Update ticket progress and resolutions.</li>
+                <li><strong>Complainant/User:</strong> Submit concerns and monitor ticket status.</li>
+            </ul>
+            <p>Users may not attempt to access functions outside their assigned permissions.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Data and System Availability</h2>
+            <p>While efforts are made to maintain continuous system availability, the administration does not guarantee uninterrupted access due to:</p>
+            <ul>
+                <li>Maintenance activities</li>
+                <li>Technical failures</li>
+                <li>Internet connectivity issues</li>
+                <li>Security incidents</li>
+            </ul>
+            <p>The administration may temporarily suspend access for maintenance or security purposes.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Intellectual Property</h2>
+            <p>All system components including design, features, database structure, logos, and documentation are the property of the ICT Helpdesk Management System developers and administrators unless otherwise stated. Users may not copy, modify, distribute, or misuse system content without authorization.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Limitation of Liability</h2>
+            <p>The system administrators and developers shall not be held liable for:</p>
+            <ul>
+                <li>Loss of data caused by technical issues</li>
+                <li>Unauthorized account access caused by user negligence</li>
+                <li>Delays in ticket resolution</li>
+                <li>Temporary service interruptions</li>
+            </ul>
+            <p>Users acknowledge that the system is provided to support operational processes and may have technical limitations.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Suspension and Termination</h2>
+            <p>Accounts may be suspended or terminated if users:</p>
+            <ul>
+                <li>Violate these Terms of Service</li>
+                <li>Engage in unauthorized or malicious activities</li>
+                <li>Abuse system privileges</li>
+                <li>Provide false information during registration</li>
+            </ul>
+            <p>Administrators reserve the right to investigate suspicious activities and take appropriate action.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Changes to the Terms</h2>
+            <p>These Terms of Service may be updated at any time to improve system operations, security, or compliance with organizational policies. Continued use of the system after updates indicates acceptance of the revised terms.</p>
+
+            <h2 class="text-gray-800 border-b pb-2 mt-8">Agreement</h2>
+            <p>By using the ICT Helpdesk Management System, you confirm that you have read, understood, and agreed to follow these Terms of Service.</p>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full bg-[#1e293b]/80 border-t border-white/10 text-gray-400 py-6 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs">
+            <div class="mb-4 md:mb-0 flex items-center gap-4">
+                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-10 w-auto object-contain">
+                <div>
+                    <p class="font-medium text-gray-300">DepEd Division of Valenzuela - ICT Unit</p>
+                    <p>&copy; {% now "Y" %} All rights reserved.</p>
+                </div>
+            </div>
+            <div class="flex space-x-6">
+                <a href="{% url 'privacy' %}" class="hover:text-gray-200 transition-colors">Privacy Policy</a>
+                <a href="{% url 'terms' %}" class="hover:text-gray-200 transition-colors">Terms of Service</a>
+                <a href="#" onclick="toggleSupportModal()" class="hover:text-gray-200 transition-colors">Contact Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Contact Support Modal -->
+    <div id="supportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700 m-auto mt-10 mb-10 transform transition-all">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 rounded-t-xl">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Contact ICT Helpdesk
+                </h3>
+                <button onclick="toggleSupportModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg p-1 hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-5">
+                <div class="flex items-start gap-4">
+                    <div class="mt-0.5 bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email</p>
+                        <a href="mailto:leonvercettttti@gmail.com" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">leonvercettttti@gmail.com</a>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4">
+                    <div class="mt-0.5 bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
+                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Telephone</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">(02) 8293-4507</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">(02) 8277-4648</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">(02) 8291-0873</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4">
+                    <div class="mt-0.5 bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg">
+                        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Mobile</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">+639262298171 <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">(Sir Noel Reyes)</span></p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4">
+                    <div class="mt-0.5 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
+                        <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Address</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white leading-relaxed">Pio Valenzuela St.,<br>Brgy. Marulas, Valenzuela City</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl flex justify-end">
+                <button onclick="toggleSupportModal()" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-sm font-bold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSupportModal() {
+            const modal = document.getElementById('supportModal');
+            if (modal) {
+                modal.classList.toggle('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
