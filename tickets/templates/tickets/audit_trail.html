@@ -18,6 +18,7 @@
                     <tr>
                         <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Ticket Number</th>
                         <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Action</th>
+                        <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Roles</th>
                         <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Changed By</th>
                         <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">Old Value</th>
                         <th scope="col" class="px-6 py-4 font-bold whitespace-nowrap">New Value</th>
@@ -34,7 +35,10 @@
                             {{ log.action|default:"-" }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            {{ log.changed_by.get_full_name|default:log.changed_by.username|default:"System" }}
+                            {% if log.changed_by.is_superuser %}ICT Head{% elif log.changed_by.role == 'ADMIN' %}ICT Secretary{% elif log.changed_by %}ICT IT Employee{% else %}Complaints{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if log.changed_by %}{{ log.changed_by.get_full_name|default:log.changed_by.username }}{% else %}{{ log.ticket.first_name }} {{ log.ticket.last_name }}{% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {{ log.old_value|default:"-" }}
@@ -70,7 +74,10 @@
                 <div class="flex flex-col gap-1.5 text-sm text-gray-600 dark:text-gray-400 mt-1">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        <span>{{ log.changed_by.get_full_name|default:log.changed_by.username|default:"System" }}</span>
+                        <span>
+                            <span class="font-semibold">{% if log.changed_by.is_superuser %}ICT Head{% elif log.changed_by.role == 'ADMIN' %}ICT Secretary{% elif log.changed_by %}ICT IT Employee{% else %}Complaints{% endif %}:</span>
+                            {% if log.changed_by %}{{ log.changed_by.get_full_name|default:log.changed_by.username }}{% else %}{{ log.ticket.first_name }} {{ log.ticket.last_name }}{% endif %}
+                        </span>
                     </div>
                     <div class="flex items-start gap-2">
                         <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
