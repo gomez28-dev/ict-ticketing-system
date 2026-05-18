@@ -19,6 +19,7 @@ class Command(BaseCommand):
         self._ensure_superuser()
         self._import_schools_if_enabled()
         self._import_performance_if_enabled()
+        self._sync_staff_expertise()
 
     def _ensure_superuser(self):
         username = os.environ.get("DJANGO_SUPERUSER_USERNAME")
@@ -83,3 +84,26 @@ class Command(BaseCommand):
         self.stdout.write(self.style.WARNING("!!! STARTING EMPLOYEE IMPORT SCRIPT !!!"))
         call_command("import_performance")
         self.stdout.write(self.style.SUCCESS("Performance data imported successfully."))
+
+    def _sync_staff_expertise(self):
+        from tickets.staff_data import STAFF_LIST
+        from tickets.models import User
+        
+        users = User.objects.filter(is_staff=True)
+        updated_count = 0
+        
+        for staff in STAFF_LIST:
+            staff_name_lower = staff['name'].lower()
+            for u in users:
+                u_first = (u.first_name or '').lower()
+                u_last = (u.last_name or '').lower()
+                
+                db_full_name = f"{u_first} {u_last}".strip()
+                if db_full_name == staff_name_lower or (u_first and u_last and u_first in staff_name_lower and u_last in staff_name_lower):
+                    expertise_str = ", ".join(staff['expertise'])
+                    u.expertise = expertise_str
+                    u.save(update_fields=['expertise'])
+                    updated_count += 1
+                    break
+                    
+        self.stdout.write(self.style.SUCCESS(f"Successfully synced expertise tags for {updated_count} employees."))
