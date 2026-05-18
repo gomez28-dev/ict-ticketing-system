@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,67 +20,116 @@
     </script>
     <style>
         /* Critical dark-mode colors applied before Tailwind loads */
-        html.dark body { background-color: #111827 !important; color: #f3f4f6 !important; }
-        html.dark header { background-color: #1f2937 !important; border-color: #374151 !important; }
-        html.dark footer { background-color: #1f2937 !important; border-color: #4b5563 !important; }
-        html.dark main { background-color: #111827 !important; }
+        html.dark body {
+            background-color: #111827 !important;
+            color: #f3f4f6 !important;
+        }
+
+        html.dark header {
+            background-color: #1f2937 !important;
+            border-color: #374151 !important;
+        }
+
+        html.dark footer {
+            background-color: #1f2937 !important;
+            border-color: #4b5563 !important;
+        }
+
+        html.dark main {
+            background-color: #111827 !important;
+        }
+
         /* Prevent transitions on initial load */
-        .preload, .preload * { transition: none !important; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #1d4ed8; }
-        .dark .tab-btn.active { border-bottom: 2px solid #60a5fa; color: #60a5fa; }
-        .modal { display: none; }
-        .modal.active { display: flex; }
+        .preload,
+        .preload * {
+            transition: none !important;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-btn.active {
+            border-bottom: 2px solid #3b82f6;
+            color: #1d4ed8;
+        }
+
+        .dark .tab-btn.active {
+            border-bottom: 2px solid #60a5fa;
+            color: #60a5fa;
+        }
+
+        .modal {
+            display: none;
+        }
+
+        .modal.active {
+            display: flex;
+        }
     </style>
 </head>
-<body class="preload bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col text-gray-800 dark:text-gray-100 transition-colors duration-200">
+
+<body
+    class="preload bg-gray-100 dark:bg-gray-900 min-h-screen flex flex-col text-gray-800 dark:text-gray-100 transition-colors duration-200">
 
     <!-- Navigation -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 print:hidden">
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 px-4 sm:px-6 py-4 max-w-7xl mx-auto">
+    <header
+        class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200 print:hidden">
+        <div
+            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 px-4 sm:px-6 py-4 max-w-7xl mx-auto">
             <div class="flex items-center gap-3 min-w-0 text-center sm:text-left">
-                <div class="w-8 h-8 rounded bg-blue-900 text-white flex items-center justify-center font-bold text-xs uppercase tracking-wider shadow-sm hidden sm:flex">ICT</div>
-                <h1 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words">Division Office Helpdesk - {{ school.name }}</h1>
+                <div
+                    class="w-8 h-8 rounded bg-blue-900 text-white flex items-center justify-center font-bold text-xs uppercase tracking-wider shadow-sm hidden sm:flex">
+                    ICT</div>
+                <h1 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words">Division Office
+                    Helpdesk - {{ school.name }}</h1>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-                <span class="text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">ID: {{ school.school_id }}</span>
-                <a href="{% url 'school_logout' %}" class="min-h-11 inline-flex items-center text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors">Logout</a>
+                <span
+                    class="text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">ID:
+                    {{ school.school_id }}</span>
+                <a href="{% url 'school_logout' %}"
+                    class="min-h-11 inline-flex items-center text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors">Logout</a>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
     <div class="flex-grow w-full max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 print:hidden">
-        
+
         <!-- Messages -->
         {% if messages %}
-            <div class="mb-4 px-4 sm:px-0">
-                {% for message in messages %}
-                    <div class="p-4 mb-2 rounded shadow text-sm {% if message.tags == 'error' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400{% else %}bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
+        <div class="mb-4 px-4 sm:px-0">
+            {% for message in messages %}
+            <div
+                class="p-4 mb-2 rounded shadow text-sm {% if message.tags == 'error' %}bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400{% else %}bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400{% endif %}">
+                {{ message }}
             </div>
+            {% endfor %}
+        </div>
         {% endif %}
 
         <!-- Tabs Navigation -->
-        <style>
-            .hide-scroll::-webkit-scrollbar { display: none; }
-            .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        </style>
-        <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200 flex overflow-x-auto whitespace-nowrap scrollbar-hide hide-scroll md:flex-wrap md:overflow-x-visible">
-            <nav class="-mb-px flex space-x-6 sm:space-x-8 px-4 sm:px-0 md:flex-wrap" aria-label="Tabs">
-                <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn active whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200 overflow-x-auto">
+            <nav class="-mb-px flex min-w-max space-x-6 sm:space-x-8 px-4 sm:px-0" aria-label="Tabs">
+                <button onclick="switchTab('tickets')" id="tab-tickets"
+                    class="tab-btn active whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     My Request
                 </button>
-                <button onclick="switchTab('notifications')" id="tab-notifications" class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <button onclick="switchTab('notifications')" id="tab-notifications"
+                    class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     Activity & Audit Trail
                 </button>
-                <button onclick="switchTab('profile')" id="tab-profile" class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <button onclick="switchTab('profile')" id="tab-profile"
+                    class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     Profile
                 </button>
-                <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                <button onclick="switchTab('settings')" id="tab-settings"
+                    class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     Settings
                 </button>
             </nav>
@@ -89,48 +139,72 @@
         <div id="content-tickets" class="tab-content active px-4 sm:px-0">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                 <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Request History</h2>
-                <button onclick="openModal()" class="min-h-11 w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-medium transition-colors">
+                <button onclick="openModal()"
+                    class="min-h-11 w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 font-medium transition-colors">
                     + Request Support
                 </button>
             </div>
-            
+
             <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md transition-colors duration-200">
                 <table class="hidden md:table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700 transition-colors">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ticket Number</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Title</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Ticket Number</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Title</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Status</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Date</th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors">
+                    <tbody
+                        class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors">
                         {% for ticket in tickets %}
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                            <td
+                                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
                                 <a href="{% url 'school_ticket_detail' ticket.id %}">{{ ticket.ticket_number }}</a>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ ticket.title }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{
+                                ticket.title }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                 {% if ticket.status == "DECLINED" %}
-                                    <span class="px-2.5 py-1 text-xs font-bold rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
+                                <span
+                                    class="px-2.5 py-1 text-xs font-bold rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
                                 {% elif ticket.status == "RESOLVED" or ticket.status == "COMPLETED" %}
-                                    <span class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{ ticket.get_status_display }}</span>
+                                <span
+                                    class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{
+                                    ticket.get_status_display }}</span>
                                 {% elif ticket.status == "PENDING" %}
-                                    <span class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{ ticket.get_status_display }}</span>
+                                <span
+                                    class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{
+                                    ticket.get_status_display }}</span>
                                 {% else %}
-                                    <span class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ ticket.get_status_display }}</span>
+                                <span
+                                    class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{
+                                    ticket.get_status_display }}</span>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ ticket.created_at|date:"M d, Y" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{
+                                ticket.created_at|date:"M d, Y" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{% url 'school_ticket_detail' ticket.id %}" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-semibold px-2 py-1">View</a>
+                                <a href="{% url 'school_ticket_detail' ticket.id %}"
+                                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-semibold px-2 py-1">View</a>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No tickets found.</td>
+                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No
+                                tickets found.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -140,17 +214,27 @@
                     <article class="p-4 space-y-3">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
-                                <a href="{% url 'school_ticket_detail' ticket.id %}" class="text-base font-bold text-blue-600 dark:text-blue-400 hover:underline">{{ ticket.ticket_number }}</a>
+                                <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number
+                                </p>
+                                <a href="{% url 'school_ticket_detail' ticket.id %}"
+                                    class="text-base font-bold text-blue-600 dark:text-blue-400 hover:underline">{{
+                                    ticket.ticket_number }}</a>
                             </div>
                             {% if ticket.status == "DECLINED" %}
-                                <span class="px-2.5 py-1 text-xs font-bold rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
+                            <span
+                                class="px-2.5 py-1 text-xs font-bold rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
                             {% elif ticket.status == "RESOLVED" or ticket.status == "COMPLETED" %}
-                                <span class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{ ticket.get_status_display }}</span>
+                            <span
+                                class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{
+                                ticket.get_status_display }}</span>
                             {% elif ticket.status == "PENDING" %}
-                                <span class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{ ticket.get_status_display }}</span>
+                            <span
+                                class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{
+                                ticket.get_status_display }}</span>
                             {% else %}
-                                <span class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ ticket.get_status_display }}</span>
+                            <span
+                                class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{
+                                ticket.get_status_display }}</span>
                             {% endif %}
                         </div>
                         <div class="grid grid-cols-1 gap-2 text-sm">
@@ -163,7 +247,8 @@
                                 <p class="text-gray-700 dark:text-gray-300">{{ ticket.created_at|date:"M d, Y" }}</p>
                             </div>
                         </div>
-                        <a href="{% url 'school_ticket_detail' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50">View</a>
+                        <a href="{% url 'school_ticket_detail' ticket.id %}"
+                            class="min-h-11 w-full inline-flex items-center justify-center rounded-lg bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50">View</a>
                     </article>
                     {% empty %}
                     <div class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No tickets found.</div>
@@ -175,7 +260,8 @@
         <!-- Tab 2: Notifications -->
         <div id="content-notifications" class="tab-content px-4 sm:px-0">
             <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Activity & Audit Trail</h2>
-            <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg transition-colors duration-200 p-6">
+            <div
+                class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg transition-colors duration-200 p-6">
                 <div class="relative">
                     {% for note in notifications %}
                     <div class="flex gap-4 {% if not forloop.last %}pb-8{% endif %} relative">
@@ -186,21 +272,47 @@
 
                         <!-- Icon -->
                         <div class="flex-shrink-0 z-10">
-                            {% if 'Resolved' in note.new_value or 'Completed' in note.new_value or note.new_value == 'RESOLVED' or note.new_value == 'COMPLETED' %}
-                            <div class="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
-                                <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            {% if 'Resolved' in note.new_value or 'Completed' in note.new_value or note.new_value ==
+                            'RESOLVED' or note.new_value == 'COMPLETED' %}
+                            <div
+                                class="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
+                                <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
                             </div>
-                            {% elif 'Scheduled' in note.new_value or note.new_value == 'SCHEDULED' or 'scheduled' in note.action %}
-                            <div class="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
-                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            {% elif 'Scheduled' in note.new_value or note.new_value == 'SCHEDULED' or 'scheduled' in
+                            note.action %}
+                            <div
+                                class="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
+                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
                             </div>
-                            {% elif 'created' in note.action or 'Created' in note.action or 'submitted' in note.action %}
-                            <div class="w-9 h-9 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
-                                <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            {% elif 'created' in note.action or 'Created' in note.action or 'submitted' in note.action
+                            %}
+                            <div
+                                class="w-9 h-9 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
+                                <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
                             </div>
                             {% else %}
-                            <div class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
-                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            <div
+                                class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
+                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                    </path>
+                                </svg>
                             </div>
                             {% endif %}
                         </div>
@@ -209,25 +321,34 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-2">
                                 <p class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
-                                    <span class="text-blue-600 dark:text-blue-400">{{ note.ticket.ticket_number }}</span>
+                                    <span class="text-blue-600 dark:text-blue-400">{{ note.ticket.ticket_number
+                                        }}</span>
                                     <span class="mx-1 text-gray-300 dark:text-gray-600">·</span>
                                     {{ note.action }}
                                 </p>
-                                <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap flex-shrink-0">{{ note.timestamp|timesince }} ago</span>
+                                <span
+                                    class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap flex-shrink-0">{{
+                                    note.timestamp|timesince }} ago</span>
                             </div>
                             {% if note.old_value or note.new_value %}
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                 <span class="line-through text-red-400 dark:text-red-500">{{ note.old_value }}</span>
                                 <span class="mx-1">→</span>
-                                <span class="font-semibold text-green-600 dark:text-green-400">{{ note.new_value }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">{{ note.new_value
+                                    }}</span>
                             </p>
                             {% endif %}
-                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{{ note.timestamp|date:"M d, Y · h:i A" }}</p>
+                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{{ note.timestamp|date:"M d, Y ·
+                                h:i A" }}</p>
                         </div>
                     </div>
                     {% empty %}
                     <div class="text-center py-8">
-                        <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
                         <p class="text-sm text-gray-500 dark:text-gray-400">No activity recorded yet.</p>
                     </div>
                     {% endfor %}
@@ -240,49 +361,77 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Section A: School Info -->
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 transition-colors duration-200">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2 mb-4">School Information</h3>
+                    <h3
+                        class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2 mb-4">
+                        School Information</h3>
                     <div class="space-y-3">
-                        <p><span class="font-semibold text-gray-900 dark:text-gray-200">School Name:</span> <span class="text-gray-600 dark:text-gray-400">{{ school.name }}</span></p>
-                        <p><span class="font-semibold text-gray-900 dark:text-gray-200">District:</span> <span class="text-gray-600 dark:text-gray-400">{{ school.district|default:"N/A" }}</span></p>
-                        <p><span class="font-semibold text-gray-900 dark:text-gray-200">School ID:</span> <span class="text-gray-600 dark:text-gray-400">{{ school.school_id }}</span></p>
+                        <p><span class="font-semibold text-gray-900 dark:text-gray-200">School Name:</span> <span
+                                class="text-gray-600 dark:text-gray-400">{{ school.name }}</span></p>
+                        <p><span class="font-semibold text-gray-900 dark:text-gray-200">District:</span> <span
+                                class="text-gray-600 dark:text-gray-400">{{ school.district|default:"N/A" }}</span></p>
+                        <p><span class="font-semibold text-gray-900 dark:text-gray-200">School ID:</span> <span
+                                class="text-gray-600 dark:text-gray-400">{{ school.school_id }}</span></p>
                     </div>
                 </div>
 
                 <!-- Section B: ICT Details -->
                 <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 transition-colors duration-200">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2 mb-4">ICT Personnel Details</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">These details will be used as the default contact for new tickets.</p>
+                    <h3
+                        class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b dark:border-gray-700 pb-2 mb-4">
+                        ICT Personnel Details</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">These details will be used as the default
+                        contact for new tickets.</p>
                     <form method="POST" action="{% url 'school_dashboard' %}">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="update_profile">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
-                                <input type="text" name="ict_first_name" value="{{ school.ict_first_name|default:'' }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" required>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">First
+                                    Name</label>
+                                <input type="text" name="ict_first_name" value="{{ school.ict_first_name|default:'' }}"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                                    required>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
-                                <input type="text" name="ict_last_name" value="{{ school.ict_last_name|default:'' }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" required>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Last
+                                    Name</label>
+                                <input type="text" name="ict_last_name" value="{{ school.ict_last_name|default:'' }}"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                                    required>
                             </div>
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Number</label>
-                            <input type="tel" name="ict_contact_number" value="{{ school.ict_contact_number|default:'' }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" placeholder="09XXXXXXXXX" maxlength="11" pattern="09[0-9]{9}" title="Please enter a valid 11-digit Philippine mobile number starting with 09" required>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact
+                                Number</label>
+                            <input type="tel" name="ict_contact_number"
+                                value="{{ school.ict_contact_number|default:'' }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                                placeholder="09XXXXXXXXX" maxlength="11" pattern="09[0-9]{9}"
+                                title="Please enter a valid 11-digit Philippine mobile number starting with 09"
+                                required>
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
-                            <input type="email" name="ict_email" value="{{ school.ict_email|default:'' }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" required>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email
+                                Address</label>
+                            <input type="email" name="ict_email" value="{{ school.ict_email|default:'' }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                                required>
                         </div>
-                        <button type="submit" class="w-full min-h-11 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Save Details</button>
+                        <button type="submit"
+                            class="w-full min-h-11 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Save
+                            Details</button>
                     </form>
                 </div>
             </div>
-            <div class="mt-6 bg-red-50 dark:bg-red-900/20 shadow sm:rounded-lg p-6 border border-red-100 dark:border-red-800 transition-colors duration-200">
+            <div
+                class="mt-6 bg-red-50 dark:bg-red-900/20 shadow sm:rounded-lg p-6 border border-red-100 dark:border-red-800 transition-colors duration-200">
                 <h3 class="text-lg font-medium text-red-800 dark:text-red-300 mb-2">Delete Account</h3>
                 <p class="text-sm text-red-700 dark:text-red-400 mb-4">This permanently deletes the school account.</p>
-                <form method="POST" action="{% url 'delete_school_account' %}" onsubmit="return confirmDeleteSchoolAccount();">
+                <form method="POST" action="{% url 'delete_school_account' %}"
+                    onsubmit="return confirmDeleteSchoolAccount();">
                     {% csrf_token %}
-                    <button type="submit" class="w-full sm:w-auto min-h-11 bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 font-medium transition-colors">
+                    <button type="submit"
+                        class="w-full sm:w-auto min-h-11 bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 font-medium transition-colors">
                         Delete Account
                     </button>
                 </form>
@@ -298,8 +447,10 @@
                         <p class="font-medium text-gray-900 dark:text-gray-100">Dark Mode</p>
                         <p class="text-sm text-gray-500 dark:text-gray-400">Toggle dark mode for this portal.</p>
                     </div>
-                    <button id="dark-mode-toggle" type="button" class="bg-gray-200 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        <span id="dark-mode-knob" class="translate-x-0 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                    <button id="dark-mode-toggle" type="button"
+                        class="bg-gray-200 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <span id="dark-mode-knob"
+                            class="translate-x-0 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
                     </button>
                 </div>
             </div>
@@ -308,19 +459,28 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-[#1e3a8a] border-t-4 border-[#eab308] text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 py-6 mt-12 print:hidden transition-colors duration-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-5 text-sm text-center md:text-left">
+    <footer
+        class="bg-[#1e3a8a] border-t-4 border-[#eab308] text-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 py-6 mt-12 print:hidden transition-colors duration-200">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-5 text-sm text-center md:text-left">
             <div class="flex flex-col sm:flex-row items-center gap-4">
-                <img src="{% static 'tickets/images/ICT_Logo.png' %}" alt="ICT Helpdesk Logo" class="h-10 w-auto object-contain">
+                <img src="{% static 'tickets/images/ICT_Logo.png' %}" alt="ICT Helpdesk Logo"
+                    class="h-10 w-auto object-contain">
                 <div>
                     <h2 class="text-white font-semibold">DepEd Division of Valenzuela - ICT Unit</h2>
                     <p class="text-xs">&copy; 2026 All rights reserved.</p>
                 </div>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                <a href="#" class="min-h-11 inline-flex items-center justify-center hover:text-white transition-colors">Privacy Policy</a>
-                <a href="#" class="min-h-11 inline-flex items-center justify-center hover:text-white transition-colors">Terms of Service</a>
-                <a href="#" class="min-h-11 inline-flex items-center justify-center hover:text-white transition-colors">Contact Support</a>
+                <a href="#"
+                    class="min-h-11 inline-flex items-center justify-center hover:text-white transition-colors">Privacy
+                    Policy</a>
+                <a href="#"
+                    class="min-h-11 inline-flex items-center justify-center hover:text-white transition-colors">Terms of
+                    Service</a>
+                <a href="#"
+                    class="min-h-11 inline-flex items-center justify-center hover:text-white transition-colors">Contact
+                    Support</a>
             </div>
         </div>
     </footer>
@@ -328,23 +488,30 @@
     <!-- Removed Print Receipts Container to prevent duplicates -->
 
     <!-- Request Support Modal -->
-    <div id="ticketModal" class="modal fixed inset-0 z-50 items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm print:hidden">
-        <div class="bg-white dark:bg-gray-800 sm:rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-lg overflow-y-auto sm:overflow-hidden transition-colors duration-200">
+    <div id="ticketModal"
+        class="modal fixed inset-0 z-50 items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm print:hidden">
+        <div
+            class="bg-white dark:bg-gray-800 sm:rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-lg overflow-y-auto sm:overflow-hidden transition-colors duration-200">
             <div class="px-6 py-4 border-b dark:border-gray-700 flex justify-between items-center transition-colors">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Request Support</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
+                <button onclick="closeModal()"
+                    class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
-            <form method="POST" action="{% url 'school_dashboard' %}" enctype="multipart/form-data" class="px-4 sm:px-6 py-4">
+            <form method="POST" action="{% url 'school_dashboard' %}" enctype="multipart/form-data"
+                class="px-4 sm:px-6 py-4">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_ticket">
-                
+
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Support Type</label>
-                    <select name="support_type" class="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" required>
+                    <select name="support_type"
+                        class="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                        required>
                         <option value="" disabled selected>-- Select an issue type --</option>
                         <option value="CCTV">CCTV Maintenance or Repair</option>
                         <option value="PC_MAINTENANCE">Computer Maintenance or Repair</option>
@@ -358,17 +525,24 @@
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                    <textarea name="description" rows="4" class="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors" required></textarea>
+                    <textarea name="description" rows="4"
+                        class="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+                        required></textarea>
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Attachment (Optional)</label>
-                    <input type="file" name="attachment" class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50 transition-colors">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Attachment
+                        (Optional)</label>
+                    <input type="file" name="attachment"
+                        class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-400 hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50 transition-colors">
                 </div>
 
                 <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3">
-                    <button type="button" onclick="closeModal()" class="min-h-11 bg-white dark:bg-gray-700 border dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 font-medium transition-colors">Cancel</button>
-                    <button type="submit" class="min-h-11 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Submit Request</button>
+                    <button type="button" onclick="closeModal()"
+                        class="min-h-11 bg-white dark:bg-gray-700 border dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 font-medium transition-colors">Cancel</button>
+                    <button type="submit"
+                        class="min-h-11 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 dark:hover:bg-blue-500 font-medium transition-colors">Submit
+                        Request</button>
                 </div>
             </form>
         </div>
@@ -376,23 +550,35 @@
 
     <!-- Success Validation Modal -->
     {% if submitted_ticket %}
-    <div id="successModal" class="modal fixed inset-0 z-[60] items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm active">
-        <div class="bg-white dark:bg-gray-800 sm:rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-md overflow-y-auto sm:overflow-hidden transition-colors duration-200 flex items-center">
+    <div id="successModal"
+        class="modal fixed inset-0 z-[60] items-center justify-center bg-gray-900/50 dark:bg-black/60 backdrop-blur-sm active">
+        <div
+            class="bg-white dark:bg-gray-800 sm:rounded-lg shadow-xl w-full h-full sm:h-auto sm:max-w-md overflow-y-auto sm:overflow-hidden transition-colors duration-200 flex items-center">
             <div class="p-6 text-center">
-                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
-                    <svg class="h-10 w-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div
+                    class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+                    <svg class="h-10 w-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Success Validation</h3>
-                <p class="text-gray-600 dark:text-gray-400 mb-6">Your request form has been successfully submitted. Your Request ID is <span class="font-bold text-blue-600 dark:text-blue-400">#{{ submitted_ticket.ticket_number }}</span>.</p>
-                
+                <p class="text-gray-600 dark:text-gray-400 mb-6">Your request form has been successfully submitted. Your
+                    Request ID is <span class="font-bold text-blue-600 dark:text-blue-400">#{{
+                        submitted_ticket.ticket_number }}</span>.</p>
+
                 <div class="flex flex-col gap-3">
-                    <a href="{% url 'school_print_ticket' submitted_ticket.id %}" target="_blank" class="w-full bg-[#1e3a8a] text-white px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-blue-800 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    <a href="{% url 'school_print_ticket' submitted_ticket.id %}" target="_blank"
+                        class="w-full bg-[#1e3a8a] text-white px-4 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-blue-800 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                            </path>
+                        </svg>
                         Print Submission Receipt
                     </a>
-                    <button onclick="closeSuccessModal()" class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <button onclick="closeSuccessModal()"
+                        class="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2.5 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                         Close
                     </button>
                 </div>
@@ -406,7 +592,7 @@
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
+
             document.getElementById('content-' + tabName).classList.add('active');
             document.getElementById('tab-' + tabName).classList.add('active');
         }
@@ -436,13 +622,13 @@
 
         // Dark Mode Logic
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(function() {
+            setTimeout(function () {
                 document.body.classList.remove('preload');
             }, 50);
 
             const toggleButton = document.getElementById('dark-mode-toggle');
             const toggleKnob = document.getElementById('dark-mode-knob');
-            
+
             // Sync Toggle State
             if (document.documentElement.classList.contains('dark')) {
                 if (toggleButton && toggleKnob) {
@@ -468,4 +654,5 @@
         });
     </script>
 </body>
+
 </html>
