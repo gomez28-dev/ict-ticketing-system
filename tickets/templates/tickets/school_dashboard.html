@@ -64,8 +64,12 @@
         {% endif %}
 
         <!-- Tabs Navigation -->
-        <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200 overflow-x-auto">
-            <nav class="-mb-px flex min-w-max space-x-6 sm:space-x-8 px-4 sm:px-0" aria-label="Tabs">
+        <style>
+            .hide-scroll::-webkit-scrollbar { display: none; }
+            .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        </style>
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200 flex overflow-x-auto whitespace-nowrap scrollbar-hide hide-scroll md:flex-wrap md:overflow-x-visible">
+            <nav class="-mb-px flex space-x-6 sm:space-x-8 px-4 sm:px-0 md:flex-wrap" aria-label="Tabs">
                 <button onclick="switchTab('tickets')" id="tab-tickets" class="tab-btn active whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     My Request
                 </button>
