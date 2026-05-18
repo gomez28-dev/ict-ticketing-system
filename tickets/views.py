@@ -9,12 +9,14 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.urls import reverse
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.db.models.functions import TruncDate
 import json
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
+from .email_utils import send_new_account_email, DEFAULT_PASSWORD
 
 User = get_user_model()
 
@@ -115,7 +117,6 @@ def add_employee(request):
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         role = request.POST.get('role', 'MEMBER')
-        password = request.POST.get('password')
         expertise = request.POST.get('expertise', '')
 
         username = email.split('@')[0] if email else f"{first_name.lower()}.{last_name.lower()}"
@@ -126,12 +127,22 @@ def add_employee(request):
             error = "An employee with this email or username already exists."
         else:
             new_user = User.objects.create_user(
-                username=username, email=email, password=password,
+                username=username, email=email, password=DEFAULT_PASSWORD,
                 first_name=first_name, last_name=last_name, role=role, expertise=expertise
             )
+            new_user.has_changed_password = False
             if role == 'ADMIN':
                 new_user.is_staff = True
-                new_user.save()
+            new_user.save()
+
+            # Send welcome email with default credentials
+            try:
+                login_url = request.build_absolute_uri(reverse('login'))
+                send_new_account_email(email, first_name, login_url)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to send welcome email: {e}")
+
             return redirect('teams')
 
     return render(request, 'tickets/employee_form.html', {'error': error})
@@ -160,11 +171,12 @@ def custom_login(request):
 
         if email_input in test_accounts and password_input == test_accounts[email_input]['pass']:
             role = test_accounts[email_input]['role']
-            last_name_value = "Employee" if role == 'MEMBER' else role.capitalize()
+            last_name_value = "Pedro" if role == 'MEMBER' else role.capitalize()
+            first_name_value = "Juan" if role == 'MEMBER' else "Test"
             
             user, created = User.objects.get_or_create(email=email_input, defaults={
                 'username': email_input.split('@')[0],
-                'first_name': 'Test',
+                'first_name': first_name_value,
                 'last_name': last_name_value,
                 'role': role if role != 'SUPERADMIN' else 'ADMIN',
                 'is_staff': True if role in ['ADMIN', 'SUPERADMIN'] else False,
@@ -172,7 +184,8 @@ def custom_login(request):
             })
             
             # Ensure name matches if it was created incorrectly previously
-            if not created and user.last_name != last_name_value:
+            if not created and (user.first_name != first_name_value or user.last_name != last_name_value):
+                user.first_name = first_name_value
                 user.last_name = last_name_value
                 user.save()
                 
@@ -343,15 +356,16 @@ def dashboard(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Real chart data for last 7 days
+    chart_data = get_activity_chart_data()
+
     context = {
         'tickets': page_obj,  # Pass the paginated object
         'page_obj': page_obj, # Explicit page_obj for template controls
         'total_tickets': all_tickets.count(),
         'resolved_tickets': all_tickets.filter(status='RESOLVED').count(),
         'staff_data': get_staff_data(),
-        'chart_labels': get_mock_chart_data()['labels'],
-        'chart_received': get_mock_chart_data()['received'],
-        'chart_resolved': get_mock_chart_data()['resolved'],
+        'graph_data': chart_data,
     }
     return render(request, 'tickets/dashboard.html', context)
 
@@ -602,16 +616,55 @@ def get_staff_data():
 
     return sorted(staff_list_copy, key=lambda x: x['active_tickets'], reverse=True)
 
-def get_mock_chart_data():
-    return {'labels': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-            'received': [8, 12, 15, 9, 14, 5, 3], 'resolved': [6, 10, 18, 12, 11, 8, 4]}
+def get_activity_chart_data():
+    """
+    Returns real ticket activity data for the last 7 calendar days.
+    Generates a strict zero-filled timeline so the X-axis always renders all 7 days.
+    - Received: tickets created (by created_at date).
+    - Resolved: tickets resolved or completed (by updated_at date).
+    """
+    today = timezone.now().date()
+    seven_days_ago = today - timedelta(days=6)  # inclusive of today = 7 days
+
+    # 1. Build a strict list of the last 7 calendar dates
+    date_range = [seven_days_ago + timedelta(days=i) for i in range(7)]
+    labels = [d.strftime('%b %d') for d in date_range]  # e.g. "May 10", "May 11"
+
+    # 2a. Tickets RECEIVED per day (all tickets created in the window)
+    received_qs = (
+        Ticket.objects.filter(created_at__date__gte=seven_days_ago)
+        .annotate(day=TruncDate('created_at'))
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+    received_map = {entry['day']: entry['count'] for entry in received_qs}
+
+    # 2b. Tickets RESOLVED/COMPLETED per day (by updated_at for broader coverage)
+    resolved_qs = (
+        Ticket.objects.filter(
+            updated_at__date__gte=seven_days_ago,
+            status__in=['RESOLVED', 'COMPLETED']
+        )
+        .annotate(day=TruncDate('updated_at'))
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+    resolved_map = {entry['day']: entry['count'] for entry in resolved_qs}
+
+    # 3. Zero-fill: iterate through every day in the range
+    received_data = [received_map.get(d, 0) for d in date_range]
+    resolved_data = [resolved_map.get(d, 0) for d in date_range]
+
+    return {'labels': labels, 'received': received_data, 'resolved': resolved_data}
 
 def analytics_dashboard(request):
     return render(request, 'tickets/analytics.html')
 
-def teams_view(request):
-    staff_list = get_staff_data()
-    
+def employee_directory(request):
+    employees = User.objects.filter(is_staff=True).exclude(is_superuser=True).order_by('first_name', 'last_name')
+
     category_map = {
         'MANAGEMENT': 'Management / Officers',
         'SYSTEM ADMIN': 'Management / Officers',
@@ -630,17 +683,21 @@ def teams_view(request):
         'HARDWARE': 'Computer Maintenance',
         'SYSTEM TESTING': 'System Testing',
     }
-    
-    grouped_staff = {}
-    for staff in staff_list:
-        primary_expertise = staff['expertise'][0] if staff['expertise'] else 'OTHER'
-        category = category_map.get(primary_expertise, 'Other / General')
-        
-        if category not in grouped_staff:
-            grouped_staff[category] = []
-        grouped_staff[category].append(staff)
-        
-    return render(request, 'tickets/teams.html', {'grouped_staff': grouped_staff})
+
+    grouped_employees = {}
+    for emp in employees:
+        skills = [s.strip().upper() for s in emp.expertise.split(',') if s.strip()] if emp.expertise else []
+        primary = skills[0] if skills else 'OTHER'
+        category = category_map.get(primary, 'Other / General')
+
+        if category not in grouped_employees:
+            grouped_employees[category] = []
+        grouped_employees[category].append(emp)
+
+    return render(request, 'tickets/employee_directory.html', {
+        'grouped_employees': grouped_employees,
+        'employees': employees,
+    })
 
 # ==========================================
 # UTILITY VIEWS
@@ -1424,21 +1481,34 @@ def employee_profile(request, user_id):
         messages.error(request, "You do not have permission to view this profile.")
         return redirect('dashboard')
 
-    # Get recent resolved tickets for this employee
+    # Get ALL resolved/completed tickets for this employee (full task history)
     user_full_name = f"{profile_user.first_name} {profile_user.last_name}".strip()
-    resolved_tickets = Ticket.objects.filter(
+    task_history = Ticket.objects.filter(
         admin_notes__icontains=user_full_name,
         status__in=['RESOLVED', 'COMPLETED']
-    ).order_by('-actual_completion_date', '-updated_at')[:10]
+    ).order_by('-actual_completion_date', '-updated_at')
+
+    # Live task count (use stored value, fallback to query count)
+    total_tasks = profile_user.total_tasks_done or task_history.count()
 
     # Get performance reviews
     reviews = PerformanceReview.objects.filter(employee=profile_user).order_by('-created_at')[:10]
 
+    # Radar chart data — scores are 0-5 in DB, convert to 0-100 for chart
+    import json
+    radar_data = json.dumps({
+        'quality': round(profile_user.quality_score * 20, 1),
+        'efficiency': round(profile_user.efficiency_score * 20, 1),
+        'timeliness': round(profile_user.timeliness_score * 20, 1),
+    })
+
     context = {
         'profile_user': profile_user,
-        'resolved_tickets': resolved_tickets,
+        'task_history': task_history,
+        'total_tasks': total_tasks,
         'reviews': reviews,
         'is_admin_user': is_admin_user,
+        'radar_data': radar_data,
     }
     return render(request, 'tickets/employee_profile.html', context)
 
@@ -1605,3 +1675,50 @@ def api_save_review(request):
         'success': True,
         'message': f'Performance review saved and ticket #{ticket.ticket_number} marked as Complete for {employee.get_full_name()}.'
     })
+
+
+# ==========================================
+# PASSWORD CHANGE SYSTEM
+# ==========================================
+
+@login_required
+def change_password(request):
+    """Standard password change form. Sets has_changed_password=True on success."""
+    if request.method == 'POST':
+        old_password = request.POST.get('old_password', '')
+        new_password1 = request.POST.get('new_password1', '')
+        new_password2 = request.POST.get('new_password2', '')
+
+        if not request.user.check_password(old_password):
+            messages.error(request, 'Your current password is incorrect.')
+            return render(request, 'tickets/change_password.html')
+
+        if not new_password1 or len(new_password1) < 8:
+            messages.error(request, 'New password must be at least 8 characters long.')
+            return render(request, 'tickets/change_password.html')
+
+        if new_password1 != new_password2:
+            messages.error(request, 'The two new passwords do not match.')
+            return render(request, 'tickets/change_password.html')
+
+        request.user.set_password(new_password1)
+        request.user.has_changed_password = True
+        request.user.save()
+
+        # Keep the user logged in after password change
+        update_session_auth_hash(request, request.user)
+
+        messages.success(request, 'Your password has been updated successfully!')
+        return redirect('dashboard')
+
+    return render(request, 'tickets/change_password.html')
+
+
+@login_required
+def dismiss_password_change(request):
+    """Lightweight AJAX view that flips has_changed_password to True so the banner goes away."""
+    if request.method == 'POST':
+        request.user.has_changed_password = True
+        request.user.save(update_fields=['has_changed_password'])
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'message': 'POST required.'}, status=405)
