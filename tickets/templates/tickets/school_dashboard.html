@@ -114,8 +114,12 @@
         {% endif %}
 
         <!-- Tabs Navigation -->
-        <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200 overflow-x-auto">
-            <nav class="-mb-px flex min-w-max space-x-6 sm:space-x-8 px-4 sm:px-0" aria-label="Tabs">
+        <style>
+            .hide-scroll::-webkit-scrollbar { display: none; }
+            .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        </style>
+        <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200 flex overflow-x-auto whitespace-nowrap scrollbar-hide hide-scroll md:flex-wrap md:overflow-x-visible">
+            <nav class="-mb-px flex space-x-6 sm:space-x-8 px-4 sm:px-0 md:flex-wrap" aria-label="Tabs">
                 <button onclick="switchTab('tickets')" id="tab-tickets"
                     class="tab-btn active whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
                     My Request
@@ -174,28 +178,23 @@
                                 class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
                                 <a href="{% url 'school_ticket_detail' ticket.id %}">{{ ticket.ticket_number }}</a>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{
-                                ticket.title }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ ticket.title }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                 {% if ticket.status == "DECLINED" %}
                                 <span
                                     class="px-2.5 py-1 text-xs font-bold rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
                                 {% elif ticket.status == "RESOLVED" or ticket.status == "COMPLETED" %}
                                 <span
-                                    class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{
-                                    ticket.get_status_display }}</span>
+                                    class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{ ticket.get_status_display }}</span>
                                 {% elif ticket.status == "PENDING" %}
                                 <span
-                                    class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{
-                                    ticket.get_status_display }}</span>
+                                    class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{ ticket.get_status_display }}</span>
                                 {% else %}
                                 <span
-                                    class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{
-                                    ticket.get_status_display }}</span>
+                                    class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ ticket.get_status_display }}</span>
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{
-                                ticket.created_at|date:"M d, Y" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ ticket.created_at|date:"M d, Y" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{% url 'school_ticket_detail' ticket.id %}"
                                     class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 font-semibold px-2 py-1">View</a>
@@ -217,24 +216,20 @@
                                 <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number
                                 </p>
                                 <a href="{% url 'school_ticket_detail' ticket.id %}"
-                                    class="text-base font-bold text-blue-600 dark:text-blue-400 hover:underline">{{
-                                    ticket.ticket_number }}</a>
+                                    class="text-base font-bold text-blue-600 dark:text-blue-400 hover:underline">{{ ticket.ticket_number }}</a>
                             </div>
                             {% if ticket.status == "DECLINED" %}
                             <span
                                 class="px-2.5 py-1 text-xs font-bold rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
                             {% elif ticket.status == "RESOLVED" or ticket.status == "COMPLETED" %}
                             <span
-                                class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{
-                                ticket.get_status_display }}</span>
+                                class="px-2.5 py-1 text-xs font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{{ ticket.get_status_display }}</span>
                             {% elif ticket.status == "PENDING" %}
                             <span
-                                class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{
-                                ticket.get_status_display }}</span>
+                                class="px-2.5 py-1 text-xs font-bold rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{{ ticket.get_status_display }}</span>
                             {% else %}
                             <span
-                                class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{
-                                ticket.get_status_display }}</span>
+                                class="px-2.5 py-1 text-xs font-bold rounded bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ ticket.get_status_display }}</span>
                             {% endif %}
                         </div>
                         <div class="grid grid-cols-1 gap-2 text-sm">
@@ -272,8 +267,7 @@
 
                         <!-- Icon -->
                         <div class="flex-shrink-0 z-10">
-                            {% if 'Resolved' in note.new_value or 'Completed' in note.new_value or note.new_value ==
-                            'RESOLVED' or note.new_value == 'COMPLETED' %}
+                            {% if 'Resolved' in note.new_value or 'Completed' in note.new_value or note.new_value == 'RESOLVED' or note.new_value == 'COMPLETED' %}
                             <div
                                 class="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
                                 <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none"
@@ -282,8 +276,7 @@
                                         d="M5 13l4 4L19 7"></path>
                                 </svg>
                             </div>
-                            {% elif 'Scheduled' in note.new_value or note.new_value == 'SCHEDULED' or 'scheduled' in
-                            note.action %}
+                            {% elif 'Scheduled' in note.new_value or note.new_value == 'SCHEDULED' or 'scheduled' in note.action %}
                             <div
                                 class="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
                                 <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
@@ -293,11 +286,10 @@
                                     </path>
                                 </svg>
                             </div>
-                            {% elif 'created' in note.action or 'Created' in note.action or 'submitted' in note.action
-                            %}
+                            {% elif 'created' in note.action or 'Created' in note.action or 'submitted' in note.action %}
                             <div
                                 class="w-9 h-9 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center ring-4 ring-white dark:ring-gray-800">
-                                <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none"
+                                <svg class="w-4 h-4 text-purple-600 text-purple-600 dark:text-purple-400" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
@@ -321,25 +313,20 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-2">
                                 <p class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">
-                                    <span class="text-blue-600 dark:text-blue-400">{{ note.ticket.ticket_number
-                                        }}</span>
+                                    <span class="text-blue-600 dark:text-blue-400">{{ note.ticket.ticket_number }}</span>
                                     <span class="mx-1 text-gray-300 dark:text-gray-600">·</span>
                                     {{ note.action }}
                                 </p>
-                                <span
-                                    class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap flex-shrink-0">{{
-                                    note.timestamp|timesince }} ago</span>
+                                <span class="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap flex-shrink-0">{{ note.timestamp|timesince }} ago</span>
                             </div>
                             {% if note.old_value or note.new_value %}
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                                 <span class="line-through text-red-400 dark:text-red-500">{{ note.old_value }}</span>
                                 <span class="mx-1">→</span>
-                                <span class="font-semibold text-green-600 dark:text-green-400">{{ note.new_value
-                                    }}</span>
+                                <span class="font-semibold text-green-600 dark:text-green-400">{{ note.new_value }}</span>
                             </p>
                             {% endif %}
-                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{{ note.timestamp|date:"M d, Y ·
-                                h:i A" }}</p>
+                            <p class="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{{ note.timestamp|date:"M d, Y · h:i A" }}</p>
                         </div>
                     </div>
                     {% empty %}
