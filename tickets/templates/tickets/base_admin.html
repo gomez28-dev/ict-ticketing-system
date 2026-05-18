@@ -79,7 +79,7 @@
         </div>
 
        <div class="p-4 border-t border-gray-700 dark:border-gray-800">
-            {% if request.user.is_staff and not request.user.is_superuser %}
+            {% if request.user.role == 'MEMBER' or (request.user.is_staff and not request.user.is_superuser) %}
             <a href="{% url 'employee_profile' request.user.id %}" class="flex items-center gap-3 px-4 py-2 transition-all hover:bg-white/10 rounded-lg cursor-pointer group">
             {% else %}
             <div class="flex items-center gap-3 px-4 py-2">
@@ -88,7 +88,7 @@
                     {{ request.user.get_full_name|default:request.user.username|make_list|first|default:"U" }}
                 </div>
                 <div class="overflow-hidden flex-1">
-                    <p class="text-xs font-bold truncate text-white {% if request.user.is_staff and not request.user.is_superuser %}group-hover:text-blue-300 transition-colors{% endif %}">{{ request.user.get_full_name|default:request.user.username }}</p>
+                    <p class="text-xs font-bold truncate text-white {% if request.user.role == 'MEMBER' or (request.user.is_staff and not request.user.is_superuser) %}group-hover:text-blue-300 transition-colors{% endif %}">{{ request.user.get_full_name|default:request.user.username }}</p>
 
                     {% if request.user.is_superuser %}
                         <p class="text-[10px] font-bold text-green-400">Super Admin</p>
@@ -98,7 +98,7 @@
                         <p class="text-[10px] font-bold text-gray-400">Employee</p>
                     {% endif %}
                 </div>
-            {% if request.user.is_staff and not request.user.is_superuser %}
+            {% if request.user.role == 'MEMBER' or (request.user.is_staff and not request.user.is_superuser) %}
             </a>
             {% else %}
             </div>

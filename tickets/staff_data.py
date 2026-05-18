@@ -30,5 +30,5 @@ STAFF_LIST = [
     {'id': 27, 'name': 'Genesis De Leon Flores', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
     {'id': 28, 'name': 'Christian Angelo A. Navera', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
     {'id': 29, 'name': 'Alvin John Villaseñor', 'expertise': ['PC MAINTENANCE', 'PRINTER', 'HARDWARE']},
-    {'id': 30, 'name': 'Test Employee', 'expertise': ['SYSTEM TESTING']},
+    {'id': 30, 'name': 'Juan Pedro', 'expertise': ['SYSTEM TESTING']},
 ]
