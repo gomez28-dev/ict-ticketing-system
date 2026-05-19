@@ -109,19 +109,6 @@
         <h2 class="text-xl font-bold text-gray-900 dark:text-white">System Analytics</h2>
     </div>
 </div>
-
-{% if page_obj.has_other_pages %}
-<div class="flex items-center justify-center space-x-2 mb-8">
-    {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-800 transition-colors">Previous</a>
-    {% endif %}
-    <span class="px-4 py-2 text-gray-400">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-800 transition-colors">Next</a>
-    {% endif %}
-</div>
-{% endif %}
-
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm border-l-4 border-l-blue-500">
         <div class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Total Tickets</div>

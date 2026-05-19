@@ -350,18 +350,12 @@ def school_ticket_detail(request, ticket_id):
 
 def dashboard(request):
     all_tickets = Ticket.objects.all().order_by('-created_at')
-    
-    # Pagination: 50 tickets per page
-    paginator = Paginator(all_tickets, 50)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
 
     # Real chart data for last 7 days
     chart_data = get_activity_chart_data()
 
     context = {
-        'tickets': page_obj,  # Pass the paginated object
-        'page_obj': page_obj, # Explicit page_obj for template controls
+        'tickets': all_tickets,
         'total_tickets': all_tickets.count(),
         'resolved_tickets': all_tickets.filter(status='RESOLVED').count(),
         'staff_data': get_staff_data(),
