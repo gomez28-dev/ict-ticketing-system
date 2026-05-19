@@ -18,11 +18,19 @@
     
     <!-- Header / Nav -->
     <div class="w-full bg-[#1e293b]/80 border-b border-white/10 py-4 px-6 flex items-center justify-between">
-        <a href="{% url 'login' %}" class="flex items-center gap-3">
-            <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-8 w-auto">
-            <span class="font-bold tracking-wide text-white">ICT UNIT</span>
-        </a>
-        <a href="{% url 'login' %}" class="text-sm font-medium text-blue-400 hover:text-blue-300">Return to Login</a>
+        {% if from_source == 'school' %}
+            <a href="{% url 'school_login' %}" class="flex items-center gap-3">
+                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-8 w-auto">
+                <span class="font-bold tracking-wide text-white">ICT UNIT</span>
+            </a>
+            <a href="{% url 'school_login' %}" class="text-sm font-medium text-blue-400 hover:text-blue-300">Return to Login</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="flex items-center gap-3">
+                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-8 w-auto">
+                <span class="font-bold tracking-wide text-white">ICT UNIT</span>
+            </a>
+            <a href="{% url 'login' %}" class="text-sm font-medium text-blue-400 hover:text-blue-300">Return to Login</a>
+        {% endif %}
     </div>
 
     <!-- Document Container -->
@@ -144,8 +152,8 @@
                 </div>
             </div>
             <div class="flex space-x-6">
-                <a href="{% url 'privacy' %}" class="hover:text-gray-200 transition-colors">Privacy Policy</a>
-                <a href="{% url 'terms' %}" class="hover:text-gray-200 transition-colors">Terms of Service</a>
+                <a href="{% url 'privacy' %}?from={{ from_source }}" class="hover:text-gray-200 transition-colors">Privacy Policy</a>
+                <a href="{% url 'terms' %}?from={{ from_source }}" class="hover:text-gray-200 transition-colors">Terms of Service</a>
                 <a href="#" onclick="toggleSupportModal()" class="hover:text-gray-200 transition-colors">Contact Support</a>
             </div>
         </div>

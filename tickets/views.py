@@ -721,10 +721,12 @@ def move_from_backlog(request, ticket_id):
     return redirect('backlog')
 
 def terms(request):
-    return render(request, 'tickets/terms.html')
+    from_source = request.GET.get('from', 'admin')
+    return render(request, 'tickets/terms.html', {'from_source': from_source})
 
 def privacy(request):
-    return render(request, 'tickets/privacy.html')
+    from_source = request.GET.get('from', 'admin')
+    return render(request, 'tickets/privacy.html', {'from_source': from_source})
 
 def search_tickets(request):
     query = request.GET.get('q', '')
