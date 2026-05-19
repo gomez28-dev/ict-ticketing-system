@@ -5,6 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Code - ICT Helpdesk</title>
+    {% if from_source == 'admin' %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f172a !important;
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%) !important;
+        }
+    </style>
+    {% else %}
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; display: flex; flex-direction: column; min-height: 100vh; }
@@ -32,7 +41,7 @@
         .step-line.done { background-color: #16a34a; }
         .icon-lock { width: 56px; height: 56px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; }
         .otp-input { text-align: center; font-size: 28px; font-weight: 700; letter-spacing: 12px; padding: 14px; font-family: 'Courier New', monospace; }
-            .auth-logo { max-height: 96px; width: auto; max-width: 200px; object-fit: contain; margin: 0 auto 24px auto; display: block; }
+        .auth-logo { max-height: 96px; width: auto; max-width: 200px; object-fit: contain; margin: 0 auto 24px auto; display: block; }
         @media (max-width: 639px) {
             body { font-size: 14px; overflow-x: hidden; }
             .page-wrapper { padding: 16px; }
@@ -45,135 +54,184 @@
             .footer-links { flex-direction: column; gap: 8px !important; align-items: center; }
             .footer-links a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
         }
-
-        /* Modal styling */
-        #supportModal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 1000;
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-        #supportModal.show {
-            display: flex;
-        }
-        .modal-container {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-            width: 100%;
-            max-width: 440px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-            text-align: left;
-        }
-        .modal-header {
-            padding: 18px 24px;
-            border-bottom: 1px solid #f1f5f9;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #f8fafc;
-        }
-        .modal-header h3 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        .modal-close-btn {
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            color: #94a3b8;
-            font-size: 24px;
-            line-height: 1;
-            padding: 4px;
-        }
-        .modal-close-btn:hover {
-            color: #475569;
-        }
-        .modal-body {
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .support-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-        }
-        .support-icon {
-            font-size: 20px;
-            background-color: #f1f5f9;
-            padding: 8px;
-            border-radius: 8px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
+        #supportModal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px; }
+        #supportModal.show { display: flex; }
+        .modal-container { background-color: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25); width: 100%; max-width: 440px; overflow: hidden; border: 1px solid #e2e8f0; text-align: left; }
+        .modal-header { padding: 18px 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc; }
+        .modal-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: #0f172a; }
+        .modal-close-btn { border: none; background: transparent; cursor: pointer; color: #94a3b8; font-size: 24px; line-height: 1; padding: 4px; }
+        .modal-close-btn:hover { color: #475569; }
+        .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+        .support-item { display: flex; align-items: flex-start; gap: 16px; }
+        .support-icon { font-size: 20px; background-color: #f1f5f9; padding: 8px; border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .support-item.email .support-icon { background-color: #eff6ff; }
         .support-item.telephone .support-icon { background-color: #f0fdf4; }
         .support-item.mobile .support-icon { background-color: #eef2ff; }
         .support-item.address .support-icon { background-color: #fffbeb; }
-        .support-details {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .support-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-            margin: 0;
-        }
-        .support-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 0;
-            line-height: 1.5;
-        }
-        .support-value a {
-            color: #3b82f6;
-            text-decoration: none;
-        }
-        .support-value a:hover {
-            text-decoration: underline;
-        }
-        .modal-footer {
-            padding: 16px 24px;
-            border-top: 1px solid #f1f5f9;
-            background-color: #f8fafc;
-            display: flex;
-            justify-content: flex-end;
-        }
-        .modal-btn-close {
-            padding: 8px 20px;
-            background-color: #e2e8f0;
-            color: #334155;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .modal-btn-close:hover {
-            background-color: #cbd5e1;
-        }
+        .support-details { display: flex; flex-direction: column; gap: 4px; }
+        .support-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 0; }
+        .support-value { font-size: 14px; font-weight: 600; color: #1e293b; margin: 0; line-height: 1.5; }
+        .support-value a { color: #3b82f6; text-decoration: none; }
+        .support-value a:hover { text-decoration: underline; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid #f1f5f9; background-color: #f8fafc; display: flex; justify-content: flex-end; }
+        .modal-btn-close { padding: 8px 20px; background-color: #e2e8f0; color: #334155; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background-color 0.2s; }
+        .modal-btn-close:hover { background-color: #cbd5e1; }
     </style>
+    {% endif %}
 </head>
+{% if from_source == 'admin' %}
+<body class="min-h-screen flex flex-col font-sans text-gray-200">
+    <div class="flex-grow flex items-center justify-center">
+        <div class="bg-[#1e293b]/60 backdrop-blur-xl border border-white/10 p-10 rounded-2xl shadow-2xl w-full max-w-sm mx-4">
+            
+            <div class="flex flex-col items-center mb-8">
+                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-24 w-auto mx-auto object-contain mb-6">
+                <h1 class="text-2xl font-bold tracking-wide text-white">ICT UNIT</h1>
+                <p class="text-xs text-gray-400 font-medium">Work Management</p>
+            </div>
+
+            <!-- Step indicator -->
+            <div class="flex items-center justify-center gap-2 mb-6">
+                <div class="w-7 h-7 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-bold">✓</div>
+                <div class="w-8 h-[2px] bg-green-600"></div>
+                <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">2</div>
+                <div class="w-8 h-[2px] bg-white/10"></div>
+                <div class="w-7 h-7 rounded-full bg-white/10 text-gray-400 flex items-center justify-center text-xs font-bold">3</div>
+            </div>
+
+            <div class="flex flex-col items-center text-center space-y-2 mb-6">
+                <div class="w-14 h-14 bg-blue-500/10 rounded-full flex items-center justify-center text-2xl text-blue-400">🔑</div>
+                <h2 class="text-lg font-semibold text-white">Enter Verification Code</h2>
+                <p class="text-xs text-gray-400 leading-relaxed">Enter the 6-digit code sent to <strong>{{ email }}</strong>. The code expires in 15 minutes.</p>
+            </div>
+
+            {% if error %}
+            <div class="bg-red-500/10 border border-red-500/50 text-red-400 text-xs px-4 py-2 rounded-lg mb-6 text-center">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'verify_otp' %}" id="verify_otp_form" class="space-y-5">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 mb-1.5 ml-1">Verification Code</label>
+                    <input type="text" name="code" id="code" class="w-full bg-[#0f172a]/50 border border-gray-600 rounded-lg py-3 px-4 text-center font-mono text-2xl tracking-[0.5em] text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder-gray-600" maxlength="6" pattern="[0-9]{6}" placeholder="------" required autofocus autocomplete="off">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all mt-2">
+                    Verify Code
+                </button>
+            </form>
+
+            <div class="flex justify-center items-center mt-6 text-xs text-blue-400">
+                <a href="{% url 'forgot_password' %}?from=admin" class="hover:text-blue-300 hover:underline transition-colors">← Request a new code</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full bg-[#1e293b]/80 border-t border-white/10 text-gray-400 py-6 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs">
+            <div class="mb-4 md:mb-0 flex items-center gap-4">
+                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-10 w-auto object-contain">
+                <div>
+                    <p class="font-medium text-gray-300">DepEd Division of Valenzuela - ICT Unit</p>
+                    <p>&copy; {% now "Y" %} All rights reserved.</p>
+                </div>
+            </div>
+            <div class="flex space-x-6">
+                <a href="{% url 'privacy' %}?from=admin" class="hover:text-white transition-colors">Privacy Policy</a>
+                <a href="{% url 'terms' %}?from=admin" class="hover:text-white transition-colors">Terms of Service</a>
+                <a href="#" onclick="toggleSupportModal()" class="hover:text-white transition-colors">Contact Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Contact Support Modal -->
+    <div id="supportModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700 m-auto mt-10 mb-10 transform transition-all">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 rounded-t-xl">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Contact ICT Helpdesk
+                </h3>
+                <button onclick="toggleSupportModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg p-1 hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-5">
+                <div class="flex items-start gap-4">
+                    <div class="mt-0.5 bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Email</p>
+                        <a href="mailto:leonvercettttti@gmail.com" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">leonvercettttti@gmail.com</a>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4">
+                    <div class="mt-0.5 bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
+                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Telephone</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">(02) 8293-4507</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">(02) 8277-4648</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">(02) 8291-0873</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4">
+                    <div class="mt-0.5 bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg">
+                        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Mobile</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">+639262298171 <span class="text-xs text-gray-500 dark:text-gray-400 font-normal">(Sir Noel Reyes)</span></p>
+                    </div>
+                </div>
+
+                <div class="flex items-start gap-4">
+                    <div class="mt-0.5 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
+                        <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Address</p>
+                        <p class="text-sm font-medium text-gray-900 dark:text-white leading-relaxed">Pio Valenzuela St.,<br>Brgy. Marulas, Valenzuela City</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl flex justify-end">
+                <button onclick="toggleSupportModal()" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white text-sm font-bold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function toggleSupportModal() {
+            const modal = document.getElementById('supportModal');
+            if (modal) {
+                modal.classList.toggle('hidden');
+            }
+        }
+
+        // Auto-filter to digits only and auto-submit when 6 digits entered
+        const codeInput = document.getElementById('code');
+        if (codeInput) {
+            codeInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                if (this.value.length === 6) {
+                    document.getElementById('verify_otp_form').submit();
+                }
+            });
+        }
+    </script>
+</body>
+{% else %}
 <body>
     <div class="page-wrapper">
         <div class="form-container">
@@ -293,8 +351,12 @@
         if (codeInput) {
             codeInput.addEventListener('input', function() {
                 this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                if (this.value.length === 6) {
+                    document.getElementById('verify_otp_form').submit();
+                }
             });
         }
     </script>
 </body>
+{% endif %}
 </html>
