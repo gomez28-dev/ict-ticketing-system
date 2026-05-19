@@ -134,7 +134,7 @@ class Command(BaseCommand):
         member_count = 0
         for member in members:
             full_name = f"{member.first_name} {member.last_name}".strip()
-            if member.username == "employee" or full_name == "Test Employee":
+            if member.username in ["employee", "testemployee"] or full_name == "Test Employee":
                 if member.first_name != "Juan" or member.last_name != "Pedro":
                     member.first_name = "Juan"
                     member.last_name = "Pedro"

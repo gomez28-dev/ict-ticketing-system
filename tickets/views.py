@@ -476,14 +476,13 @@ def ticket_triage_view(request, ticket_id):
     recent_school_tickets = Ticket.objects.filter(
         school_name=ticket.school_name
     ).exclude(id=ticket.id).order_by('-created_at')[:5]
-
     all_staff = get_staff_data()
     filtered_staff = []
 
     for staff in all_staff:
         # Normalize expertise (e.g., 'PC MAINTENANCE' -> 'PC_MAINTENANCE') to match the mapped type
         normalized_expertise = [str(exp).replace(' ', '_') for exp in staff['expertise']]
-        if mapped_type in normalized_expertise or 'ALL' in normalized_expertise or staff['name'].strip().lower() == 'test employee':
+        if mapped_type in normalized_expertise or 'ALL' in normalized_expertise or staff['name'].strip().lower() == 'juan pedro':
             filtered_staff.append(staff)
 
     # Fallback if no matching staff
@@ -664,7 +663,7 @@ def analytics_dashboard(request):
     return render(request, 'tickets/analytics.html')
 
 def employee_directory(request):
-    employees = User.objects.filter(is_staff=True).exclude(is_superuser=True).order_by('first_name', 'last_name')
+    employees = User.objects.filter(role='MEMBER').order_by('first_name', 'last_name')
 
     category_map = {
         'MANAGEMENT': 'Management / Officers',
