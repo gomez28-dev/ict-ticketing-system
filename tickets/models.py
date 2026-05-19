@@ -82,7 +82,8 @@ class School(models.Model):
 
 
 class PasswordResetOTP(models.Model):
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='otp_codes')
+    school = models.ForeignKey(School, on_delete=models.CASCADE, null=True, blank=True, related_name='otp_codes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='user_otp_codes')
     code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()

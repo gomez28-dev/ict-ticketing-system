@@ -208,7 +208,7 @@
                 <button type="submit" class="btn-submit">Verify Code</button>
             </form>
 
-            <a href="{% url 'forgot_password' %}" class="back-link">← Request a new code</a>
+            <a href="{% url 'forgot_password' %}?from={{ from_source }}" class="back-link">← Request a new code</a>
         </div>
     </div>
 
@@ -223,8 +223,8 @@
                 </div>
             </div>
             <div class="footer-links" style="display: flex; gap: 24px;">
-                <a href="{% url 'privacy' %}?from=school" style="color: #dbeafe; text-decoration: none;">Privacy Policy</a>
-                <a href="{% url 'terms' %}?from=school" style="color: #dbeafe; text-decoration: none;">Terms of Service</a>
+                <a href="{% url 'privacy' %}?from={{ from_source }}" style="color: #dbeafe; text-decoration: none;">Privacy Policy</a>
+                <a href="{% url 'terms' %}?from={{ from_source }}" style="color: #dbeafe; text-decoration: none;">Terms of Service</a>
                 <a href="#" onclick="toggleSupportModal()" style="color: #dbeafe; text-decoration: none;">Contact Support</a>
             </div>
         </div>

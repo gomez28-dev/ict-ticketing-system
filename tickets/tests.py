@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from .models import Ticket
+from .models import Ticket, School, PasswordResetOTP
 
 
 User = get_user_model()
@@ -130,3 +130,63 @@ class TicketWorkflowTests(TestCase):
         self.assertEqual(self.ticket.status, 'UNDER_REVIEW')
         self.assertEqual(self.ticket.resolution_notes, 'Replaced the cable and tested connectivity.')
         self.assertTrue(self.ticket.resolution_attachment.name.endswith('evidence.txt'))
+
+
+class PasswordResetTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='adminuser',
+            email='adminuser@example.com',
+            password='pass1234',
+            first_name='Admin',
+            last_name='User',
+            role='ADMIN',
+            is_staff=True,
+        )
+        self.school = School.objects.create(
+            school_id='123456',
+            name='Test School',
+            ict_email='school@example.com',
+        )
+        self.school.set_password('pass1234')
+        self.school.save()
+
+    def test_forgot_password_routes_correctly_for_school_and_admin(self):
+        # 1. Test GET requests preserve from_source
+        response_school = self.client.get(reverse('forgot_password') + '?from=school')
+        self.assertEqual(response_school.status_code, 200)
+        self.assertContains(response_school, 'Back to School Login')
+
+        response_admin = self.client.get(reverse('forgot_password') + '?from=admin')
+        self.assertEqual(response_admin.status_code, 200)
+        self.assertContains(response_admin, 'Back to Login')
+
+        # 2. Test POST forgot password for school
+        response = self.client.post(reverse('forgot_password'), {'email': 'school@example.com'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session['otp_email'], 'school@example.com')
+        from .models import PasswordResetOTP
+        otp = PasswordResetOTP.objects.filter(school=self.school).first()
+        self.assertIsNotNone(otp)
+
+        # 3. Test POST forgot password for admin
+        response = self.client.post(reverse('forgot_password'), {'email': 'adminuser@example.com'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.session['otp_email'], 'adminuser@example.com')
+        otp_admin = PasswordResetOTP.objects.filter(user=self.admin).first()
+        self.assertIsNotNone(otp_admin)
+
+        # 4. Verify OTP and change password
+        # Verify school OTP
+        session = self.client.session
+        session['otp_email'] = 'school@example.com'
+        session.save()
+        response_verify = self.client.post(reverse('verify_otp'), {'code': otp.code})
+        self.assertRedirects(response_verify, reverse('reset_password_confirm'))
+
+        # Verify admin OTP
+        session = self.client.session
+        session['otp_email'] = 'adminuser@example.com'
+        session.save()
+        response_verify_admin = self.client.post(reverse('verify_otp'), {'code': otp_admin.code})
+        self.assertRedirects(response_verify_admin, reverse('reset_password_confirm'))

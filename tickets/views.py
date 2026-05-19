@@ -1068,24 +1068,37 @@ def admin_force_reset_password(request, school_id):
 
 def forgot_password(request):
     """Step 1: User submits email → OTP is generated and emailed."""
+    from_source = request.session.get('forgot_password_from')
+    if request.method == 'GET':
+        from_source = request.GET.get('from', 'school')
+        request.session['forgot_password_from'] = from_source
+    else:
+        if not from_source:
+            from_source = 'school'
+
     if request.method == 'POST':
         email = request.POST.get('email', '').strip().lower()
 
         if not email:
             return render(request, 'tickets/forgot_password.html', {
                 'error': 'Please enter your email address.',
+                'from_source': from_source,
             })
 
-        # Look up school by ICT email — use generic message to prevent info disclosure
+        # Look up school or user (Admin/Employee)
         school = School.objects.filter(ict_email__iexact=email).first()
+        user = User.objects.filter(email__iexact=email).first() if not school else None
 
-        if school:
-            # Invalidate any previous unused OTPs for this school
-            PasswordResetOTP.objects.filter(school=school, is_used=False).update(is_used=True)
+        if school or user:
+            # Invalidate any previous unused OTPs
+            if school:
+                PasswordResetOTP.objects.filter(school=school, is_used=False).update(is_used=True)
+            else:
+                PasswordResetOTP.objects.filter(user=user, is_used=False).update(is_used=True)
 
             # Generate and save new OTP
             code = PasswordResetOTP.generate_code()
-            otp = PasswordResetOTP(school=school, code=code)
+            otp = PasswordResetOTP(school=school, user=user, code=code)
             otp.save()
 
             # Send email with OTP
@@ -1113,14 +1126,18 @@ def forgot_password(request):
         return render(request, 'tickets/forgot_password.html', {
             'email_sent': True,
             'email': email,
+            'from_source': from_source,
         })
 
-    return render(request, 'tickets/forgot_password.html')
+    return render(request, 'tickets/forgot_password.html', {
+        'from_source': from_source,
+    })
 
 
 def verify_otp(request):
     """Step 2: User enters the 6-digit code from their email."""
     email = request.session.get('otp_email')
+    from_source = request.session.get('forgot_password_from', 'school')
     if not email:
         return redirect('forgot_password')
 
@@ -1131,43 +1148,67 @@ def verify_otp(request):
             return render(request, 'tickets/verify_otp.html', {
                 'error': 'Please enter the 6-digit code.',
                 'email': email,
+                'from_source': from_source,
             })
 
-        # Find the school and matching OTP
+        # Find the school or user and matching OTP
         school = School.objects.filter(ict_email__iexact=email).first()
-        if school:
-            otp = PasswordResetOTP.objects.filter(
-                school=school, code=code, is_used=False
-            ).order_by('-created_at').first()
+        user = User.objects.filter(email__iexact=email).first() if not school else None
+
+        if school or user:
+            if school:
+                otp = PasswordResetOTP.objects.filter(
+                    school=school, code=code, is_used=False
+                ).order_by('-created_at').first()
+            else:
+                otp = PasswordResetOTP.objects.filter(
+                    user=user, code=code, is_used=False
+                ).order_by('-created_at').first()
 
             if otp and otp.is_valid:
-                # Mark OTP as used and store verified school in session
+                # Mark OTP as used and store verified school/user in session
                 otp.is_used = True
                 otp.save()
-                request.session['otp_verified_school_id'] = school.id
+                if school:
+                    request.session['otp_verified_school_id'] = school.id
+                else:
+                    request.session['otp_verified_user_id'] = user.id
                 return redirect('reset_password_confirm')
             elif otp and otp.is_expired:
                 return render(request, 'tickets/verify_otp.html', {
                     'error': 'This code has expired. Please request a new one.',
                     'email': email,
+                    'from_source': from_source,
                 })
 
         # Generic error for invalid code
         return render(request, 'tickets/verify_otp.html', {
             'error': 'Invalid verification code. Please try again.',
             'email': email,
+            'from_source': from_source,
         })
 
-    return render(request, 'tickets/verify_otp.html', {'email': email})
+    return render(request, 'tickets/verify_otp.html', {
+        'email': email,
+        'from_source': from_source,
+    })
 
 
 def reset_password_confirm(request):
     """Step 3: User sets a new password after OTP verification."""
     school_id = request.session.get('otp_verified_school_id')
-    if not school_id:
+    user_id = request.session.get('otp_verified_user_id')
+    from_source = request.session.get('forgot_password_from', 'school')
+
+    if not school_id and not user_id:
         return redirect('forgot_password')
 
-    school = get_object_or_404(School, id=school_id)
+    if school_id:
+        obj = get_object_or_404(School, id=school_id)
+        display_name = obj.name
+    else:
+        obj = get_object_or_404(User, id=user_id)
+        display_name = obj.get_full_name() or obj.username
 
     if request.method == 'POST':
         new_password = request.POST.get('new_password', '').strip()
@@ -1176,30 +1217,40 @@ def reset_password_confirm(request):
         if not new_password or len(new_password) < 8:
             return render(request, 'tickets/reset_password_confirm.html', {
                 'error': 'Password must be at least 8 characters long.',
-                'school_name': school.name,
+                'school_name': display_name,
+                'from_source': from_source,
             })
 
         if new_password != confirm_password:
             return render(request, 'tickets/reset_password_confirm.html', {
                 'error': 'Passwords do not match.',
-                'school_name': school.name,
+                'school_name': display_name,
+                'from_source': from_source,
             })
 
         # Set the new password
-        school.set_password(new_password)
-        school.save()
+        obj.set_password(new_password)
+        obj.save()
 
         # Clean up session
-        del request.session['otp_verified_school_id']
+        if school_id:
+            del request.session['otp_verified_school_id']
+        else:
+            del request.session['otp_verified_user_id']
+
         if 'otp_email' in request.session:
             del request.session['otp_email']
+        if 'forgot_password_from' in request.session:
+            del request.session['forgot_password_from']
 
         return render(request, 'tickets/reset_password_confirm.html', {
             'success': True,
+            'from_source': from_source,
         })
 
     return render(request, 'tickets/reset_password_confirm.html', {
-        'school_name': school.name,
+        'school_name': display_name,
+        'from_source': from_source,
     })
 
 
