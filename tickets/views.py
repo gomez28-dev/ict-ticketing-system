@@ -171,8 +171,15 @@ def custom_login(request):
 
         if email_input in test_accounts and password_input == test_accounts[email_input]['pass']:
             role = test_accounts[email_input]['role']
-            last_name_value = "Pedro" if role == 'MEMBER' else role.capitalize()
-            first_name_value = "Juan" if role == 'MEMBER' else "Test"
+            if role == 'MEMBER':
+                first_name_value = "Juan"
+                last_name_value = "Pedro"
+            elif role == 'ADMIN':
+                first_name_value = "Alice"
+                last_name_value = "Tan"
+            else:  # SUPERADMIN
+                first_name_value = "Ramon"
+                last_name_value = "Sy"
             
             user, created = User.objects.get_or_create(email=email_input, defaults={
                 'username': email_input.split('@')[0],
