@@ -21,6 +21,7 @@ class Command(BaseCommand):
         self._import_performance_if_enabled()
         self._sync_staff_expertise()
         self._rename_test_accounts()
+        self._cleanup_historical_notes()
 
     def _ensure_superuser(self):
         username = os.environ.get("DJANGO_SUPERUSER_USERNAME")
@@ -146,3 +147,34 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"Successfully renamed {total_updated} test accounts."))
         else:
             self.stdout.write(self.style.SUCCESS("All test accounts are already correctly named."))
+
+    def _cleanup_historical_notes(self):
+        from tickets.models import Ticket, PerformanceReview
+
+        replacements = [
+            ("Test Employee", "Juan Pedro"),
+            ("testemployee", "Juan Pedro"),
+            ("Test Superadmin", "Ramon Sy"),
+            ("Test Admin", "Alice Tan"),
+        ]
+
+        ticket_count = 0
+        for old_str, new_str in replacements:
+            for ticket in Ticket.objects.filter(admin_notes__contains=old_str):
+                ticket.admin_notes = ticket.admin_notes.replace(old_str, new_str)
+                ticket.save(update_fields=['admin_notes'])
+                ticket_count += 1
+
+        review_count = 0
+        for old_str, new_str in replacements:
+            for review in PerformanceReview.objects.filter(notes__contains=old_str):
+                review.notes = review.notes.replace(old_str, new_str)
+                review.save(update_fields=['notes'])
+                review_count += 1
+
+        if ticket_count > 0 or review_count > 0:
+            self.stdout.write(self.style.SUCCESS(
+                f"Successfully cleaned up historical notes: {ticket_count} tickets, {review_count} reviews."
+            ))
+        else:
+            self.stdout.write(self.style.SUCCESS("No historical notes needed cleanup."))
