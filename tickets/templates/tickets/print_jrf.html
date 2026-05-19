@@ -109,39 +109,85 @@
                     </div>
                 </section>
 
-                <!-- PROBLEM & RESOLUTION -->
-                <section class="grid grid-cols-2 border-2 border-slate-900 print:border-black mb-4 print:mb-3 avoid-page-break">
-                    <div class="border-r border-slate-900 print:border-black p-3 min-h-[150px] print:min-h-[200px]">
-                        <h2 class="border-b border-slate-900 print:border-black pb-1 mb-2 text-center text-sm font-bold uppercase tracking-wider">
-                            Recommendation/Action Taken
-                        </h2>
-                        <!-- Blank space for admin to write -->
+                <!-- TECHNICAL FINDINGS AND RECOMMENDATION -->
+                <section class="border-2 border-slate-900 print:border-black mb-4 print:mb-3 avoid-page-break">
+                    <div class="bg-[#00a2e8] text-white font-bold uppercase tracking-wider text-center py-1.5 border-b-2 border-slate-900 print:border-black text-xs sm:text-sm">
+                        Technical Findings and Recommendation
                     </div>
-                    <div class="p-3 min-h-[150px] print:min-h-[200px]">
-                        <h2 class="border-b border-slate-900 print:border-black pb-1 mb-2 text-center text-sm font-bold uppercase tracking-wider">
-                            Problem/s
-                        </h2>
-                        <div class="text-sm leading-relaxed whitespace-pre-wrap">
-                            {{ ticket.description|default:"" }}
+                    <div class="grid grid-cols-2 min-h-[160px] print:min-h-[180px] text-xs sm:text-sm">
+                        <!-- Left Column: Problem/s -->
+                        <div class="border-r border-slate-900 print:border-black p-3 flex flex-col justify-between">
+                            <div>
+                                <span class="font-bold uppercase">Problem/s:</span>
+                                <span class="ml-1 font-semibold whitespace-pre-wrap">{{ ticket.description|default:"" }}</span>
+                            </div>
+                            <div class="mt-4 text-center">
+                                <p class="text-left font-semibold text-xs italic mb-4">Inspected by:</p>
+                                <div class="inline-block w-4/5">
+                                    <div class="h-6 flex items-center justify-center">
+                                        <!-- Space for physical signature -->
+                                    </div>
+                                    <div class="border-t border-slate-900 print:border-black pt-0.5 font-bold uppercase text-[11px]">
+                                        {{ ticket.assignee.get_full_name|default:"(Technician's Signature over Printed Name)" }}
+                                    </div>
+                                    <p class="text-[9px] text-gray-500 italic">(Technician's Signature over Printed Name)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Column: Recommendation/Action Taken -->
+                        <div class="p-3 flex flex-col justify-between">
+                            <div>
+                                <span class="font-bold uppercase">Recommendation/Action Taken:</span>
+                                <span class="ml-1 font-semibold whitespace-pre-wrap">{{ ticket.resolution_notes|default:"" }}</span>
+                            </div>
+                            <div class="mt-4 text-center">
+                                <p class="text-left font-semibold text-xs italic mb-4">Attested by:</p>
+                                <div class="inline-block w-4/5">
+                                    <div class="h-6 flex items-center justify-center">
+                                        {% if ticket.client_signature %}
+                                            <img src="{{ ticket.client_signature }}" alt="Client Signature" class="max-h-6 object-contain">
+                                        {% endif %}
+                                    </div>
+                                    <div class="border-t border-slate-900 print:border-black pt-0.5 font-bold uppercase text-[11px]">
+                                        {{ ticket.first_name }} {{ ticket.last_name }}
+                                    </div>
+                                    <p class="text-[9px] text-gray-500 italic">(Client's Name)</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- SIGNATURES -->
-                <section class="flex justify-between border-2 border-slate-900 print:border-black p-4 print:p-3 mb-4 print:mb-3 avoid-page-break text-sm text-center">
-                    <div class="w-1/2 px-4">
-                        <p class="text-left font-semibold mb-8">Action Taken by:</p>
-                        <div class="border-t border-slate-900 print:border-black pt-1 font-semibold uppercase">
-                            {{ ticket.assignee.get_full_name|default:"(Assigned Employee)" }}
-                        </div>
-                        <p class="text-xs uppercase tracking-wide">ICT Staff</p>
+                <!-- JOB VALIDATION -->
+                <section class="border-2 border-slate-900 print:border-black mb-4 print:mb-3 avoid-page-break">
+                    <div class="bg-[#00a2e8] text-white font-bold uppercase tracking-wider text-center py-1.5 border-b-2 border-slate-900 print:border-black text-xs sm:text-sm">
+                        Job Validation
                     </div>
-                    <div class="w-1/2 px-4 border-l border-slate-900 print:border-black">
-                        <p class="text-left font-semibold mb-8">Conforme:</p>
-                        <div class="border-t border-slate-900 print:border-black pt-1 font-semibold uppercase">
-                            {{ ticket.first_name }} {{ ticket.last_name }}
+                    <div class="grid grid-cols-2 min-h-[90px] print:min-h-[100px] text-xs sm:text-sm">
+                        <!-- Left Column: Reviewed by -->
+                        <div class="border-r border-slate-900 print:border-black p-3 flex flex-col justify-between">
+                            <span class="font-semibold italic">Reviewed by:</span>
+                            <div class="text-center mt-3">
+                                <div class="inline-block w-4/5">
+                                    <div class="border-t border-slate-900 print:border-black pt-0.5 font-bold uppercase text-[11px]">
+                                        KARESHENE SD. MALVAR
+                                    </div>
+                                    <p class="text-[9px] text-gray-600 italic">Administrative Aide IV</p>
+                                </div>
+                            </div>
                         </div>
-                        <p class="text-xs uppercase tracking-wide">Signature over printed name</p>
+                        <!-- Right Column: Noted by -->
+                        <div class="p-3 flex flex-col justify-between">
+                            <span class="font-semibold italic">Noted by:</span>
+                            <div class="text-center mt-3">
+                                <div class="inline-block w-4/5">
+                                    <div class="border-t border-slate-900 print:border-black pt-0.5 font-bold uppercase text-[11px]">
+                                        NOEL E. REYES
+                                    </div>
+                                    <p class="text-[9px] text-gray-600 italic">Information Technology Officer I</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
