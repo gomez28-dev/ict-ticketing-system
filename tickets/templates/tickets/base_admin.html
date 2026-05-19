@@ -166,6 +166,17 @@
                 }
             </script>
             {% endif %}
+            
+            {% if messages %}
+            <div class="mb-6 flex flex-col gap-3">
+                {% for message in messages %}
+                <div class="p-4 rounded-xl border text-sm font-medium {% if message.tags == 'error' %}bg-red-50 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800{% elif message.tags == 'success' %}bg-green-50 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800{% else %}bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             {% block content %}{% endblock %}
             
             <footer class="mt-auto pt-10 pb-2 w-full">

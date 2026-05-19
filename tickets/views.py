@@ -663,7 +663,7 @@ def analytics_dashboard(request):
     return render(request, 'tickets/analytics.html')
 
 def employee_directory(request):
-    employees = User.objects.filter(role='MEMBER').order_by('first_name', 'last_name')
+    employees = User.objects.filter(role='MEMBER').exclude(is_superuser=True).exclude(role='ADMIN').order_by('first_name', 'last_name')
 
     category_map = {
         'MANAGEMENT': 'Management / Officers',
@@ -1533,6 +1533,10 @@ def submit_performance_review(request, ticket_id):
 def employee_profile(request, user_id):
     """View an employee's profile — accessible by Admin, Super Admin, and the employee themselves."""
     profile_user = get_object_or_404(User, id=user_id)
+
+    if profile_user.is_superuser or profile_user.role == 'ADMIN':
+        messages.error(request, "This user is an administrator and does not have an employee profile.")
+        return redirect('employee_directory')
 
     # Access control
     is_self = request.user.id == profile_user.id
