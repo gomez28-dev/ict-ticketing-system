@@ -1,5 +1,4 @@
 from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type, calculate_overall_rating
-from .staff_data import STAFF_LIST
 from django.utils import timezone
 from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP, PerformanceReview
 import math
@@ -482,7 +481,7 @@ def ticket_triage_view(request, ticket_id):
     for staff in all_staff:
         # Normalize expertise (e.g., 'PC MAINTENANCE' -> 'PC_MAINTENANCE') to match the mapped type
         normalized_expertise = [str(exp).replace(' ', '_') for exp in staff['expertise']]
-        if mapped_type in normalized_expertise or 'ALL' in normalized_expertise or staff['name'].strip().lower() == 'juan pedro':
+        if mapped_type in normalized_expertise or 'ALL' in normalized_expertise:
             filtered_staff.append(staff)
 
     # Fallback if no matching staff
@@ -593,28 +592,37 @@ def approve_request(request, ticket_id):
 # ==========================================
 
 def get_staff_data():
-    # Pre-fetch users from DB to map user_ids
-    users_qs = User.objects.all()
-    user_map = {}
-    for u in users_qs:
-        full_name = f"{u.first_name} {u.last_name}".strip()
-        user_map[full_name.lower()] = u.id
+    """
+    Builds the staff data list dynamically from the database User model.
+    Any User with role='MEMBER' (excluding superusers) is included.
+    Each staff entry contains: id, name, expertise list, active_tickets count, and user_id.
+    """
+    # Fetch all team member users from the database
+    members = User.objects.filter(role='MEMBER').exclude(is_superuser=True).order_by('first_name', 'last_name')
 
     # Optimize N+1 query by fetching all active notes once
     active_notes = list(Ticket.objects.exclude(status='RESOLVED').exclude(status='COMPLETED').values_list('admin_notes', flat=True))
 
-    staff_list_copy = [dict(s) for s in STAFF_LIST]
+    staff_list = []
+    for user in members:
+        full_name = f"{user.first_name} {user.last_name}".strip()
+        name_lower = full_name.lower()
 
-    for staff in staff_list_copy:
-        # Count active tickets in python to avoid N+1 queries
-        name_lower = staff['name'].lower()
+        # Parse expertise from the comma-separated DB field
+        expertise = [e.strip() for e in user.expertise.split(',') if e.strip()] if user.expertise else []
+
+        # Count active tickets assigned to this staff member
         active_count = sum(1 for note in active_notes if note and name_lower in note.lower())
-        staff['active_tickets'] = active_count
 
-        # Map to DB user_id if it exists
-        staff['user_id'] = user_map.get(name_lower, None)
+        staff_list.append({
+            'id': user.id,
+            'name': full_name,
+            'expertise': expertise,
+            'active_tickets': active_count,
+            'user_id': user.id,
+        })
 
-    return sorted(staff_list_copy, key=lambda x: x['active_tickets'], reverse=True)
+    return sorted(staff_list, key=lambda x: x['active_tickets'], reverse=True)
 
 def get_activity_chart_data():
     """

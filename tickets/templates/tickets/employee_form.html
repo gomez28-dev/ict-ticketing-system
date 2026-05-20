@@ -1,68 +1,79 @@
 {% extends 'tickets/base_admin.html' %}
 
 {% block content %}
-<div class="mb-6">
-    <a href="{% url 'employee_directory' %}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2 inline-block">&larr; Back to Employees</a>
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Add New Employee</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400">Create a new staff account and assign their role level.</p>
-</div>
-
-<div class="max-w-2xl bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors">
-    
-    {% if error %}
-    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-6 text-sm font-medium">
-        ⚠️ {{ error }}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6">
+        <a href="{% url 'employee_directory' %}" class="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2 inline-block">&larr; Back to Employees</a>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Add New Employee</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400">Create a new staff account and assign their role level.</p>
     </div>
-    {% endif %}
 
-    <form method="POST" class="space-y-6">
-        {% csrf_token %}
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 transition-colors">
         
-        <div class="grid grid-cols-2 gap-6">
-            <div>
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">First Name</label>
-                <input type="text" name="first_name" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
-            </div>
-            <div>
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Last Name</label>
-                <input type="text" name="last_name" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
-            </div>
+        {% if error %}
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-6 text-sm font-medium">
+            ⚠️ {{ error }}
         </div>
+        {% endif %}
 
-        <div>
-            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Email Address</label>
-            <input type="email" name="email" required placeholder="employee@valenzuela.gov.ph" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
-        </div>
-
-        <div class="grid grid-cols-2 gap-6">
-            <div>
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">System Role</label>
-                <select name="role" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
-                    <option value="MEMBER">Team Member (Standard)</option>
-                    <option value="MANAGER">Manager</option>
-                    <option value="ADMIN">Admin (Full Access)</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Expertise</label>
-                <input type="text" name="expertise" placeholder="e.g., CCTV, NETWORK" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
-            </div>
-        </div>
-
-        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4">
-            <div class="flex items-start gap-2">
-                <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-2 gap-6">
                 <div>
-                    <p class="text-sm font-bold text-blue-800 dark:text-blue-300">Default Password</p>
-                    <p class="text-xs text-blue-700 dark:text-blue-400 mt-0.5">The default password <code class="bg-blue-100 dark:bg-blue-800/40 px-1.5 py-0.5 rounded font-mono font-bold">DepEd123!</code> will be automatically assigned and emailed to the employee.</p>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">First Name</label>
+                    <input type="text" name="first_name" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Last Name</label>
+                    <input type="text" name="last_name" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
                 </div>
             </div>
-        </div>
 
-        <div class="pt-6 mt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
-            <a href="{% url 'employee_directory' %}" class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">Cancel</a>
-            <button type="submit" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-sm transition-colors">Create Employee</button>
-        </div>
-    </form>
+            <div>
+                <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Email Address</label>
+                <input type="email" name="email" required placeholder="employee@valenzuela.gov.ph" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">System Role</label>
+                    <select name="role" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
+                        <option value="MEMBER">Team Member (Standard)</option>
+                        <option value="ADMIN">Admin (Full Access)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-2 font-bold">Expertise</label>
+                    <select name="expertise" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-[#0078d4] outline-none">
+                        <option value="" disabled selected>Select expertise...</option>
+                        <option value="CCTV">CCTV Operations</option>
+                        <option value="NETWORK, INTERNET">Network & Internet</option>
+                        <option value="PC MAINTENANCE, PRINTER, HARDWARE">PC Maintenance / Hardware</option>
+                        <option value="WEBSITE, SYSTEM DEV">Application Development</option>
+                        <option value="ACCOUNT, SOFTWARE, SECURITY">Account / Software / Security</option>
+                        <option value="GRAPHICS, MULTIMEDIA">Graphic Design & Multimedia</option>
+                        <option value="MANAGEMENT, SYSTEM ADMIN, ALL">Management / System Admin</option>
+                        <option value="SYSTEM TESTING">System Testing</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4">
+                <div class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div>
+                        <p class="text-sm font-bold text-blue-800 dark:text-blue-300">Default Password</p>
+                        <p class="text-xs text-blue-700 dark:text-blue-400 mt-0.5">The default password <code class="bg-blue-100 dark:bg-blue-800/40 px-1.5 py-0.5 rounded font-mono font-bold">DepEd123!</code> will be automatically assigned and emailed to the employee.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-6 mt-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+                <a href="{% url 'employee_directory' %}" class="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">Cancel</a>
+                <button type="submit" class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-sm transition-colors">Create Employee</button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

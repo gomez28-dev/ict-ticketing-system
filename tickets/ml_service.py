@@ -1,7 +1,7 @@
 import random
 import math
 
-from .staff_data import STAFF_LIST
+
 
 
 # ==========================================
@@ -52,28 +52,38 @@ def predict_ticket_duration(support_type, priority):
 def recommend_staff(school_name, support_type):
     """
     Recommends the best staff member for the job based on their expertise.
-    Filters the dictionary safely and avoids KeyErrors.
+    Dynamically queries the database User model instead of a static list.
     """
-    # 1. Find all staff members who match the required expertise
-    eligible_staff = []
+    from .models import Ticket, User
 
     mapped_type = get_mapped_support_type(support_type)
 
-    for staff in STAFF_LIST:
-        expertise = [e.replace(' ', '_') for e in staff['expertise']]
-        if mapped_type in expertise or "ALL" in expertise or "MANAGEMENT" in expertise:
-            eligible_staff.append(staff)
+    # 1. Fetch all team member users from the database
+    members = User.objects.filter(role='MEMBER').exclude(is_superuser=True)
 
-    # 2. Fallback just in case no exact match is found
+    # 2. Find all staff members who match the required expertise
+    eligible_staff = []
+    all_staff = []
+
+    for user in members:
+        full_name = f"{user.first_name} {user.last_name}".strip()
+        expertise_raw = [e.strip() for e in user.expertise.split(',') if e.strip()] if user.expertise else []
+        expertise_normalized = [e.replace(' ', '_') for e in expertise_raw]
+
+        staff_entry = {'name': full_name, 'id': user.id}
+        all_staff.append(staff_entry)
+
+        if mapped_type in expertise_normalized or 'ALL' in expertise_normalized or 'MANAGEMENT' in expertise_normalized:
+            eligible_staff.append(staff_entry)
+
+    # 3. Fallback just in case no exact match is found
     if not eligible_staff:
-        eligible_staff = STAFF_LIST
+        eligible_staff = all_staff if all_staff else [{'name': 'Any available staff', 'id': None}]
 
-    # 3. Safely choose a random staff member from our filtered list
+    # 4. Safely choose a random staff member from our filtered list
     selected_staff = random.choice(eligible_staff)
 
-    # 4. Generate the AI reason to display on the UI
-    from .models import Ticket
-    # Calculate live current load
+    # 5. Generate the AI reason to display on the UI
     current_load = Ticket.objects.filter(
         admin_notes__icontains=selected_staff['name']
     ).exclude(status__in=['RESOLVED', 'COMPLETED']).count()
