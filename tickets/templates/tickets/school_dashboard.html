@@ -551,8 +551,7 @@
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Success Validation</h3>
                 <p class="text-gray-600 dark:text-gray-400 mb-6">Your request form has been successfully submitted. Your
-                    Request ID is <span class="font-bold text-blue-600 dark:text-blue-400">#{{
-                        submitted_ticket.ticket_number }}</span>.</p>
+                    Request ID is <span class="font-bold text-blue-600 dark:text-blue-400">#{{ submitted_ticket.ticket_number }}</span>.</p>
 
                 <div class="flex flex-col gap-3">
                     <a href="{% url 'school_print_ticket' submitted_ticket.id %}" target="_blank"
