@@ -84,14 +84,6 @@
             </div>
             {% endif %}
 
-            {% if ticket.client_signature %}
-            <div class="mb-8">
-                <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Client Signature</span>
-                <div class="bg-white dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 inline-block">
-                    <img src="{{ ticket.client_signature }}" alt="Client Signature" class="max-h-24">
-                </div>
-            </div>
-            {% endif %}
 
             {% if ticket.status == 'UNDER_REVIEW' or ticket.status == 'RESOLVED' or ticket.status == 'COMPLETED' %}
             <div class="mb-8">
@@ -200,20 +192,9 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Evidence Upload</label>
                     <input type="file" name="resolution_attachment" required class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 dark:file:bg-purple-900/30 dark:file:text-purple-400">
                 </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Signature</label>
-                    <div class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md p-2">
-                        <canvas id="signatureCanvas" width="460" height="120" class="w-full border border-dashed border-gray-300 dark:border-gray-500 rounded cursor-crosshair" style="touch-action: none;"></canvas>
-                    </div>
-                    <div class="flex items-center justify-between mt-1">
-                        <p class="text-xs text-gray-400">Draw the client's signature above</p>
-                        <button type="button" onclick="clearSignature()" class="text-xs text-red-500 hover:text-red-700 font-medium">Clear</button>
-                    </div>
-                    <input type="hidden" name="client_signature" id="clientSignatureData">
-                </div>
                 <div class="flex items-center justify-end gap-3 px-4 py-3 border-t dark:border-gray-700">
                     <button type="button" onclick="document.getElementById('modal-review').classList.add('hidden')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-sm font-medium rounded-md">Cancel</button>
-                    <button type="submit" onclick="captureSignature()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md">Submit for Review</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md">Submit for Review</button>
                 </div>
             </form>
         </div>
@@ -265,46 +246,4 @@
 
 {% endblock %}
 
-{% block scripts %}
-<script>
-    // Signature Pad Logic
-    (function() {
-        const canvas = document.getElementById('signatureCanvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        let drawing = false;
-        let hasDrawn = false;
 
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: (clientX - rect.left) * (canvas.width / rect.width),
-                y: (clientY - rect.top) * (canvas.height / rect.height)
-            };
-        }
-
-        canvas.addEventListener('mousedown', (e) => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-        canvas.addEventListener('mousemove', (e) => { if (!drawing) return; hasDrawn = true; const p = getPos(e); ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b'; ctx.lineTo(p.x, p.y); ctx.stroke(); });
-        canvas.addEventListener('mouseup', () => { drawing = false; });
-        canvas.addEventListener('mouseleave', () => { drawing = false; });
-
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!drawing) return; hasDrawn = true; const p = getPos(e); ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#1e293b'; ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
-        canvas.addEventListener('touchend', () => { drawing = false; });
-
-        window.clearSignature = function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            hasDrawn = false;
-            document.getElementById('clientSignatureData').value = '';
-        };
-
-        window.captureSignature = function() {
-            if (hasDrawn) {
-                document.getElementById('clientSignatureData').value = canvas.toDataURL('image/png');
-            }
-        };
-    })();
-</script>
-{% endblock %}

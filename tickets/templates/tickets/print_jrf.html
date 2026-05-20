@@ -144,9 +144,6 @@
                                 <p class="text-left font-semibold text-xs italic mb-4">Attested by:</p>
                                 <div class="inline-block w-4/5">
                                     <div class="h-6 flex items-center justify-center">
-                                        {% if ticket.client_signature %}
-                                            <img src="{{ ticket.client_signature }}" alt="Client Signature" class="max-h-6 object-contain">
-                                        {% endif %}
                                     </div>
                                     <div class="border-t border-slate-900 print:border-black pt-0.5 font-bold uppercase text-[11px]">
                                         {{ ticket.first_name }} {{ ticket.last_name }}

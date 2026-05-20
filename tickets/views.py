@@ -1007,10 +1007,6 @@ def submit_for_review(request, ticket_id):
         ticket.resolution_notes = form.cleaned_data['resolution_notes']
         ticket.resolution_attachment = form.cleaned_data['resolution_attachment']
 
-        # Capture client signature (Base64 from canvas pad)
-        client_sig = request.POST.get('client_signature', '').strip()
-        if client_sig:
-            ticket.client_signature = client_sig
 
         ticket.status = 'UNDER_REVIEW'
         ticket._current_user = request.user
