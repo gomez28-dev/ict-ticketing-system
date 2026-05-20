@@ -20,6 +20,7 @@ class Command(BaseCommand):
         self._import_schools_if_enabled()
         self._import_performance_if_enabled()
         self._sync_staff_expertise()
+        self._migrate_test_emails()
         self._rename_test_accounts()
         self._cleanup_historical_notes()
 
@@ -178,3 +179,52 @@ class Command(BaseCommand):
             ))
         else:
             self.stdout.write(self.style.SUCCESS("No historical notes needed cleanup."))
+
+    def _migrate_test_emails(self):
+        from tickets.models import User
+        from django.db import transaction
+
+        mappings = {
+            'superadmin@test.com': {
+                'new_email': 'ramon.sy@email.com',
+                'new_username': 'ramon.sy'
+            },
+            'admin@test.com': {
+                'new_email': 'alice.tan@email.com',
+                'new_username': 'alice.tan'
+            },
+            'employee@test.com': {
+                'new_email': 'juan.pedro@email.com',
+                'new_username': 'juan.pedro'
+            }
+        }
+
+        deleted_duplicates = 0
+        migrated_users = 0
+
+        with transaction.atomic():
+            for old_email, details in mappings.items():
+                new_email = details['new_email']
+                new_username = details['new_username']
+
+                # Delete duplicate empty users under the new email/username if they aren't the original one
+                duplicates = User.objects.filter(email__iexact=new_email) | User.objects.filter(username__iexact=new_username)
+                for dup in duplicates:
+                    if dup.email.lower() != old_email.lower():
+                        dup.delete()
+                        deleted_duplicates += 1
+
+                # Rename the original user
+                old_users = User.objects.filter(email__iexact=old_email)
+                for u in old_users:
+                    u.email = new_email
+                    u.username = new_username
+                    u.save(update_fields=['email', 'username'])
+                    migrated_users += 1
+
+        if deleted_duplicates > 0 or migrated_users > 0:
+            self.stdout.write(self.style.SUCCESS(
+                f"Test email migration: migrated {migrated_users} accounts, cleaned up {deleted_duplicates} duplicate empty accounts."
+            ))
+        else:
+            self.stdout.write(self.style.SUCCESS("All test accounts are already on their new email addresses."))
