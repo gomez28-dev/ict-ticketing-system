@@ -10,12 +10,15 @@
     <nav class="-mb-px flex min-w-max space-x-4 sm:space-x-8" aria-label="Tabs">
         <button onclick="switchTab('pending')" id="tab-pending" class="tab-btn active whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-[#0078d4] text-[#0078d4] font-medium text-sm transition-colors">
             Pending Requests
+            {% if pending_count > 0 %}<span class="ml-1.5 inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-500 text-white">{{ pending_count }}</span>{% endif %}
         </button>
         <button onclick="switchTab('reviewed')" id="tab-reviewed" class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors">
             Reviewed &amp; Assigned Tickets
+            {% if reviewed_count > 0 %}<span class="ml-1.5 inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500 text-white">{{ reviewed_count }}</span>{% endif %}
         </button>
         <button onclick="switchTab('unresolved')" id="tab-unresolved" class="tab-btn whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors">
             Unresolved Tickets
+            {% if unresolved_count > 0 %}<span class="ml-1.5 inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-orange-500 text-white">{{ unresolved_count }}</span>{% endif %}
         </button>
     </nav>
 </div>
@@ -148,7 +151,7 @@
                         </td>
                         <td class="p-4 whitespace-nowrap">
                             <div class="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                {{ ticket.assignee.get_full_name|default:ticket.assignee.username }}
+                                {{ ticket.assigned_staff_display|default:"Unassigned" }}
                             </div>
                         </td>
                         <td class="p-4 sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
@@ -187,7 +190,7 @@
                     </div>
                     <div>
                         <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Assigned To</p>
-                        <p class="text-gray-700 dark:text-gray-300">{{ ticket.assignee.get_full_name|default:ticket.assignee.username }}</p>
+                        <p class="text-gray-700 dark:text-gray-300">{{ ticket.assigned_staff_display|default:"Unassigned" }}</p>
                     </div>
                 </div>
                 <a href="{% url 'reviewed_ticket_readonly' ticket.id %}" class="min-h-11 w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm text-center inline-flex items-center justify-center border border-gray-300 dark:border-gray-600">

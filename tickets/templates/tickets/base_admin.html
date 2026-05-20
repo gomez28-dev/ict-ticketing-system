@@ -91,9 +91,9 @@
                     <p class="text-xs font-bold truncate text-white {% if not request.user.is_superuser %}group-hover:text-blue-300 transition-colors{% endif %}">{{ request.user.get_full_name|default:request.user.username }}</p>
 
                     {% if request.user.is_superuser %}
-                        <p class="text-[10px] font-bold text-green-400">Super Admin</p>
+                        <p class="text-[10px] font-bold text-green-400">ICT HEAD</p>
                     {% elif request.user.role == 'ADMIN' %}
-                        <p class="text-[10px] font-bold text-blue-400">Admin</p>
+                        <p class="text-[10px] font-bold text-blue-400">ICT SECRETARY</p>
                     {% else %}
                         <p class="text-[10px] font-bold text-gray-400">Employee</p>
                     {% endif %}

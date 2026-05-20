@@ -222,7 +222,7 @@
                     <div id="staffListContainer" class="max-h-64 sm:max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800/50 space-y-1 custom-scrollbar">
                         {% for staff in staff_data %}
                         <label class="staff-item min-h-11 flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
-                            <input type="checkbox" name="assigned_staff" value="{{ staff.name }}" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
+                            <input type="checkbox" name="assigned_staff" value="{{ staff.name }}" data-userid="{{ staff.user_id }}" class="staff-checkbox w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
                             <span class="staff-name text-sm font-medium text-gray-800 dark:text-gray-200">{{ staff.name }}</span>
                             {% if staff.active_tickets > 0 %}
                             <span class="ml-auto px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400">Busy ({{ staff.active_tickets }})</span>
@@ -231,6 +231,7 @@
                             {% endif %}
                         </label>
                         {% endfor %}
+                        <input type="hidden" name="assigned_staff_ids" id="assignedStaffIds" value="">
                     </div>
                 </div>
 
@@ -356,11 +357,15 @@
         const triageForm = document.getElementById('triageForm');
         if(triageForm) {
             triageForm.addEventListener('submit', function(e) {
-                const checkedStaff = document.querySelectorAll('input[name="assigned_staff"]:checked').length;
-                if (checkedStaff === 0) {
+                const checkedBoxes = document.querySelectorAll('input[name="assigned_staff"]:checked');
+                if (checkedBoxes.length === 0) {
                     e.preventDefault();
                     alert('Please assign at least one staff member before approving this request.');
+                    return;
                 }
+                // Sync checked user IDs into hidden field
+                const ids = Array.from(checkedBoxes).map(cb => cb.dataset.userid).filter(id => id);
+                document.getElementById('assignedStaffIds').value = ids.join(',');
             });
         }
     });

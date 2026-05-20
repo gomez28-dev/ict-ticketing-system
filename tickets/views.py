@@ -108,6 +108,16 @@ def extract_latest_unresolved_reason(admin_notes):
     ]
     return unresolved_lines[-1] if unresolved_lines else ''
 
+def _parse_assigned_staff(admin_notes):
+    """Extracts the assigned staff names from the admin_notes 'Assigned to:' line."""
+    if not admin_notes:
+        return 'Unassigned'
+    for line in admin_notes.split('\n'):
+        if line.strip().startswith('Assigned to:'):
+            names = line.replace('Assigned to:', '').strip()
+            return names if names else 'Unassigned'
+    return 'Unassigned'
+
 @user_passes_test(is_superadmin, login_url='dashboard')
 def add_employee(request):
     error = None
@@ -377,10 +387,20 @@ def requests_view(request):
         assignee__isnull=False
     ).order_by('-updated_at')
     unresolved_requests = Ticket.objects.filter(status='UNRESOLVED').order_by('-updated_at')
+
+    # Annotate assigned staff display names from admin_notes for multi-assignee support
+    for ticket in reviewed_requests:
+        ticket.assigned_staff_display = _parse_assigned_staff(ticket.admin_notes)
+    for ticket in unresolved_requests:
+        ticket.assigned_staff_display = _parse_assigned_staff(ticket.admin_notes)
+
     return render(request, 'tickets/ticket_requests.html', {
         'pending_requests': pending_requests,
         'reviewed_requests': reviewed_requests,
         'unresolved_requests': unresolved_requests,
+        'pending_count': pending_requests.count(),
+        'reviewed_count': reviewed_requests.count(),
+        'unresolved_count': unresolved_requests.count(),
     })
 
 
@@ -573,7 +593,17 @@ def approve_request(request, ticket_id):
                     return redirect('ticket_triage', ticket_id=ticket.id)
 
             assigned_staff_str = ", ".join(unique_staff)
-            ticket.assignee = resolve_assignee_from_names(unique_staff) or request.user
+
+            # Resolve assignee by database user ID (from hidden field) instead of name matching
+            staff_ids_str = request.POST.get('assigned_staff_ids', '')
+            staff_ids = [sid.strip() for sid in staff_ids_str.split(',') if sid.strip()]
+            if staff_ids:
+                try:
+                    ticket.assignee = User.objects.get(id=int(staff_ids[0]))
+                except (User.DoesNotExist, ValueError):
+                    ticket.assignee = resolve_assignee_from_names(unique_staff) or request.user
+            else:
+                ticket.assignee = resolve_assignee_from_names(unique_staff) or request.user
             ticket.status = 'PENDING_ACCEPTANCE'
 
         feedback = request.POST.get('admin_feedback', '').strip()
