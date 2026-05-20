@@ -164,9 +164,9 @@ def custom_login(request):
 
         # HARDCODED ACCOUNTS FOR TESTING ONLY
         test_accounts = {
-            'superadmin@test.com': {'pass': 'super123', 'role': 'SUPERADMIN'},
-            'admin@test.com': {'pass': 'admin123', 'role': 'ADMIN'},
-            'employee@test.com': {'pass': 'emp123', 'role': 'MEMBER'}
+            'ramon.sy@email.com': {'pass': 'super123', 'role': 'SUPERADMIN'},
+            'alice.tan@email.com': {'pass': 'admin123', 'role': 'ADMIN'},
+            'juan.pedro@email.com': {'pass': 'emp123', 'role': 'MEMBER'}
         }
 
         if email_input in test_accounts and password_input == test_accounts[email_input]['pass']:
@@ -252,7 +252,7 @@ def school_dashboard(request):
             new_ict_email = request.POST.get('ict_email', '').strip()
             
             normalized_email = new_ict_email.lower()
-            allowed_emails = ['admin@test.com', 'employee@test.com']
+            allowed_emails = ['admin@test.com', 'employee@test.com', 'alice.tan@email.com', 'juan.pedro@email.com', 'ramon.sy@email.com']
             if not normalized_email.endswith('@deped.gov.ph') and normalized_email not in allowed_emails:
                 messages.error(request, "Only official @deped.gov.ph email addresses are permitted.")
                 return redirect('school_dashboard')
@@ -1302,7 +1302,7 @@ def request_access(request):
             })
 
         normalized_email = email.lower()
-        allowed_emails = ['admin@test.com', 'employee@test.com']
+        allowed_emails = ['admin@test.com', 'employee@test.com', 'alice.tan@email.com', 'juan.pedro@email.com', 'ramon.sy@email.com']
         if not normalized_email.endswith('@deped.gov.ph') and normalized_email not in allowed_emails:
             return render(request, 'tickets/request_access.html', {
                 'error': 'Only official @deped.gov.ph email addresses are permitted.',
