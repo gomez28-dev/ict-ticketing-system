@@ -221,7 +221,10 @@
 
                     <div id="staffListContainer" class="max-h-64 sm:max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800/50 space-y-1 custom-scrollbar">
                         {% for staff in staff_data %}
-                        <label class="staff-item min-h-11 flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors">
+                        <label class="staff-item min-h-11 flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                               data-name="{{ staff.name|lower }}"
+                               data-expertise="{{ staff.expertise|join:','|lower }}"
+                               data-original-index="{{ forloop.counter0 }}">
                             <input type="checkbox" name="assigned_staff" value="{{ staff.name }}" data-userid="{{ staff.user_id }}" class="staff-checkbox w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600">
                             <span class="staff-name text-sm font-medium text-gray-800 dark:text-gray-200">{{ staff.name }}</span>
                             {% if staff.active_tickets > 0 %}
@@ -263,18 +266,44 @@
     // Real-time search filter logic
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('staffSearchInput');
-        const staffItems = document.querySelectorAll('.staff-item');
+        const container = document.getElementById('staffListContainer');
 
-        if(searchInput) {
+        if(searchInput && container) {
             searchInput.addEventListener('input', function(e) {
-                const term = e.target.value.toLowerCase();
-                staffItems.forEach(item => {
-                    const name = item.querySelector('.staff-name').textContent.toLowerCase();
-                    if (name.includes(term)) {
+                const term = e.target.value.toLowerCase().trim();
+                const items = Array.from(container.querySelectorAll('.staff-item'));
+
+                if (!term) {
+                    // Restore original index sorting
+                    items.sort((a, b) => parseInt(a.dataset.originalIndex) - parseInt(b.dataset.originalIndex));
+                    items.forEach(item => {
                         item.style.display = 'flex';
-                    } else {
-                        item.style.display = 'none';
-                    }
+                        container.insertBefore(item, container.querySelector('#assignedStaffIds'));
+                    });
+                    return;
+                }
+
+                // Sort items by matching status
+                items.sort((a, b) => {
+                    const aName = a.dataset.name || '';
+                    const aExp = a.dataset.expertise || '';
+                    const bName = b.dataset.name || '';
+                    const bExp = b.dataset.expertise || '';
+
+                    const aMatches = aName.includes(term) || aExp.includes(term);
+                    const bMatches = bName.includes(term) || bExp.includes(term);
+
+                    if (aMatches && !bMatches) return -1;
+                    if (!aMatches && bMatches) return 1;
+
+                    // Preserve original order if both match or both don't match
+                    return parseInt(a.dataset.originalIndex) - parseInt(b.dataset.originalIndex);
+                });
+
+                // Re-append sorted elements in the DOM
+                items.forEach(item => {
+                    item.style.display = 'flex'; // Do not filter out any employees, keep them all visible!
+                    container.insertBefore(item, container.querySelector('#assignedStaffIds'));
                 });
             });
         }

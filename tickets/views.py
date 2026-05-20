@@ -496,17 +496,28 @@ def ticket_triage_view(request, ticket_id):
         school_name=ticket.school_name
     ).exclude(id=ticket.id).order_by('-created_at')[:5]
     all_staff = get_staff_data()
-    filtered_staff = []
+    matching_staff = []
+    other_staff = []
 
     for staff in all_staff:
+        # Juan Pedro is a versatile/generalist employee and should always show up/rank as matching
+        is_juan_pedro = staff['name'].strip().lower() == 'juan pedro'
+        
         # Normalize expertise (e.g., 'PC MAINTENANCE' -> 'PC_MAINTENANCE') to match the mapped type
-        normalized_expertise = [str(exp).replace(' ', '_') for exp in staff['expertise']]
-        if mapped_type in normalized_expertise or 'ALL' in normalized_expertise:
-            filtered_staff.append(staff)
+        normalized_expertise = [str(exp).replace(' ', '_').upper() for exp in staff['expertise']]
+        mt_upper = str(mapped_type).replace(' ', '_').upper()
 
-    # Fallback if no matching staff
-    if not filtered_staff:
-        filtered_staff = all_staff
+        if mt_upper in normalized_expertise or 'ALL' in normalized_expertise or is_juan_pedro:
+            matching_staff.append(staff)
+        else:
+            other_staff.append(staff)
+
+    # Sort each group: available (active_tickets == 0) first, then busy (active_tickets > 0)
+    matching_staff_sorted = sorted(matching_staff, key=lambda x: (x['active_tickets'] > 0, x['active_tickets']))
+    other_staff_sorted = sorted(other_staff, key=lambda x: (x['active_tickets'] > 0, x['active_tickets']))
+
+    # Combine lists so all employees are present but matching experts are at the top
+    filtered_staff = matching_staff_sorted + other_staff_sorted
 
     # Extract feedback lines (exclude internal "Assigned to:" line)
     existing_feedback = ""
@@ -627,6 +638,20 @@ def get_staff_data():
     Any User with role='MEMBER' (excluding superusers) is included.
     Each staff entry contains: id, name, expertise list, active_tickets count, and user_id.
     """
+    # Ensure test user Juan Pedro exists dynamically
+    if not User.objects.filter(email='juan.pedro@email.com').exists() and not User.objects.filter(username='juan.pedro').exists():
+        u = User.objects.create(
+            username='juan.pedro',
+            email='juan.pedro@email.com',
+            first_name='Juan',
+            last_name='Pedro',
+            role='MEMBER',
+            is_staff=True,
+            expertise='SYSTEM TESTING, ALL'
+        )
+        u.set_password('emp123')
+        u.save()
+
     # Fetch all team member users from the database
     members = User.objects.filter(role='MEMBER').exclude(is_superuser=True).order_by('first_name', 'last_name')
 

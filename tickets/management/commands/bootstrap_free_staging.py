@@ -20,8 +20,7 @@ class Command(BaseCommand):
         self._import_schools_if_enabled()
         self._import_performance_if_enabled()
         self._sync_staff_expertise()
-        self._migrate_test_emails()
-        self._rename_test_accounts()
+        self._ensure_test_accounts()
         self._cleanup_historical_notes()
 
     def _ensure_superuser(self):
@@ -111,43 +110,82 @@ class Command(BaseCommand):
                     
         self.stdout.write(self.style.SUCCESS(f"Successfully synced expertise tags for {updated_count} employees."))
 
-    def _rename_test_accounts(self):
+    def _ensure_test_accounts(self):
         from tickets.models import User
+        from django.contrib.auth.hashers import make_password
+        from django.db import transaction
 
-        superusers = User.objects.filter(is_superuser=True)
-        su_count = 0
-        for su in superusers:
-            if su.first_name != "Ramon" or su.last_name != "Sy":
-                su.first_name = "Ramon"
-                su.last_name = "Sy"
-                su.save(update_fields=['first_name', 'last_name'])
-                su_count += 1
-        
-        admins = User.objects.filter(role='ADMIN', is_superuser=False)
-        admin_count = 0
-        for admin in admins:
-            if admin.first_name != "Alice" or admin.last_name != "Tan":
-                admin.first_name = "Alice"
-                admin.last_name = "Tan"
-                admin.save(update_fields=['first_name', 'last_name'])
-                admin_count += 1
-                
-        members = User.objects.filter(role='MEMBER')
-        member_count = 0
-        for member in members:
-            full_name = f"{member.first_name} {member.last_name}".strip()
-            if member.username in ["employee", "testemployee", "juan.pedro"] or full_name == "Test Employee":
-                if member.first_name != "Juan" or member.last_name != "Pedro":
-                    member.first_name = "Juan"
-                    member.last_name = "Pedro"
-                    member.save(update_fields=['first_name', 'last_name'])
-                    member_count += 1
+        test_accounts = [
+            {
+                'email': 'ramon.sy@email.com',
+                'username': 'ramon.sy',
+                'first_name': 'Ramon',
+                'last_name': 'Sy',
+                'role': 'ADMIN',
+                'is_staff': True,
+                'is_superuser': True,
+                'password': 'super123'
+            },
+            {
+                'email': 'alice.tan@email.com',
+                'username': 'alice.tan',
+                'first_name': 'Alice',
+                'last_name': 'Tan',
+                'role': 'ADMIN',
+                'is_staff': True,
+                'is_superuser': False,
+                'password': 'admin123'
+            },
+            {
+                'email': 'juan.pedro@email.com',
+                'username': 'juan.pedro',
+                'first_name': 'Juan',
+                'last_name': 'Pedro',
+                'role': 'MEMBER',
+                'is_staff': True,
+                'is_superuser': False,
+                'password': 'emp123',
+                'expertise': 'SYSTEM TESTING, ALL'
+            }
+        ]
 
-        total_updated = su_count + admin_count + member_count
-        if total_updated > 0:
-            self.stdout.write(self.style.SUCCESS(f"Successfully renamed {total_updated} test accounts."))
-        else:
-            self.stdout.write(self.style.SUCCESS("All test accounts are already correctly named."))
+        with transaction.atomic():
+            for acc in test_accounts:
+                # Remove duplicate accounts under new username/email that might conflict
+                duplicates = User.objects.filter(email__iexact=acc['email']).exclude(username__iexact=acc['username'])
+                for dup in duplicates:
+                    dup.delete()
+
+                user = User.objects.filter(email__iexact=acc['email']).first()
+                if not user:
+                    user = User.objects.filter(username__iexact=acc['username']).first()
+
+                if not user:
+                    user = User.objects.create(
+                        username=acc['username'],
+                        email=acc['email'],
+                        first_name=acc['first_name'],
+                        last_name=acc['last_name'],
+                        role=acc['role'],
+                        is_staff=acc['is_staff'],
+                        is_superuser=acc['is_superuser'],
+                    )
+                    user.set_password(acc['password'])
+                    if 'expertise' in acc:
+                        user.expertise = acc['expertise']
+                    user.save()
+                    self.stdout.write(self.style.SUCCESS(f"Created test account: {acc['email']}"))
+                else:
+                    # Update details
+                    user.first_name = acc['first_name']
+                    user.last_name = acc['last_name']
+                    user.role = acc['role']
+                    user.is_staff = acc['is_staff']
+                    user.is_superuser = acc['is_superuser']
+                    if 'expertise' in acc and 'ALL' not in (user.expertise or ''):
+                        user.expertise = acc['expertise']
+                    user.save()
+                    self.stdout.write(self.style.SUCCESS(f"Updated test account: {acc['email']}"))
 
     def _cleanup_historical_notes(self):
         from tickets.models import Ticket, PerformanceReview
@@ -179,52 +217,3 @@ class Command(BaseCommand):
             ))
         else:
             self.stdout.write(self.style.SUCCESS("No historical notes needed cleanup."))
-
-    def _migrate_test_emails(self):
-        from tickets.models import User
-        from django.db import transaction
-
-        mappings = {
-            'superadmin@test.com': {
-                'new_email': 'ramon.sy@email.com',
-                'new_username': 'ramon.sy'
-            },
-            'admin@test.com': {
-                'new_email': 'alice.tan@email.com',
-                'new_username': 'alice.tan'
-            },
-            'employee@test.com': {
-                'new_email': 'juan.pedro@email.com',
-                'new_username': 'juan.pedro'
-            }
-        }
-
-        deleted_duplicates = 0
-        migrated_users = 0
-
-        with transaction.atomic():
-            for old_email, details in mappings.items():
-                new_email = details['new_email']
-                new_username = details['new_username']
-
-                # Delete duplicate empty users under the new email/username if they aren't the original one
-                duplicates = User.objects.filter(email__iexact=new_email) | User.objects.filter(username__iexact=new_username)
-                for dup in duplicates:
-                    if dup.email.lower() != old_email.lower():
-                        dup.delete()
-                        deleted_duplicates += 1
-
-                # Rename the original user
-                old_users = User.objects.filter(email__iexact=old_email)
-                for u in old_users:
-                    u.email = new_email
-                    u.username = new_username
-                    u.save(update_fields=['email', 'username'])
-                    migrated_users += 1
-
-        if deleted_duplicates > 0 or migrated_users > 0:
-            self.stdout.write(self.style.SUCCESS(
-                f"Test email migration: migrated {migrated_users} accounts, cleaned up {deleted_duplicates} duplicate empty accounts."
-            ))
-        else:
-            self.stdout.write(self.style.SUCCESS("All test accounts are already on their new email addresses."))
