@@ -1649,7 +1649,13 @@ def edit_employee_profile(request, user_id):
         profile_user.expertise = request.POST.get('expertise', profile_user.expertise)
         profile_user.bio = request.POST.get('bio', '')
 
-        if request.FILES.get('profile_picture'):
+        if request.POST.get('remove_profile_picture'):
+            if profile_user.profile_picture:
+                profile_user.profile_picture.delete(save=False)
+            profile_user.profile_picture = None
+        elif request.FILES.get('profile_picture'):
+            if profile_user.profile_picture:
+                profile_user.profile_picture.delete(save=False)
             profile_user.profile_picture = request.FILES['profile_picture']
 
         profile_user.save()
