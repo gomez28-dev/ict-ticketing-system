@@ -118,7 +118,19 @@
             .hide-scroll::-webkit-scrollbar { display: none; }
             .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         </style>
-        <div class="border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200 flex overflow-x-auto whitespace-nowrap scrollbar-hide hide-scroll md:flex-wrap md:overflow-x-visible">
+        <!-- Mobile dropdown selector -->
+        <div class="md:hidden mb-6 px-4">
+            <label for="mobile-tab-select" class="sr-only">Select a tab</label>
+            <select id="mobile-tab-select" onchange="switchTab(this.value)" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-11 transition-colors">
+                <option value="tickets">My Request</option>
+                <option value="notifications">Activity &amp; Audit Trail</option>
+                <option value="profile">Profile</option>
+                <option value="settings">Settings</option>
+            </select>
+        </div>
+
+        <!-- Desktop tabs -->
+        <div class="hidden md:block border-b border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-200 overflow-x-auto whitespace-nowrap scrollbar-hide hide-scroll md:flex-wrap md:overflow-x-visible">
             <nav class="-mb-px flex space-x-6 sm:space-x-8 px-4 sm:px-0 md:flex-wrap" aria-label="Tabs">
                 <button onclick="switchTab('tickets')" id="tab-tickets"
                     class="tab-btn active whitespace-nowrap min-h-11 py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
@@ -580,7 +592,16 @@
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
             document.getElementById('content-' + tabName).classList.add('active');
-            document.getElementById('tab-' + tabName).classList.add('active');
+            const activeBtn = document.getElementById('tab-' + tabName);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+
+            // Sync mobile select element
+            const selectEl = document.getElementById('mobile-tab-select');
+            if (selectEl) {
+                selectEl.value = tabName;
+            }
         }
 
         function openModal() {
