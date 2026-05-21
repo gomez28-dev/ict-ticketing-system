@@ -24,7 +24,7 @@
 </div>
 
 <!-- Tab 1: Pending Requests -->
-<div id="content-pending" class="tab-content active bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 flex flex-col transition-colors">
+<div id="content-pending" class="tab-content active bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto flex-1 flex flex-col transition-colors">
     {% if pending_requests %}
         <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -116,7 +116,7 @@
 </div>
 
 <!-- Tab 2: Reviewed & Assigned -->
-<div id="content-reviewed" class="tab-content hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 flex flex-col transition-colors">
+<div id="content-reviewed" class="tab-content hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto flex-1 flex flex-col transition-colors">
     {% if reviewed_requests %}
         <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -209,7 +209,7 @@
 </div>
 
 <!-- Tab 3: Unresolved Tickets -->
-<div id="content-unresolved" class="tab-content hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 flex flex-col transition-colors">
+<div id="content-unresolved" class="tab-content hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto flex-1 flex flex-col transition-colors">
     {% if unresolved_requests %}
         <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
