@@ -183,9 +183,9 @@ CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY')
 CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
 
 if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
-    # Dynamically inject cloudinary apps (cloudinary_storage must be before staticfiles)
+    # Dynamically inject cloudinary apps (appended so they don't override collectstatic)
     if 'cloudinary_storage' not in INSTALLED_APPS:
-        INSTALLED_APPS.insert(0, 'cloudinary_storage')
+        INSTALLED_APPS.append('cloudinary_storage')
     if 'cloudinary' not in INSTALLED_APPS:
         INSTALLED_APPS.append('cloudinary')
 
