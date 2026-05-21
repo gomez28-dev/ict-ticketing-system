@@ -24,7 +24,7 @@
 </div>
 
 <!-- Tab 1: Pending Requests -->
-<div id="content-pending" class="tab-content active bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto flex-1 flex flex-col transition-colors">
+<div id="content-pending" class="tab-content active bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
     {% if pending_requests %}
         <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -71,39 +71,42 @@
                 </tbody>
             </table>
         </div>
-        <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        <div class="grid grid-cols-1 gap-4 p-3 sm:p-4 md:hidden">
             {% for ticket in pending_requests %}
-            <article class="p-4 space-y-4">
-                <div class="flex items-start justify-between gap-3">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-start gap-2">
                     <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
-                        <p class="text-base font-bold text-gray-900 dark:text-white">{{ ticket.ticket_number|default:"TKT-NEW" }}</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ ticket.created_at|date:'M d, Y g:i A' }}</p>
+                        <p class="font-bold text-gray-900 dark:text-white text-base">{{ ticket.ticket_number|default:"TKT-NEW" }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.created_at|date:'M d, Y g:i A' }}</p>
                     </div>
-                    <span class="inline-flex px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-xs font-semibold">
+                    <span class="inline-flex px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-xs font-semibold whitespace-nowrap">
                         {{ ticket.get_support_type_display|default:"General Inquiry" }}
                     </span>
                 </div>
-                <div class="grid grid-cols-1 gap-3 text-sm">
-                    <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Requester</p>
-                        <p class="font-medium text-gray-800 dark:text-gray-200">{{ ticket.first_name }} {{ ticket.last_name }}</p>
-                        <p class="text-gray-500 dark:text-gray-400">{{ ticket.email|default:"No email provided" }}</p>
+                <div class="flex flex-col gap-1.5 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span>{{ ticket.first_name }} {{ ticket.last_name }}</span>
                     </div>
-                    <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">School</p>
-                        <p class="text-gray-700 dark:text-gray-300">{{ ticket.school_name|default:"No school specified" }}</p>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <span class="break-all">{{ ticket.email|default:"No email provided" }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        <span>{{ ticket.school_name|default:"No school specified" }}</span>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 gap-2">
-                    <button onclick="openDeclineModal('{{ ticket.id }}')" type="button" class="min-h-11 w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                <hr class="border-gray-100 dark:border-gray-700 mt-2">
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <button onclick="openDeclineModal('{{ ticket.id }}')" type="button" class="min-h-11 w-full inline-flex items-center justify-center px-3 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-lg transition-colors">
                         Decline
                     </button>
-                    <a href="{% url 'ticket_triage' ticket.id %}" class="min-h-11 w-full px-4 py-2 bg-[#0078d4] text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm text-center inline-flex items-center justify-center">
-                        Review &amp; Create Ticket
+                    <a href="{% url 'ticket_triage' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center px-3 py-2 text-sm font-bold text-white bg-[#0078d4] hover:bg-blue-700 rounded-lg transition-colors shadow-sm text-center">
+                        Review
                     </a>
                 </div>
-            </article>
+            </div>
             {% endfor %}
         </div>
     {% else %}
@@ -116,7 +119,7 @@
 </div>
 
 <!-- Tab 2: Reviewed & Assigned -->
-<div id="content-reviewed" class="tab-content hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto flex-1 flex flex-col transition-colors">
+<div id="content-reviewed" class="tab-content hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
     {% if reviewed_requests %}
         <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -166,37 +169,37 @@
                 </tbody>
             </table>
         </div>
-        <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        <div class="grid grid-cols-1 gap-4 p-3 sm:p-4 md:hidden">
             {% for ticket in reviewed_requests %}
-            <article class="p-4 space-y-4">
-                <div class="flex items-start justify-between gap-3">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-start gap-2">
                     <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
-                        <p class="text-base font-bold text-gray-900 dark:text-white">{{ ticket.ticket_number|default:"TKT-NEW" }}</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ ticket.updated_at|date:'M d, Y g:i A' }}</p>
+                        <p class="font-bold text-gray-900 dark:text-white text-base">{{ ticket.ticket_number|default:"TKT-NEW" }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.updated_at|date:'M d, Y g:i A' }}</p>
                     </div>
-                    <span class="inline-flex px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-xs font-semibold">
+                    <span class="inline-flex px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-xs font-semibold whitespace-nowrap">
                         {{ ticket.get_support_type_display|default:"General Inquiry" }}
                     </span>
                 </div>
-                <div class="grid grid-cols-1 gap-3 text-sm">
-                    <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Requester</p>
-                        <p class="font-medium text-gray-800 dark:text-gray-200">{{ ticket.first_name }} {{ ticket.last_name }}</p>
+                <div class="flex flex-col gap-1.5 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span>{{ ticket.first_name }} {{ ticket.last_name }}</span>
                     </div>
-                    <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">School</p>
-                        <p class="text-gray-700 dark:text-gray-300">{{ ticket.school_name|default:"No school specified" }}</p>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        <span>{{ ticket.school_name|default:"No school specified" }}</span>
                     </div>
-                    <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Assigned To</p>
-                        <p class="text-gray-700 dark:text-gray-300">{{ ticket.assigned_staff_display|default:"Unassigned" }}</p>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span>{{ ticket.assigned_staff_display|default:"Unassigned" }}</span>
                     </div>
                 </div>
-                <a href="{% url 'reviewed_ticket_readonly' ticket.id %}" class="min-h-11 w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm text-center inline-flex items-center justify-center border border-gray-300 dark:border-gray-600">
+                <hr class="border-gray-100 dark:border-gray-700 mt-2">
+                <a href="{% url 'reviewed_ticket_readonly' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center px-3 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors border border-gray-300 dark:border-gray-600 mt-2">
                     View Details
                 </a>
-            </article>
+            </div>
             {% endfor %}
         </div>
     {% else %}
@@ -209,7 +212,7 @@
 </div>
 
 <!-- Tab 3: Unresolved Tickets -->
-<div id="content-unresolved" class="tab-content hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-auto flex-1 flex flex-col transition-colors">
+<div id="content-unresolved" class="tab-content hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
     {% if unresolved_requests %}
         <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -263,43 +266,43 @@
                 </tbody>
             </table>
         </div>
-        <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+        <div class="grid grid-cols-1 gap-4 p-3 sm:p-4 md:hidden">
             {% for ticket in unresolved_requests %}
-            <article class="p-4 space-y-4">
-                <div class="flex items-start justify-between gap-3">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-3">
+                <div class="flex justify-between items-start gap-2">
                     <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
-                        <p class="text-base font-bold text-gray-900 dark:text-white">{{ ticket.ticket_number|default:"TKT-NEW" }}</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ ticket.updated_at|date:'M d, Y g:i A' }}</p>
+                        <p class="font-bold text-gray-900 dark:text-white text-base">{{ ticket.ticket_number|default:"TKT-NEW" }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ ticket.updated_at|date:'M d, Y g:i A' }}</p>
                     </div>
-                    <span class="inline-flex px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-xs font-semibold">
+                    <span class="inline-flex px-2.5 py-1 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded text-xs font-semibold whitespace-nowrap">
                         {{ ticket.get_support_type_display|default:"General Inquiry" }}
                     </span>
                 </div>
-                <div class="grid grid-cols-1 gap-3 text-sm">
-                    <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Requester</p>
-                        <p class="font-medium text-gray-800 dark:text-gray-200">{{ ticket.first_name }} {{ ticket.last_name }}</p>
+                <div class="flex flex-col gap-1.5 text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        <span>{{ ticket.first_name }} {{ ticket.last_name }}</span>
                     </div>
-                    <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">School</p>
-                        <p class="text-gray-700 dark:text-gray-300">{{ ticket.school_name|default:"No school specified" }}</p>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        <span>{{ ticket.school_name|default:"No school specified" }}</span>
                     </div>
-                    <div>
-                        <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Assigned To</p>
-                        <p class="text-gray-700 dark:text-gray-300">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span>
                             {% if ticket.assignee %}
                                 {{ ticket.assignee.get_full_name|default:ticket.assignee.username }}
                             {% else %}
                                 Unassigned
                             {% endif %}
-                        </p>
+                        </span>
                     </div>
                 </div>
-                <a href="{% url 'reviewed_ticket_readonly' ticket.id %}" class="min-h-11 w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm text-center inline-flex items-center justify-center border border-gray-300 dark:border-gray-600">
+                <hr class="border-gray-100 dark:border-gray-700 mt-2">
+                <a href="{% url 'reviewed_ticket_readonly' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center px-3 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors border border-gray-300 dark:border-gray-600 mt-2">
                     View Details
                 </a>
-            </article>
+            </div>
             {% endfor %}
         </div>
     {% else %}
@@ -312,7 +315,6 @@
 </div>
 
 <style>
-    .tab-content.hidden { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
 </style>
