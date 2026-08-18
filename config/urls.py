@@ -6,7 +6,6 @@ from django.conf.urls.static import static
 from django.views.static import serve
 
 urlpatterns = [
-    path('', views.school_login, name='school_login'),
     path('admin/', admin.site.urls),
 
     path('terms-of-service/', views.terms, name='terms'),
@@ -14,9 +13,8 @@ urlpatterns = [
 
     # Auth Links
     path('login/', views.custom_login, name='login'),
-    path('admin-login/', views.custom_login, name='admin_login'),
     path('logout/', views.custom_logout, name='logout'),
-    path('school-login/', views.school_login, name='school_login_alias'),
+    path('school-login/', views.school_login, name='school_login'),
     path('school-logout/', views.school_logout, name='school_logout'),
     path('forgot-password/', views.forgot_password, name='forgot_password'),
     path('forgot-password/verify/', views.verify_otp, name='verify_otp'),

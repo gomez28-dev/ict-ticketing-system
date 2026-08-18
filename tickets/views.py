@@ -225,9 +225,6 @@ def custom_logout(request):
     return redirect('login')
 
 def school_login(request):
-    if request.session.get('is_school_authenticated'):
-        return redirect('school_dashboard')
-
     if request.method == 'POST':
         school_id = request.POST.get('school_id')
         password = request.POST.get('password')
