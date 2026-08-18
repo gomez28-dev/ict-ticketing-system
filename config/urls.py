@@ -6,15 +6,18 @@ from django.conf.urls.static import static
 from django.views.static import serve
 
 urlpatterns = [
+    # Default Root URL -> School Login
+    path('', views.school_login, name='school_login'),
     path('admin/', admin.site.urls),
 
     path('terms-of-service/', views.terms, name='terms'),
     path('privacy-policy/', views.privacy, name='privacy'),
 
     # Auth Links
+    path('admin-login/', views.custom_login, name='admin_login'),
     path('login/', views.custom_login, name='login'),
     path('logout/', views.custom_logout, name='logout'),
-    path('school-login/', views.school_login, name='school_login'),
+    path('school-login/', views.school_login, name='school_login_alias'),
     path('school-logout/', views.school_logout, name='school_logout'),
     path('forgot-password/', views.forgot_password, name='forgot_password'),
     path('forgot-password/verify/', views.verify_otp, name='verify_otp'),

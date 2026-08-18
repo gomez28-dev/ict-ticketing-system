@@ -224,7 +224,7 @@ SERVE_MEDIA_FILES = env_bool('SERVE_MEDIA_FILES', default=DEBUG)
 AUTH_USER_MODEL = 'tickets.User'
 
 # Redirect to custom login page after logout
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = 'admin_login'
 
 # ==========================================
 # EMAIL CONFIGURATION

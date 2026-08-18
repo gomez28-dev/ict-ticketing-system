@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ICT Unit</title>
+    <title>Admin Login - ICT Unit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom subtle background pattern */
@@ -21,7 +21,7 @@
             <div class="flex flex-col items-center mb-8">
                 <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-24 w-auto mx-auto object-contain mb-6">
                 <h1 class="text-2xl font-bold tracking-wide text-white">ICT UNIT</h1>
-                <p class="text-xs text-gray-400 font-medium">Work Management</p>
+                <p class="text-xs text-gray-400 font-medium">Admin & Staff Portal</p>
             </div>
 
             {% if error %}
@@ -57,12 +57,13 @@
                 </div>
 
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all mt-2">
-                    Login
+                    Admin Login
                 </button>
             </form>
 
-            <div class="flex justify-center items-center mt-6 text-xs text-blue-400">
-                <a href="{% url 'forgot_password' %}?from=admin" class="hover:text-blue-300 hover:underline transition-colors">Forgot password?</a>
+            <div class="flex flex-col items-center gap-2 mt-6 text-xs">
+                <a href="{% url 'forgot_password' %}?from=admin" class="text-blue-400 hover:text-blue-300 hover:underline transition-colors">Forgot password?</a>
+                <a href="{% url 'school_login' %}" class="text-gray-400 hover:text-gray-200 transition-colors mt-2">← Go to School Portal</a>
             </div>
 
         </div>
