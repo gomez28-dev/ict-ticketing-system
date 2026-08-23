@@ -66,12 +66,20 @@ class Command(BaseCommand):
         school_file = os.environ.get("BOOTSTRAP_SCHOOLS_FILE", "schools.xlsx")
         school_path = Path(school_file)
         if not school_path.exists():
-            self.stdout.write(
-                self.style.WARNING(
-                    f"Skipping school import: '{school_file}' not found in deploy root."
+            # Check data/ directory fallback
+            if (Path("data") / school_file).exists():
+                school_path = Path("data") / school_file
+                school_file = str(school_path)
+            elif Path("data/schools.xlsx").exists():
+                school_path = Path("data/schools.xlsx")
+                school_file = "data/schools.xlsx"
+            else:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Skipping school import: '{school_file}' not found in deploy root or data/."
+                    )
                 )
-            )
-            return
+                return
 
         try:
             call_command("import_schools", school_file)
