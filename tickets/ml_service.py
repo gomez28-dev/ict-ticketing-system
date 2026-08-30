@@ -1,7 +1,48 @@
 import random
 import math
+import re
 
 
+# ==========================================
+# INPUT VALIDATION SERVICES
+# ==========================================
+
+def validate_ticket_description_for_ai(description):
+    """
+    Validates ticket description before executing AI/ML prediction services.
+    Returns a tuple (is_valid: bool, error_message: str).
+    Rules:
+    - Must be at least 20 characters long
+    - Must contain at least 3 words
+    - Must not consist of repetitive characters (e.g. 'aaaaaa', '11111')
+    - Must not consist of repetitive single words (e.g. 'test test test')
+    """
+    if not description:
+        return False, "Description does not contain enough detail for AI analysis."
+
+    cleaned = description.strip()
+    if len(cleaned) < 20:
+        return False, "Description does not contain enough detail for AI analysis (minimum 20 characters)."
+
+    words = cleaned.split()
+    if len(words) < 3:
+        return False, "Description does not contain enough detail for AI analysis (minimum 3 words)."
+
+    # Check for excessive repetitive characters (e.g. 'aaaaa', '......')
+    if re.search(r'(.)\1{4,}', cleaned):
+        return False, "Description contains repetitive or non-meaningful characters."
+
+    # Check for repetitive single-word spam
+    unique_words = {w.lower() for w in words}
+    if len(unique_words) <= 1:
+        return False, "Description contains repetitive or non-meaningful words."
+
+    # Check unique character diversity
+    unique_chars = {c.lower() for c in cleaned if not c.isspace()}
+    if len(unique_chars) < 4:
+        return False, "Description lacks sufficient character diversity for AI analysis."
+
+    return True, ""
 
 
 # ==========================================

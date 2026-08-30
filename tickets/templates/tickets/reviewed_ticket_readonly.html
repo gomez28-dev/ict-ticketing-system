@@ -61,6 +61,16 @@
                 <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Support Type</p>
                 <p class="text-sm text-gray-800 dark:text-gray-200">{{ ticket.get_support_type_display|default:"Not specified" }}</p>
             </div>
+            <div>
+                <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned On</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200 font-medium">{{ ticket.assigned_at|date:"M d, Y, g:i A"|default:"N/A" }}</p>
+            </div>
+            {% if ticket.scheduled_date %}
+            <div>
+                <p class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Scheduled Target</p>
+                <p class="text-sm text-gray-800 dark:text-gray-200">{{ ticket.scheduled_date|date:"M d, Y" }}{% if ticket.scheduled_start_time %} ({{ ticket.scheduled_start_time|time:"g:i A" }} - {{ ticket.scheduled_end_time|time:"g:i A" }}){% endif %}</p>
+            </div>
+            {% endif %}
         </div>
 
         <div>

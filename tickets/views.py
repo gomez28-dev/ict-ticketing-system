@@ -1,9 +1,9 @@
-from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type, calculate_overall_rating
+from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type, calculate_overall_rating, validate_ticket_description_for_ai
 from django.utils import timezone
 from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP, PerformanceReview
 import math
 from datetime import date, timedelta
-from .forms import PublicTicketForm, SubmitForReviewForm, validate_ph_mobile
+from .forms import PublicTicketForm, SubmitForReviewForm, TicketAssignmentForm, validate_ph_mobile
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
@@ -488,11 +488,30 @@ def complete_ticket_ajax(request, ticket_id):
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def ticket_triage_view(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    duration = predict_ticket_duration(ticket.support_type, ticket.priority)
-    predicted_hours = duration['predicted_hours']
-    predicted_days = duration['predicted_days']
-    staff_rec = recommend_staff(ticket.school_name, ticket.support_type)
-    risk_assessment = predict_risk(ticket.support_type, ticket.priority)
+
+    # Pre-validate ticket description before AI analysis
+    ai_valid, ai_validation_error = validate_ticket_description_for_ai(ticket.description)
+
+    if ai_valid:
+        duration = predict_ticket_duration(ticket.support_type, ticket.priority)
+        predicted_hours = duration['predicted_hours']
+        predicted_days = duration['predicted_days']
+        staff_rec = recommend_staff(ticket.school_name, ticket.support_type)
+        risk_assessment = predict_risk(ticket.support_type, ticket.priority)
+    else:
+        # Graceful baseline fallbacks when description is insufficient
+        predicted_hours = 8
+        predicted_days = 1
+        staff_rec = {
+            'recommended_name': 'Manual Selection Required',
+            'reason': ai_validation_error or 'Description does not contain enough detail for AI recommendation.'
+        }
+        risk_assessment = {
+            'level': 'Low',
+            'color': 'gray',
+            'blockers': 'Unable to determine AI risk metrics due to insufficient description.'
+        }
+
     mapped_type = get_mapped_support_type(ticket.support_type)
 
     recent_school_tickets = Ticket.objects.filter(
@@ -530,6 +549,8 @@ def ticket_triage_view(request, ticket_id):
 
     context = {
         'ticket': ticket,
+        'ai_valid': ai_valid,
+        'ai_validation_error': ai_validation_error,
         'predicted_hours': predicted_hours,
         'predicted_days': predicted_days,
         'staff_rec': staff_rec,
@@ -537,6 +558,7 @@ def ticket_triage_view(request, ticket_id):
         'staff_data': filtered_staff,
         'recent_school_tickets': recent_school_tickets,
         'existing_feedback': existing_feedback,
+        'today': timezone.localdate(),
     }
     return render(request, 'tickets/ticket_creation.html', context)
 
@@ -544,42 +566,52 @@ def ticket_triage_view(request, ticket_id):
 def approve_request(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if request.method == 'POST':
-        ticket.priority = request.POST.get('priority', ticket.priority)
-        ticket.work_type = request.POST.get('work_type', ticket.work_type)
+        form = TicketAssignmentForm(request.POST)
+        if not form.is_valid():
+            for field, errors in form.errors.items():
+                for err in errors:
+                    messages.error(request, err)
+            return redirect('ticket_triage', ticket_id=ticket.id)
 
-        scheduled_date_str = request.POST.get('scheduled_date')
-        if scheduled_date_str:
-            ticket.scheduled_date = scheduled_date_str
+        cleaned_data = form.cleaned_data
+        ticket.priority = cleaned_data.get('priority') or request.POST.get('priority', ticket.priority)
+        ticket.work_type = cleaned_data.get('work_type') or request.POST.get('work_type', ticket.work_type)
 
-        scheduled_start_time_str = request.POST.get('scheduled_start_time')
-        if scheduled_start_time_str:
-            ticket.scheduled_start_time = scheduled_start_time_str
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        scheduled_start_time = cleaned_data.get('scheduled_start_time')
+        scheduled_end_time = cleaned_data.get('scheduled_end_time')
 
-        scheduled_end_time_str = request.POST.get('scheduled_end_time')
-        if scheduled_end_time_str:
-            # Backend Validation
-            if scheduled_start_time_str and scheduled_end_time_str <= scheduled_start_time_str:
-                messages.error(request, "Scheduled End Time must be strictly after Start Time.")
-                return redirect('ticket_triage', ticket_id=ticket.id)
-            ticket.scheduled_end_time = scheduled_end_time_str
+        # Explicit server-side validation checks
+        today = timezone.localdate()
+        if start_date and start_date < today:
+            messages.error(request, "Scheduled start date cannot be in the past.")
+            return redirect('ticket_triage', ticket_id=ticket.id)
 
-        # Handle start_date and end_date for duration tracking
-        start_date_str = request.POST.get('start_date')
-        end_date_str = request.POST.get('end_date')
-        if start_date_str:
-            ticket.start_date = start_date_str
-        if end_date_str:
-            ticket.end_date = end_date_str
+        if start_date and end_date and end_date < start_date:
+            messages.error(request, "Scheduled end date cannot be earlier than the start date.")
+            return redirect('ticket_triage', ticket_id=ticket.id)
 
-        # Store predicted_days from form or compute
-        predicted_days_str = request.POST.get('predicted_days')
-        if predicted_days_str:
-            ticket.predicted_days = int(predicted_days_str)
+        if scheduled_start_time and scheduled_end_time and scheduled_end_time <= scheduled_start_time:
+            messages.error(request, "Scheduled end time must be strictly after the start time.")
+            return redirect('ticket_triage', ticket_id=ticket.id)
+
+        ticket.start_date = start_date
+        ticket.end_date = end_date
+        ticket.scheduled_date = start_date
+        ticket.scheduled_start_time = scheduled_start_time
+        ticket.scheduled_end_time = scheduled_end_time
+
+        # Store predicted_days from form
+        predicted_days = cleaned_data.get('predicted_days')
+        if predicted_days:
+            ticket.predicted_days = predicted_days
 
         assigned_staff_list = request.POST.getlist('assigned_staff')
         if not assigned_staff_list:
             assigned_staff_str = 'Unassigned'
             ticket.assignee = None
+            ticket.assigned_at = None
             ticket.status = 'PENDING'
         else:
             unique_staff = list(set(assigned_staff_list))
@@ -618,9 +650,11 @@ def approve_request(request, ticket_id):
                     ticket.assignee = resolve_assignee_from_names(unique_staff) or request.user
             else:
                 ticket.assignee = resolve_assignee_from_names(unique_staff) or request.user
+            
             ticket.status = 'PENDING_ACCEPTANCE'
+            ticket.assigned_at = timezone.now()
 
-        feedback = request.POST.get('admin_feedback', '').strip()
+        feedback = cleaned_data.get('admin_feedback', '').strip()
         
         # Structure admin_notes with specific headers to facilitate parsing
         ticket.admin_notes = f"Assigned to: {assigned_staff_str}"
@@ -982,6 +1016,9 @@ def decline_assignment(request, ticket_id):
                 ticket.admin_notes = decline_note
 
         ticket.status = 'PENDING'
+        if not ticket.admin_notes or 'Assigned to: Unassigned' in ticket.admin_notes:
+            ticket.assignee = None
+            ticket.assigned_at = None
         ticket._current_user = request.user
         ticket.save()
 

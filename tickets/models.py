@@ -224,6 +224,7 @@ class Ticket(models.Model):
     scheduled_date = models.DateField(null=True, blank=True, help_text="Date the ticket is scheduled for")
     scheduled_start_time = models.TimeField(null=True, blank=True, help_text="Start time the ticket is scheduled for")
     scheduled_end_time = models.TimeField(null=True, blank=True, help_text="End time the ticket is scheduled for")
+    assigned_at = models.DateTimeField(null=True, blank=True, help_text="Timestamp when the ticket was assigned to staff")
 
     due_date = models.DateTimeField(null=True, blank=True)
     actual_completion_date = models.DateTimeField(null=True, blank=True)
@@ -248,6 +249,15 @@ class Ticket(models.Model):
             self.actual_completion_date = timezone.now()
         elif self.status not in ['RESOLVED', 'COMPLETED'] and self.actual_completion_date:
             self.actual_completion_date = None
+
+        # Automatically track assignment timestamp
+        is_assigned_status = self.status in ['PENDING_ACCEPTANCE', 'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW', 'RESOLVED', 'COMPLETED']
+        has_assignee = bool(self.assignee) or (self.admin_notes and 'Assigned to:' in self.admin_notes and 'Assigned to: Unassigned' not in self.admin_notes)
+
+        if (is_assigned_status or has_assignee) and not self.assigned_at:
+            self.assigned_at = timezone.now()
+        elif self.status == 'PENDING' and not self.assignee and (not self.admin_notes or 'Assigned to: Unassigned' in self.admin_notes):
+            self.assigned_at = None
 
         super().save(*args, **kwargs)
 

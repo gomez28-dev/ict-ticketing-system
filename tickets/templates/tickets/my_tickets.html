@@ -34,7 +34,10 @@
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         {% for ticket in pending_acceptance_tickets %}
                         <tr id="pending-row-{{ ticket.id }}" class="bg-yellow-50/50 dark:bg-yellow-900/10 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors">
-                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ ticket.ticket_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium text-gray-900 dark:text-white">{{ ticket.ticket_number }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Assigned: {{ ticket.assigned_at|date:'M d, Y, g:i A'|default:'Recently' }}</div>
+                            </td>
                             <td class="px-6 py-4">
                                 <span class="px-2.5 py-1 rounded text-xs font-bold
                                     {% if ticket.priority == 'URGENT' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
@@ -63,6 +66,7 @@
                         <div>
                             <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
                             <p class="text-base font-bold text-gray-900 dark:text-white">{{ ticket.ticket_number }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Assigned: {{ ticket.assigned_at|date:'M d, Y, g:i A'|default:'Recently' }}</p>
                         </div>
                         <span class="px-2.5 py-1 rounded text-xs font-bold
                             {% if ticket.priority == 'URGENT' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
@@ -128,7 +132,10 @@
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         {% for ticket in assigned_tickets %}
                         <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ ticket.ticket_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium text-gray-900 dark:text-white">{{ ticket.ticket_number }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Assigned: {{ ticket.assigned_at|date:'M d, Y, g:i A'|default:'N/A' }}</div>
+                            </td>
                             <td class="px-6 py-4">
                                 <span class="px-2.5 py-1 rounded text-xs font-bold
                                     {% if ticket.priority == 'URGENT' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
@@ -162,6 +169,7 @@
                         <div>
                             <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Ticket Number</p>
                             <p class="text-base font-bold text-gray-900 dark:text-white">{{ ticket.ticket_number }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Assigned: {{ ticket.assigned_at|date:'M d, Y, g:i A'|default:'N/A' }}</p>
                         </div>
                         <span class="px-2.5 py-1 rounded text-xs font-bold
                             {% if ticket.priority == 'URGENT' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400

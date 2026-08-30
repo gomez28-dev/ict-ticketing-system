@@ -54,9 +54,19 @@
                     <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.get_support_type_display }}</span>
                 </div>
                 <div>
-                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Submission Date</span>
-                    <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.created_at|date:"F d, Y h:i A" }}</span>
+                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Assignment Date</span>
+                    <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.assigned_at|date:"M d, Y, g:i A"|default:"N/A" }}</span>
                 </div>
+                <div>
+                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Submission Date</span>
+                    <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.created_at|date:"M d, Y, g:i A" }}</span>
+                </div>
+                {% if ticket.scheduled_date %}
+                <div>
+                    <span class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Scheduled Date & Time</span>
+                    <span class="text-gray-800 dark:text-gray-200 font-medium">{{ ticket.scheduled_date|date:"M d, Y" }}{% if ticket.scheduled_start_time %} ({{ ticket.scheduled_start_time|time:"g:i A" }} - {{ ticket.scheduled_end_time|time:"g:i A" }}){% endif %}</span>
+                </div>
+                {% endif %}
             </div>
 
             <div class="mb-8">

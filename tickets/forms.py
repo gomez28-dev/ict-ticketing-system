@@ -68,3 +68,41 @@ class SubmitForReviewForm(forms.Form):
         if not resolution_notes:
             raise forms.ValidationError('Please provide a resolution summary before submitting for review.')
         return resolution_notes
+
+
+class TicketAssignmentForm(forms.Form):
+    work_type = forms.ChoiceField(choices=Ticket.WorkType.choices, required=False)
+    priority = forms.ChoiceField(choices=Ticket.Priority.choices, required=False)
+    start_date = forms.DateField(required=True, error_messages={'required': 'Please select a valid start date.'})
+    end_date = forms.DateField(required=True, error_messages={'required': 'Please select a valid end date.'})
+    scheduled_start_time = forms.TimeField(required=False)
+    scheduled_end_time = forms.TimeField(required=False)
+    predicted_days = forms.IntegerField(required=False, min_value=1)
+    admin_feedback = forms.CharField(required=False, widget=forms.Textarea)
+
+    def clean_start_date(self):
+        start_date = self.cleaned_data.get('start_date')
+        if start_date:
+            from django.utils import timezone
+            today = timezone.localdate()
+            if start_date < today:
+                raise forms.ValidationError("Scheduled start date cannot be in the past.")
+        return start_date
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        scheduled_start_time = cleaned_data.get('scheduled_start_time')
+        scheduled_end_time = cleaned_data.get('scheduled_end_time')
+
+        if start_date and end_date:
+            if end_date < start_date:
+                self.add_error('end_date', "Scheduled end date cannot be earlier than the start date.")
+
+        if scheduled_start_time and scheduled_end_time:
+            if scheduled_end_time <= scheduled_start_time:
+                self.add_error('scheduled_end_time', "Scheduled end time must be strictly after the start time.")
+
+        return cleaned_data
+

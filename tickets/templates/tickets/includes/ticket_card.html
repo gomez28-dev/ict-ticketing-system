@@ -14,6 +14,7 @@
      data-resolution-attachment-url="{% if ticket.resolution_attachment %}{{ ticket.resolution_attachment.url }}{% endif %}"
      data-resolution-notes="{{ ticket.resolution_notes|default:'' }}"
      data-notes="{{ ticket.admin_notes|default:'' }}"
+     data-assigned="{{ ticket.assigned_at|date:'M d, Y g:i A'|default:'' }}"
      data-created="{{ ticket.created_at|date:'M d, Y h:i A' }}"
      data-updated="{{ ticket.updated_at|date:'M d, Y h:i A' }}">
 

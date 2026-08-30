@@ -135,6 +135,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('modalContact').innerText = card.getAttribute('data-contact');
             document.getElementById('modalSchool').innerText = card.getAttribute('data-school');
             document.getElementById('modalSupportType').innerText = card.getAttribute('data-support-type');
+            const assignedAtVal = card.getAttribute('data-assigned');
+            const modalAssignedEl = document.getElementById('modalAssignedAt');
+            if (modalAssignedEl) {
+                modalAssignedEl.innerText = assignedAtVal || 'N/A';
+            }
             document.getElementById('modalDescription').innerText = card.getAttribute('data-description');
             const attachmentUrl = card.getAttribute('data-attachment-url');
             const attachmentWrap = document.getElementById('modalAttachmentWrap');

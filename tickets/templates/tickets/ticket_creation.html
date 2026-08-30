@@ -126,6 +126,16 @@
                     <span>✨</span> AI Analysis
                 </h3>
 
+                {% if not ai_valid %}
+                <div class="mb-3 p-3.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/60 rounded-lg flex items-start gap-2.5">
+                    <span class="text-amber-600 dark:text-amber-400 text-base leading-none">⚠️</span>
+                    <div>
+                        <h4 class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">AI Analysis Notice</h4>
+                        <p class="text-xs text-amber-700 dark:text-amber-300/90 mt-0.5">{{ ai_validation_error|default:"Description does not contain enough detail for AI analysis" }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="space-y-3">
                     <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-purple-100 dark:border-purple-800/50">
                         <span class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Predicted Resolution Time</span>
@@ -178,11 +188,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Start Date</label>
-                            <input type="date" id="start_date" name="start_date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
+                            <input type="date" id="start_date" name="start_date" min="{{ today|date:'Y-m-d' }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">End Date (Auto-calc: {{ predicted_days|default:1 }} days)</label>
-                            <input type="date" id="end_date" name="end_date" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required readonly>
+                            <input type="date" id="end_date" name="end_date" min="{{ today|date:'Y-m-d' }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required readonly>
                             <input type="hidden" id="predicted_days" name="predicted_days" value="{{ predicted_days|default:1 }}">
                         </div>
                     </div>
@@ -316,6 +326,7 @@
         if(startDateInput && endDateInput) {
             startDateInput.addEventListener('change', function() {
                 if(this.value) {
+                    endDateInput.min = this.value;
                     const startD = new Date(this.value);
                     const endD = new Date(startD);
                     // Add predicted days (minus 1 if same day)
@@ -382,10 +393,34 @@
             });
         }
 
-        // Form Validation for Staff Assignment
+        // Form Validation for Staff Assignment and Date/Time
         const triageForm = document.getElementById('triageForm');
         if(triageForm) {
             triageForm.addEventListener('submit', function(e) {
+                const startDateVal = startDateInput ? startDateInput.value : '';
+                const endDateVal = endDateInput ? endDateInput.value : '';
+                const todayStr = '{{ today|date:"Y-m-d" }}';
+
+                if (startDateVal && startDateVal < todayStr) {
+                    e.preventDefault();
+                    alert('Scheduled start date cannot be in the past.');
+                    return;
+                }
+
+                if (startDateVal && endDateVal && endDateVal < startDateVal) {
+                    e.preventDefault();
+                    alert('Scheduled end date cannot be earlier than the start date.');
+                    return;
+                }
+
+                const startTimeVal = startTimeSelect ? startTimeSelect.value : '';
+                const endTimeVal = endTimeSelect ? endTimeSelect.value : '';
+                if (startTimeVal && endTimeVal && endTimeVal <= startTimeVal) {
+                    e.preventDefault();
+                    alert('Scheduled end time must be strictly after the start time.');
+                    return;
+                }
+
                 const checkedBoxes = document.querySelectorAll('input[name="assigned_staff"]:checked');
                 if (checkedBoxes.length === 0) {
                     e.preventDefault();
