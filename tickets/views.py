@@ -15,7 +15,8 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
-from .email_utils import send_new_account_email, DEFAULT_PASSWORD
+from django.conf import settings
+from .email_utils import send_new_account_email, send_otp_email, DEFAULT_PASSWORD
 
 User = get_user_model()
 
@@ -265,8 +266,8 @@ def school_dashboard(request):
             
             normalized_email = new_ict_email.lower()
             allowed_emails = ['admin@test.com', 'employee@test.com', 'alice.tan@email.com', 'juan.pedro@email.com', 'ramon.sy@email.com']
-            if not normalized_email.endswith('@deped.gov.ph') and normalized_email not in allowed_emails:
-                messages.error(request, "Only official @deped.gov.ph email addresses are permitted.")
+            if not (normalized_email.endswith('@deped.gov.ph') or normalized_email.endswith('@gmail.com')) and normalized_email not in allowed_emails:
+                messages.error(request, "Only official @deped.gov.ph or @gmail.com email addresses are permitted.")
                 return redirect('school_dashboard')
 
             if is_email_already_associated(new_ict_email, exclude_school_id=school.id):
@@ -1187,44 +1188,42 @@ def forgot_password(request):
         school = School.objects.filter(ict_email__iexact=email).first()
         user = User.objects.filter(email__iexact=email).first() if not school else None
 
-        if school or user:
-            # Invalidate any previous unused OTPs
-            if school:
-                PasswordResetOTP.objects.filter(school=school, is_used=False).update(is_used=True)
-            else:
-                PasswordResetOTP.objects.filter(user=user, is_used=False).update(is_used=True)
+        if not school and not user:
+            return render(request, 'tickets/forgot_password.html', {
+                'error': 'No account found with this email address. Please make sure you are using your registered DepEd or Gmail address, or request access.',
+                'from_source': from_source,
+            })
 
-            # Generate and save new OTP
-            code = PasswordResetOTP.generate_code()
-            otp = PasswordResetOTP(school=school, user=user, code=code)
+        recipient_name = school.name if school else (user.get_full_name() or user.username)
+
+        # Invalidate any previous unused OTPs
+        if school:
+            PasswordResetOTP.objects.filter(school=school, is_used=False).update(is_used=True)
+        else:
+            PasswordResetOTP.objects.filter(user=user, is_used=False).update(is_used=True)
+
+        # Generate and save new OTP
+        code = PasswordResetOTP.generate_code()
+        otp = PasswordResetOTP(school=school, user=user, code=code)
+        otp.save()
+
+        # Send branded email with OTP
+        success, error_msg = send_otp_email(email, code, recipient_name=recipient_name)
+        if not success:
+            # Mark OTP as used/invalidated since delivery failed
+            otp.is_used = True
             otp.save()
+            return render(request, 'tickets/forgot_password.html', {
+                'error': 'Unable to send verification code. Please check your network connection or contact ICT support.',
+                'from_source': from_source,
+            })
 
-            # Send email with OTP
-            try:
-                from django.core.mail import send_mail
-                send_mail(
-                    subject='ICT Helpdesk — Password Reset Code',
-                    message=(
-                        f'Your password reset verification code is: {code}\n\n'
-                        f'This code will expire in 15 minutes.\n\n'
-                        f'If you did not request this, please ignore this email.\n\n'
-                        f'— DepEd Division of Valenzuela, ICT Unit'
-                    ),
-                    from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings
-                    recipient_list=[email],
-                    fail_silently=False,
-                )
-            except Exception as e:
-                print(f"[OTP Email Error] {e}")
-                # Still proceed — in dev/demo the OTP is in the DB for testing
-
-        # Always show the same success message regardless of whether email was found
-        # This prevents attackers from enumerating which emails are registered
         request.session['otp_email'] = email
         return render(request, 'tickets/forgot_password.html', {
             'email_sent': True,
             'email': email,
             'from_source': from_source,
+            'debug_otp': code if settings.DEBUG else None,
         })
 
     return render(request, 'tickets/forgot_password.html', {
@@ -1402,9 +1401,9 @@ def request_access(request):
 
         normalized_email = email.lower()
         allowed_emails = ['admin@test.com', 'employee@test.com', 'alice.tan@email.com', 'juan.pedro@email.com', 'ramon.sy@email.com']
-        if not normalized_email.endswith('@deped.gov.ph') and normalized_email not in allowed_emails:
+        if not (normalized_email.endswith('@deped.gov.ph') or normalized_email.endswith('@gmail.com')) and normalized_email not in allowed_emails:
             return render(request, 'tickets/request_access.html', {
-                'error': 'Only official @deped.gov.ph email addresses are permitted.',
+                'error': 'Only official @deped.gov.ph or @gmail.com email addresses are permitted.',
                 'schools': schools,
                 'form_data': request.POST,
             })

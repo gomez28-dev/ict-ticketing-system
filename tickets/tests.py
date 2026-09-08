@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Ticket, School, PasswordResetOTP
+from .models import Ticket, School, PasswordResetOTP, SchoolAccountRequest
 from .ml_service import validate_ticket_description_for_ai
 
 
@@ -350,3 +350,67 @@ class PasswordResetTests(TestCase):
         session.save()
         response_verify_admin = self.client.post(reverse('verify_otp'), {'code': otp_admin.code})
         self.assertRedirects(response_verify_admin, reverse('reset_password_confirm'))
+
+    def test_send_otp_email_utility(self):
+        from django.core import mail
+        from tickets.email_utils import send_otp_email
+        success, error = send_otp_email('test@gmail.com', '123456', recipient_name='Juan Dela Cruz')
+        self.assertTrue(success)
+        self.assertIsNone(error)
+        self.assertEqual(len(mail.outbox), 1)
+        sent_email = mail.outbox[0]
+        self.assertEqual(sent_email.to, ['test@gmail.com'])
+        self.assertIn('123456', sent_email.body)
+        self.assertIn('Juan Dela Cruz', sent_email.body)
+
+    def test_forgot_password_shows_error_when_email_fails(self):
+        from unittest.mock import patch
+        with patch('tickets.views.send_otp_email', return_value=(False, 'Connection timed out')):
+            response = self.client.post(reverse('forgot_password'), {'email': 'school@example.com'})
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'Unable to send verification code')
+
+    def test_test_smtp_management_command(self):
+        from io import StringIO
+        from django.core.management import call_command
+        out = StringIO()
+        call_command('test_smtp', 'testrecipient@gmail.com', stdout=out)
+        output = out.getvalue()
+        self.assertIn('SMTP Configuration Diagnostic Tool', output)
+        self.assertTrue('SUCCESS' in output or 'SIMULATED' in output)
+
+    def test_forgot_password_unregistered_email_shows_error(self):
+        response = self.client.post(reverse('forgot_password'), {'email': 'nonexistent@gmail.com'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No account found with this email address')
+
+    def test_forgot_password_registered_gmail_succeeds(self):
+        # Update school's email to a gmail account
+        self.school.ict_email = 'school.coordinator@gmail.com'
+        self.school.save()
+        response = self.client.post(reverse('forgot_password'), {'email': 'school.coordinator@gmail.com'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Check Your Email')
+        self.assertEqual(self.client.session['otp_email'], 'school.coordinator@gmail.com')
+
+    def test_request_school_access_with_gmail(self):
+        # Create a new test school
+        new_school = School.objects.create(
+            name="Gmail Test Elementary School",
+            school_id="119999",
+            district="District 1",
+        )
+        data = {
+            'school': new_school.id,
+            'ict_name': 'Test Coordinator',
+            'email': 'coordinator.test@gmail.com',
+            'contact_number': '09123456789',
+        }
+        response = self.client.post(reverse('request_access'), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Request Submitted')
+        req = SchoolAccountRequest.objects.filter(email='coordinator.test@gmail.com').first()
+        self.assertIsNotNone(req)
+        self.assertFalse(req.domain_verified)  # non-deped is flagged for manual admin review
+
+

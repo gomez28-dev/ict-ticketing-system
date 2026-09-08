@@ -114,6 +114,120 @@ def send_new_account_email(user_email, first_name, login_url):
         email.content_subtype = 'html'
         email.send(fail_silently=False)
         logger.info(f"[Email] New account notification sent to {user_email}")
+        return True, None
     except Exception as e:
         logger.error(f"[Email Error] Failed to send new account email to {user_email}: {e}")
-        # Don't re-raise — the account is already created, email failure is non-blocking
+        return False, str(e)
+
+
+def send_otp_email(recipient_email, code, recipient_name=None):
+    """
+    Sends an HTML-formatted OTP verification email for password reset.
+    Returns (success: bool, error_message: str or None).
+    """
+    subject = 'ICT Helpdesk — Your Password Reset Code'
+    greeting = f"Hello, {recipient_name}!" if recipient_name else "Hello!"
+
+    html_body = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin:0; padding:0; background-color:#f4f6f9; font-family: 'Segoe UI', Arial, sans-serif;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f4f6f9; padding:40px 20px;">
+            <tr>
+                <td align="center">
+                    <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                        <!-- Header -->
+                        <tr>
+                            <td style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding:32px 40px; text-align:center;">
+                                <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:700; letter-spacing:0.5px;">ICT Unit Helpdesk</h1>
+                                <p style="margin:6px 0 0; color:#93c5fd; font-size:13px;">DepEd Division of Valenzuela</p>
+                            </td>
+                        </tr>
+                        <!-- Body -->
+                        <tr>
+                            <td style="padding:36px 40px;">
+                                <h2 style="margin:0 0 16px; color:#1e293b; font-size:18px; font-weight:700;">{greeting}</h2>
+                                <p style="margin:0 0 20px; color:#475569; font-size:14px; line-height:1.7;">
+                                    We received a request to reset the password for your ICT Helpdesk account. Use the 6-digit verification code below to proceed:
+                                </p>
+
+                                <!-- OTP Code Box -->
+                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
+                                    <tr>
+                                        <td align="center" style="background-color:#eff6ff; border:2px dashed #3b82f6; border-radius:12px; padding:28px 20px;">
+                                            <p style="margin:0 0 8px; color:#64748b; font-size:11px; text-transform:uppercase; font-weight:700; letter-spacing:1.5px;">Verification Code (OTP)</p>
+                                            <div style="font-family: 'Courier New', Courier, monospace; font-size:36px; font-weight:800; letter-spacing:10px; color:#1d4ed8; padding-left:10px;">
+                                                {code}
+                                            </div>
+                                            <p style="margin:10px 0 0; color:#64748b; font-size:12px;">Valid for <strong>15 minutes</strong></p>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <!-- Security Warning Notice -->
+                                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;">
+                                    <tr>
+                                        <td style="background-color:#fef3c7; border:1px solid #fde68a; border-radius:8px; padding:14px 18px;">
+                                            <p style="margin:0; color:#92400e; font-size:12px; line-height:1.6;">
+                                                <strong>⚠️ Security Notice:</strong> Never share this code with anyone. ICT Helpdesk staff will never ask for your verification code or password.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <p style="margin:0; color:#64748b; font-size:13px; line-height:1.6;">
+                                    If you did not make this request, you can safely ignore this email. Your password will remain unchanged.
+                                </p>
+                            </td>
+                        </tr>
+                        <!-- Footer -->
+                        <tr>
+                            <td style="background-color:#f8fafc; border-top:1px solid #e2e8f0; padding:20px 40px; text-align:center;">
+                                <p style="margin:0; color:#94a3b8; font-size:11px; line-height:1.6;">
+                                    This is an automated security notification from the ICT Helpdesk system.<br>
+                                    &copy; 2026 DepEd Division of Valenzuela — ICT Unit. All rights reserved.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+
+    # Check for unconfigured SMTP in local development
+    unconfigured_passwords = {'', 'your-brevo-smtp-key', 'your-actual-app-password', 'your-16-char-app-password'}
+    is_smtp_backend = getattr(settings, 'EMAIL_BACKEND', '').endswith('smtp.EmailBackend')
+    host_password = getattr(settings, 'EMAIL_HOST_PASSWORD', '').strip()
+
+    if getattr(settings, 'DEBUG', False) and is_smtp_backend and host_password in unconfigured_passwords:
+        print("\n" + "=" * 60)
+        print(f" [DEV FALLBACK] Live SMTP credentials not configured yet in .env")
+        print(f" [OTP CODE for {recipient_email}]: {code}")
+        print("=" * 60 + "\n")
+        logger.warning(f"[Dev Mode] Simulating email delivery. OTP for {recipient_email}: {code}")
+        return True, None
+
+    try:
+        email = EmailMessage(
+            subject=subject,
+            body=html_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[recipient_email],
+        )
+        email.content_subtype = 'html'
+        email.send(fail_silently=False)
+        logger.info(f"[Email] OTP verification code successfully sent to {recipient_email}")
+        return True, None
+    except Exception as e:
+        logger.error(f"[Email Error] Failed to send OTP email to {recipient_email}: {e}")
+        return False, str(e)
+
+
+
