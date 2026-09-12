@@ -30,6 +30,7 @@ urlpatterns = [
     # Dashboard Links
     path('admin-dashboard/', views.dashboard, name='dashboard'),
     path('admin-dashboard/analytics/', views.analytics_dashboard, name='analytics'),
+    path('admin-dashboard/analytics/print/', views.analytics_report_print, name='analytics_report_print'),
     path('admin-dashboard/requests/', views.requests_view, name='requests'),
     path('admin-dashboard/requests/reviewed/<int:ticket_id>/', views.reviewed_ticket_readonly, name='reviewed_ticket_readonly'),
 

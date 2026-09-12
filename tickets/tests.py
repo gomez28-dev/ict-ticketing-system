@@ -414,3 +414,74 @@ class PasswordResetTests(TestCase):
         self.assertFalse(req.domain_verified)  # non-deped is flagged for manual admin review
 
 
+class AnalyticsReportTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='admin_analytics',
+            email='admin_analytics@example.com',
+            password='password123',
+            first_name='Admin',
+            last_name='Tester',
+            role='ADMIN',
+            is_staff=True,
+        )
+        self.member = User.objects.create_user(
+            username='member_user',
+            email='member@example.com',
+            password='password123',
+            first_name='Juan',
+            last_name='Dela Cruz',
+            role='MEMBER',
+            overall_rating=4.5,
+        )
+        # Create test tickets
+        Ticket.objects.create(
+            ticket_number='TKT-2026-9001',
+            school_name='Valenzuela National High School',
+            support_type='CCTV',
+            status='COMPLETED',
+            admin_notes='Assigned to: Juan Dela Cruz',
+            description='Test CCTV maintenance issue'
+        )
+        Ticket.objects.create(
+            ticket_number='TKT-2026-9002',
+            school_name='Polo National High School',
+            support_type='NETWORK_MAINTENANCE',
+            status='PENDING',
+            description='Network configuration support'
+        )
+
+    def test_analytics_dashboard_requires_admin(self):
+        # Unauthenticated redirects to dashboard login
+        response = self.client.get(reverse('analytics'))
+        self.assertRedirects(response, f"{reverse('dashboard')}?next={reverse('analytics')}")
+
+        # Member user redirects to dashboard
+        self.client.force_login(self.member)
+        response = self.client.get(reverse('analytics'))
+        self.assertRedirects(response, f"{reverse('dashboard')}?next={reverse('analytics')}")
+
+        # Admin user succeeds
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('analytics'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'System Performance & Analytics')
+        self.assertContains(response, 'Export Report (PDF)')
+
+    def test_analytics_report_print_view(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('analytics_report_print'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'DIVISION OFFICE OF VALENZUELA')
+        self.assertContains(response, 'DASHBOARD ANALYTICS AND PERFORMANCE REPORT')
+        self.assertContains(response, 'I. SYSTEM SUMMARY')
+        self.assertContains(response, 'II. SCHOOL COMPLAINT / REQUEST ANALYSIS')
+        self.assertContains(response, 'III. MOST REQUESTED SERVICES')
+        self.assertContains(response, 'IV. EMPLOYEE PERFORMANCE ANALYSIS')
+        self.assertContains(response, 'V. SYSTEM ANALYTICS')
+        self.assertContains(response, 'VI. REPORT CERTIFICATION')
+        self.assertContains(response, 'Valenzuela National High School')
+        self.assertContains(response, 'Juan Dela Cruz')
+
+
+

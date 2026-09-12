@@ -1,0 +1,594 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT Helpdesk Analytics Report - {{ report_reference_no }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .print-exact {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 8mm 10mm 8mm 10mm;
+            }
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                font-size: 9pt !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .screen-toolbar {
+                display: none !important;
+            }
+            .report-sheet {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+            }
+            .page-break {
+                page-break-after: always !important;
+                break-after: page !important;
+                clear: both;
+            }
+            .avoid-break {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+        }
+
+        @media screen {
+            body {
+                background-color: #f1f5f9;
+            }
+            .report-sheet {
+                width: 210mm;
+                min-height: 297mm;
+                margin: 16px auto;
+                background: white;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+                padding: 18mm 16mm;
+            }
+            .page-break {
+                border-bottom: 2px dashed #cbd5e1;
+                margin-bottom: 24px;
+                padding-bottom: 24px;
+            }
+        }
+
+        /* Clean document styling matching Google Docs / Skia PDF template */
+        .report-table th, .report-table td {
+            border: 1px solid #1e293b;
+            padding: 4px 6px;
+        }
+        .report-table th {
+            background-color: #f8fafc;
+            font-weight: 700;
+            text-transform: none;
+        }
+        .meta-box td {
+            border: 1px solid #1e293b;
+            padding: 5px 8px;
+        }
+        .section-title {
+            font-size: 11pt;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+    </style>
+</head>
+<body class="text-slate-900 antialiased print-exact">
+
+    <!-- Top Action Toolbar (Hidden during print) -->
+    <header class="screen-toolbar sticky top-0 z-50 border-b border-slate-300 bg-white/95 backdrop-blur shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'dashboard' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors border border-slate-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to Board
+                </a>
+                <a href="{% url 'analytics' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors border border-blue-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    Analytics Dashboard
+                </a>
+            </div>
+
+            <!-- Period Filter Selector -->
+            <form method="GET" action="{% url 'analytics_report_print' %}" class="flex flex-wrap items-center gap-2">
+                <label for="periodSelect" class="text-xs font-bold text-slate-500 uppercase">Period:</label>
+                <select id="periodSelect" name="period" onchange="handlePeriodChange(this.value)" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="all" {% if period == 'all' %}selected{% endif %}>All Time</option>
+                    <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>This Month</option>
+                    <option value="last_30" {% if period == 'last_30' %}selected{% endif %}>Last 30 Days</option>
+                    <option value="this_year" {% if period == 'this_year' %}selected{% endif %}>This Year</option>
+                    <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
+                    <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom Date Range</option>
+                </select>
+
+                <div id="customDatesWrap" class="{% if period != 'custom' %}hidden{% endif %} flex items-center gap-1">
+                    <input type="date" name="start_date" value="{{ start_date }}" class="text-xs px-2 py-1 rounded border border-slate-300 bg-white text-slate-800">
+                    <span class="text-xs text-slate-400">to</span>
+                    <input type="date" name="end_date" value="{{ end_date }}" class="text-xs px-2 py-1 rounded border border-slate-300 bg-white text-slate-800">
+                    <button type="submit" class="px-2 py-1 bg-slate-800 text-white rounded text-xs font-medium hover:bg-slate-700">Apply</button>
+                </div>
+            </form>
+
+            <div class="flex items-center gap-2">
+                <button onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-lg shadow-sm transition-all focus:ring-2 focus:ring-blue-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    Print / Save as PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main 2-Page Printable Document Sheet -->
+    <main class="report-sheet">
+
+        <!-- ======================================================== -->
+        <!-- PAGE 1: HEADER, SUMMARY, SCHOOLS, SERVICES               -->
+        <!-- ======================================================== -->
+        <div class="page-break">
+            <!-- Header matching template -->
+            <div class="text-center mb-5">
+                <h1 class="text-[14pt] font-extrabold uppercase tracking-wide text-slate-900 leading-tight">DIVISION OFFICE OF VALENZUELA</h1>
+                <h2 class="text-[11pt] font-bold uppercase tracking-wider text-slate-800 mt-1 leading-tight">ICT HELPDESK TICKETING AND WORK MANAGEMENT SYSTEM</h2>
+                <h3 class="text-[10pt] font-semibold uppercase tracking-widest text-slate-700 mt-1">DASHBOARD ANALYTICS AND PERFORMANCE REPORT</h3>
+            </div>
+
+            <!-- Metadata Box -->
+            <table class="w-full text-[9pt] meta-box mb-4 border-collapse">
+                <tbody>
+                    <tr>
+                        <td class="w-1/2">
+                            <span class="font-normal text-slate-600">Reporting Period:</span>
+                            <strong class="font-bold text-slate-900 ml-1">{{ reporting_period }}</strong>
+                        </td>
+                        <td class="w-1/2">
+                            <span class="font-normal text-slate-600">Date Generated:</span>
+                            <strong class="font-bold text-slate-900 ml-1">{{ date_generated }}</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <span class="font-normal text-slate-600">Generated By:</span>
+                            <strong class="font-bold text-slate-900 ml-1">{{ generated_by }}</strong>
+                        </td>
+                        <td>
+                            <span class="font-normal text-slate-600">Report Reference No.:</span>
+                            <strong class="font-mono font-bold text-slate-900 ml-1">{{ report_reference_no }}</strong>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Section I: System Summary -->
+            <div class="mb-5">
+                <h4 class="section-title">I. SYSTEM SUMMARY</h4>
+                <table class="w-full text-[9.5pt] report-table border-collapse text-center">
+                    <thead>
+                        <tr class="bg-slate-100">
+                            <th class="w-1/5 py-1.5">Total Tickets</th>
+                            <th class="w-1/5 py-1.5">Resolved</th>
+                            <th class="w-1/5 py-1.5">Pending</th>
+                            <th class="w-1/5 py-1.5">In Progress</th>
+                            <th class="w-1/5 py-1.5">Under Review</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-bold text-slate-900 py-2">{{ system_summary.total_tickets }}</td>
+                            <td class="font-bold text-slate-900 py-2">{{ system_summary.resolved }}</td>
+                            <td class="font-bold text-slate-900 py-2">{{ system_summary.pending }}</td>
+                            <td class="font-bold text-slate-900 py-2">{{ system_summary.in_progress }}</td>
+                            <td class="font-bold text-slate-900 py-2">{{ system_summary.under_review }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section II: School Complaint / Request Analysis -->
+            <div class="mb-5">
+                <h4 class="section-title">II. SCHOOL COMPLAINT / REQUEST ANALYSIS</h4>
+                <div class="text-[9pt] mb-2 flex justify-between items-center text-slate-800">
+                    <div>
+                        <span>School with the Most Complaints/Requests:</span>
+                        <strong class="font-bold underline ml-1">{{ school_analysis.most_complaints_school }}</strong>
+                    </div>
+                    <div>
+                        <span>Total:</span>
+                        <strong class="font-bold ml-1">{{ school_analysis.most_complaints_total }}</strong> requests
+                    </div>
+                </div>
+                <table class="w-full text-[9pt] report-table border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-left">
+                            <th class="w-16 text-center py-1.5">Rank</th>
+                            <th class="py-1.5 px-3">School Name</th>
+                            <th class="w-32 text-center py-1.5">No. of Requests</th>
+                            <th class="w-32 text-center py-1.5">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for school in school_analysis.top_schools %}
+                        <tr>
+                            <td class="text-center font-semibold py-1.5">{{ school.rank }}</td>
+                            <td class="px-3 py-1.5">{{ school.school_name }}</td>
+                            <td class="text-center py-1.5">{% if school.count > 0 %}{{ school.count }}{% else %}—{% endif %}</td>
+                            <td class="text-center py-1.5">{% if school.count > 0 %}{{ school.percentage }} %{% else %}—{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section III: Most Requested Services -->
+            <div class="mb-2">
+                <h4 class="section-title">III. MOST REQUESTED SERVICES</h4>
+                <div class="text-[9pt] mb-2 flex justify-between items-center text-slate-800">
+                    <div>
+                        <span>Most Requested Service:</span>
+                        <strong class="font-bold underline ml-1">{{ service_analysis.most_requested_service }}</strong>
+                    </div>
+                    <div>
+                        <span>Total:</span>
+                        <strong class="font-bold ml-1">{{ service_analysis.most_requested_total }}</strong> requests
+                    </div>
+                </div>
+                <table class="w-full text-[9pt] report-table border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-left">
+                            <th class="w-16 text-center py-1.5">Rank</th>
+                            <th class="py-1.5 px-3">Service / Request Type</th>
+                            <th class="w-32 text-center py-1.5">No. of Requests</th>
+                            <th class="w-32 text-center py-1.5">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in service_analysis.top_services %}
+                        <tr>
+                            <td class="text-center font-semibold py-1.5">{{ service.rank }}</td>
+                            <td class="px-3 py-1.5">{{ service.service_name }}</td>
+                            <td class="text-center py-1.5">{% if service.count > 0 %}{{ service.count }}{% else %}—{% endif %}</td>
+                            <td class="text-center py-1.5">{% if service.count > 0 %}{{ service.percentage }} %{% else %}—{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- ======================================================== -->
+        <!-- PAGE 2: EMPLOYEE PERFORMANCE, CHARTS, CERTIFICATION      -->
+        <!-- ======================================================== -->
+        <div>
+            <!-- Section IV: Employee Performance Analysis -->
+            <div class="mb-4">
+                <h4 class="section-title">IV. EMPLOYEE PERFORMANCE ANALYSIS</h4>
+                <div class="text-[9pt] mb-2 flex justify-between items-center text-slate-800">
+                    <div>
+                        <span>Top Performing Employee:</span>
+                        <strong class="font-bold underline ml-1">{{ employee_analysis.top_employee_name }}</strong>
+                    </div>
+                    <div>
+                        <span>Overall Rating:</span>
+                        <strong class="font-bold ml-1">{{ employee_analysis.top_employee_rating }}</strong> / 5.00
+                    </div>
+                </div>
+                <table class="w-full text-[9pt] report-table border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-left">
+                            <th class="w-12 text-center py-1.5">Rank</th>
+                            <th class="py-1.5 px-3">Employee Name</th>
+                            <th class="w-28 text-center py-1.5">Tickets Handled</th>
+                            <th class="w-24 text-center py-1.5">Resolved</th>
+                            <th class="w-32 text-center py-1.5">Avg. Resolution Time</th>
+                            <th class="w-32 text-center py-1.5">Performance Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in employee_analysis.top_employees %}
+                        <tr>
+                            <td class="text-center font-semibold py-1.5">{{ emp.rank }}</td>
+                            <td class="px-3 py-1.5 font-medium">{{ emp.name }}</td>
+                            <td class="text-center py-1.5">{% if emp.tickets_handled > 0 %}{{ emp.tickets_handled }}{% else %}—{% endif %}</td>
+                            <td class="text-center py-1.5">{% if emp.resolved > 0 %}{{ emp.resolved }}{% else %}—{% endif %}</td>
+                            <td class="text-center py-1.5">{{ emp.avg_resolution_time }}</td>
+                            <td class="text-center py-1.5 font-semibold">
+                                {% if emp.rating > 0 %}
+                                    {{ emp.rating_display }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Section V: System Analytics (Charts Grid) -->
+            <div class="mb-4 avoid-break">
+                <h4 class="section-title">V. SYSTEM ANALYTICS</h4>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Chart A: Activity -->
+                    <div class="border border-slate-900 p-2 rounded bg-white">
+                        <div class="text-[8pt] font-bold text-slate-800 mb-1">A. System Activity: Tickets Received vs. Resolved</div>
+                        <div class="h-36 w-full relative">
+                            <canvas id="chartActivity"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart B: Requests by School -->
+                    <div class="border border-slate-900 p-2 rounded bg-white">
+                        <div class="text-[8pt] font-bold text-slate-800 mb-1">B. Requests by School (Top 5)</div>
+                        <div class="h-36 w-full relative">
+                            <canvas id="chartSchools"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart C: Most Requested Services -->
+                    <div class="border border-slate-900 p-2 rounded bg-white">
+                        <div class="text-[8pt] font-bold text-slate-800 mb-1">C. Most Requested Services</div>
+                        <div class="h-36 w-full relative">
+                            <canvas id="chartServices"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart D: Employee Performance Ranking -->
+                    <div class="border border-slate-900 p-2 rounded bg-white">
+                        <div class="text-[8pt] font-bold text-slate-800 mb-1">D. Employee Performance Ranking</div>
+                        <div class="h-36 w-full relative">
+                            <canvas id="chartEmployees"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section VI: Report Certification & Signatures -->
+            <div class="mt-4 pt-2 avoid-break">
+                <h4 class="section-title">VI. REPORT CERTIFICATION</h4>
+                <p class="text-[8.5pt] text-slate-700 leading-relaxed mb-6">
+                    This report was automatically generated by the ICT Helpdesk Ticketing and Work Management System based on the available dashboard records within the selected reporting period.
+                </p>
+
+                <div class="grid grid-cols-2 gap-12 mt-4 px-6 text-center text-[9pt]">
+                    <div>
+                        <div class="border-b border-slate-900 pb-1 mb-1 font-bold text-slate-900">
+                            {{ prepared_by_name }}
+                        </div>
+                        <div class="text-[8pt] font-semibold text-slate-700">Prepared by:</div>
+                        <div class="text-[8pt] text-slate-500">{{ prepared_by_title }}</div>
+                    </div>
+
+                    <div>
+                        <div class="border-b border-slate-900 pb-1 mb-1 font-bold text-slate-900">
+                            {{ verified_by_name }}
+                        </div>
+                        <div class="text-[8pt] font-semibold text-slate-700">Verified by:</div>
+                        <div class="text-[8pt] text-slate-500">{{ verified_by_title }}</div>
+                    </div>
+                </div>
+
+                <div class="text-center text-[8pt] font-bold tracking-widest text-slate-400 mt-6 uppercase">
+                    *** END OF REPORT ***
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Chart.js Initializer Script -->
+    <script>
+        function handlePeriodChange(val) {
+            const customWrap = document.getElementById('customDatesWrap');
+            if (val === 'custom') {
+                customWrap.classList.remove('hidden');
+            } else {
+                customWrap.classList.add('hidden');
+                // Auto submit form when selecting pre-set periods
+                document.querySelector('.screen-toolbar form').submit();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Disable animations for instant, crisp print rendering
+            Chart.defaults.animation = false;
+            Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+            Chart.defaults.font.size = 8;
+            Chart.defaults.color = '#334155';
+
+            // 1. Chart A: System Activity (Received vs. Resolved)
+            const ctxActivity = document.getElementById('chartActivity').getContext('2d');
+            new Chart(ctxActivity, {
+                type: 'line',
+                data: {
+                    labels: {{ charts.activity.labels|safe }},
+                    datasets: [
+                        {
+                            label: 'Received',
+                            data: {{ charts.activity.received|safe }},
+                            borderColor: '#0284c7',
+                            backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: 2,
+                        },
+                        {
+                            label: 'Resolved',
+                            data: {{ charts.activity.resolved|safe }},
+                            borderColor: '#16a34a',
+                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true,
+                            pointRadius: 2,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { boxWidth: 10, padding: 6, font: { size: 8 } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0, font: { size: 7.5 } },
+                            grid: { color: '#e2e8f0' }
+                        },
+                        x: {
+                            ticks: { font: { size: 7.5 }, maxRotation: 45 },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // 2. Chart B: Requests by School (Horizontal Bar)
+            const ctxSchools = document.getElementById('chartSchools').getContext('2d');
+            new Chart(ctxSchools, {
+                type: 'bar',
+                data: {
+                    labels: {{ charts.schools.labels|safe }},
+                    datasets: [{
+                        label: 'Requests',
+                        data: {{ charts.schools.data|safe }},
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 3,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { precision: 0, font: { size: 7.5 } },
+                            grid: { color: '#e2e8f0' }
+                        },
+                        y: {
+                            ticks: {
+                                font: { size: 7.5 },
+                                callback: function(val, index) {
+                                    let label = this.getLabelForValue(val);
+                                    return label.length > 18 ? label.substring(0, 16) + '...' : label;
+                                }
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // 3. Chart C: Most Requested Services (Donut Chart)
+            const ctxServices = document.getElementById('chartServices').getContext('2d');
+            new Chart(ctxServices, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ charts.services.labels|safe }},
+                    datasets: [{
+                        data: {{ charts.services.data|safe }},
+                        backgroundColor: [
+                            '#0284c7', // Sky blue
+                            '#10b981', // Emerald
+                            '#f59e0b', // Amber
+                            '#8b5cf6', // Violet
+                            '#ec4899', // Pink
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { boxWidth: 8, padding: 4, font: { size: 7.5 } }
+                        }
+                    },
+                    cutout: '55%'
+                }
+            });
+
+            // 4. Chart D: Employee Performance Ranking (Bar Chart)
+            const ctxEmployees = document.getElementById('chartEmployees').getContext('2d');
+            new Chart(ctxEmployees, {
+                type: 'bar',
+                data: {
+                    labels: {{ charts.employees.labels|safe }},
+                    datasets: [{
+                        label: 'Rating (out of 5)',
+                        data: {{ charts.employees.data|safe }},
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: { stepSize: 1, font: { size: 7.5 } },
+                            grid: { color: '#e2e8f0' }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 7.5 },
+                                callback: function(val, index) {
+                                    let label = this.getLabelForValue(val);
+                                    return label.length > 12 ? label.substring(0, 10) + '...' : label;
+                                }
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -60,6 +60,7 @@
                 {% if request.user.role == 'MEMBER' and not request.user.is_superuser %}
                     {% include 'tickets/includes/nav_item.html' with url_pattern='my_tickets' active_urls='my_tickets,employee_ticket_review' label='My Tickets' badge_count=my_ticket_count %}
                 {% else %}
+                    {% include 'tickets/includes/nav_item.html' with url_pattern='analytics' active_urls='analytics,analytics_report_print' label='Analytics' %}
                     {% include 'tickets/includes/nav_item.html' with url_pattern='employee_directory' active_urls='employee_directory' label='Employees' %}
                     {% include 'tickets/includes/nav_item.html' with url_pattern='schools_management' active_urls='schools_management' label='Schools' badge_count=pending_schools_count %}
                     {% include 'tickets/includes/nav_item.html' with url_pattern='requests' active_urls='requests,ticket_triage' label='Requests' badge_count=pending_count %}
@@ -79,7 +80,7 @@
         </div>
 
        <div class="p-4 border-t border-gray-700 dark:border-gray-800">
-            {% if not request.user.is_superuser %}
+            {% if request.user.is_authenticated and not request.user.is_superuser %}
             <a href="{% url 'employee_profile' request.user.id %}" class="flex items-center gap-3 px-4 py-2 transition-all hover:bg-white/10 rounded-lg cursor-pointer group">
             {% else %}
             <div class="flex items-center gap-3 px-4 py-2">
@@ -98,7 +99,7 @@
                         <p class="text-[10px] font-bold text-gray-400">Employee</p>
                     {% endif %}
                 </div>
-            {% if not request.user.is_superuser %}
+            {% if request.user.is_authenticated and not request.user.is_superuser %}
             </a>
             {% else %}
             </div>

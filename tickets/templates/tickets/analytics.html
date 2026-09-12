@@ -1,80 +1,200 @@
 {% extends 'tickets/base_admin.html' %}
+{% load static %}
 
 {% block content %}
-<div class="mb-6 flex justify-between items-end">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400">System overview, metrics, and team performance.</p>
-    </div>
-</div>
+<div class="space-y-6">
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-
-    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-[#0078d4] dark:text-blue-400 flex items-center justify-center text-2xl">
-            📊
-        </div>
+    <!-- Page Header & Actions -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors">
         <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ total_tickets }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold">Total Tickets</div>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">Analytics & Reporting</span>
+                <span class="text-xs text-gray-400">•</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">{{ reporting_period }}</span>
+            </div>
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white tracking-tight">System Performance & Analytics</h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Comprehensive metrics, school complaint patterns, service distribution, and staff performance.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- Period Filter Form -->
+            <form method="GET" action="{% url 'analytics' %}" class="flex items-center gap-2">
+                <select name="period" onchange="this.form.submit()" class="text-xs font-semibold px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-100 shadow-sm outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                    <option value="all" {% if period == 'all' %}selected{% endif %}>All Time</option>
+                    <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>This Month</option>
+                    <option value="last_30" {% if period == 'last_30' %}selected{% endif %}>Last 30 Days</option>
+                    <option value="this_year" {% if period == 'this_year' %}selected{% endif %}>This Year</option>
+                    <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
+                </select>
+            </form>
+
+            <!-- Export Report PDF Button -->
+            <a href="{% url 'analytics_report_print' %}?period={{ period }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Export Report (PDF)
+            </a>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-12 h-12 rounded-lg bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center text-2xl">
-            ✅
+    <!-- Section I: Metric Summary Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <!-- Total Tickets -->
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm border-l-4 border-l-blue-500 transition-colors">
+            <div class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Total Tickets</div>
+            <div class="text-2xl font-black text-gray-900 dark:text-white">{{ system_summary.total_tickets }}</div>
+            <div class="text-[10px] text-gray-400 mt-1">Logged requests</div>
         </div>
-        <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ resolved_tickets }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold">Resolved Tickets</div>
+
+        <!-- Resolved -->
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm border-l-4 border-l-emerald-500 transition-colors">
+            <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Resolved</div>
+            <div class="text-2xl font-black text-gray-900 dark:text-white">{{ system_summary.resolved }}</div>
+            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">Completed solutions</div>
+        </div>
+
+        <!-- Pending -->
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm border-l-4 border-l-amber-500 transition-colors">
+            <div class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">Pending</div>
+            <div class="text-2xl font-black text-gray-900 dark:text-white">{{ system_summary.pending }}</div>
+            <div class="text-[10px] text-gray-400 mt-1">Awaiting triage</div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm border-l-4 border-l-indigo-500 transition-colors">
+            <div class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">In Progress</div>
+            <div class="text-2xl font-black text-gray-900 dark:text-white">{{ system_summary.in_progress }}</div>
+            <div class="text-[10px] text-gray-400 mt-1">Currently serviced</div>
+        </div>
+
+        <!-- Under Review -->
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm border-l-4 border-l-purple-500 transition-colors col-span-2 sm:col-span-1">
+            <div class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-1">Under Review</div>
+            <div class="text-2xl font-black text-gray-900 dark:text-white">{{ system_summary.under_review }}</div>
+            <div class="text-[10px] text-gray-400 mt-1">Pending admin sign-off</div>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex items-center gap-4 transition-colors">
-        <div class="w-12 h-12 rounded-lg bg-orange-50 dark:bg-orange-900/30 text-orange-500 dark:text-orange-400 flex items-center justify-center text-2xl">
-            📥
-        </div>
-        <div>
-            <div class="text-2xl font-bold text-gray-800 dark:text-white">{{ pending_requests }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold">Pending Requests</div>
-        </div>
-    </div>
-
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
-
-    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col transition-colors">
-        <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 uppercase tracking-wider flex items-center gap-2">📈 System Activity (7-Day Trend)</h3>
-        <div class="flex-1 relative w-full h-64">
-            <canvas id="activityChart"></canvas>
-        </div>
-    </div>
-
-    <div class="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 transition-colors flex flex-col">
-        <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 mb-4 uppercase tracking-wider flex items-center gap-2">🏆 Top Performers</h3>
-
-        <div class="space-y-3 flex-1">
-            {% for staff in staff_data %}
-            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-[#0078d4] text-white flex items-center justify-center text-sm font-bold shadow-sm">
-                        {{ staff.name|make_list|first }}
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ staff.name }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ staff.role }}</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-sm font-bold text-[#0078d4] dark:text-blue-400">{{ staff.resolved_tickets }} <span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">Resolved</span></p>
-                    <p class="text-xs text-green-600 dark:text-green-400 font-bold flex items-center justify-end gap-1">⭐ {{ staff.rating }}</p>
+    <!-- Charts Row 1: System Activity & Requests by School -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- System Activity (7-14 Days / Period Trend) -->
+        <div class="lg:col-span-7 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col transition-colors">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white text-base">System Activity: Received vs. Resolved</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Incoming tickets compared with resolved milestones over time</p>
                 </div>
             </div>
-            {% endfor %}
+            <div class="flex-1 min-h-[280px] relative w-full">
+                <canvas id="activityChart"></canvas>
+            </div>
         </div>
 
-        <a href="{% url 'employee_directory' %}" class="block text-center text-xs text-[#0078d4] dark:text-blue-400 mt-4 hover:underline font-bold bg-blue-50 dark:bg-blue-900/20 py-2 rounded-lg transition-colors">View All Employees &rarr;</a>
+        <!-- Requests by School -->
+        <div class="lg:col-span-5 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col transition-colors">
+            <div class="flex items-center justify-between mb-2">
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white text-base">Top Schools by Requests</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Schools submitting the most support tickets</p>
+                </div>
+                <span class="text-xs font-semibold px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">Top 5</span>
+            </div>
+            <div class="flex-1 min-h-[260px] relative w-full">
+                <canvas id="schoolsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Most Requested Services & Employee Ranking -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Most Requested Services -->
+        <div class="lg:col-span-5 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col transition-colors">
+            <div class="flex items-center justify-between mb-2">
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white text-base">Most Requested Services</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Distribution of requests by support category</p>
+                </div>
+            </div>
+            <div class="flex-1 min-h-[260px] relative w-full flex items-center justify-center">
+                <canvas id="servicesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Employee Performance Ranking -->
+        <div class="lg:col-span-7 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col transition-colors">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-bold text-gray-900 dark:text-white text-base">Top Performing Employees</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Staff rankings based on overall performance rating and completed tickets</p>
+                </div>
+                <a href="{% url 'employee_directory' %}" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">View All &rarr;</a>
+            </div>
+            <div class="flex-1 min-h-[260px] relative w-full">
+                <canvas id="employeesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tables Breakdown Accordion / Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- School Breakdown Table -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <h4 class="font-bold text-gray-900 dark:text-white text-sm">School Complaint / Request Breakdown</h4>
+                <span class="text-xs text-gray-400 font-medium">Top: <strong class="text-gray-700 dark:text-gray-200">{{ school_analysis.most_complaints_school }}</strong></span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-gray-600 dark:text-gray-300">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                        <tr>
+                            <th class="py-3 px-4 w-12 text-center">Rank</th>
+                            <th class="py-3 px-4">School Name</th>
+                            <th class="py-3 px-4 text-center">Requests</th>
+                            <th class="py-3 px-4 text-center">Share</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        {% for school in school_analysis.top_schools %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                            <td class="py-3 px-4 text-center font-bold text-gray-900 dark:text-white">{{ school.rank }}</td>
+                            <td class="py-3 px-4 font-medium text-gray-800 dark:text-gray-200">{{ school.school_name }}</td>
+                            <td class="py-3 px-4 text-center font-semibold text-blue-600 dark:text-blue-400">{% if school.count > 0 %}{{ school.count }}{% else %}—{% endif %}</td>
+                            <td class="py-3 px-4 text-center font-semibold text-gray-600 dark:text-gray-300">{% if school.count > 0 %}{{ school.percentage }}%{% else %}—{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Service Breakdown Table -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <h4 class="font-bold text-gray-900 dark:text-white text-sm">Most Requested Service Breakdown</h4>
+                <span class="text-xs text-gray-400 font-medium">Top: <strong class="text-gray-700 dark:text-gray-200">{{ service_analysis.most_requested_service|truncatechars:28 }}</strong></span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-gray-600 dark:text-gray-300">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
+                        <tr>
+                            <th class="py-3 px-4 w-12 text-center">Rank</th>
+                            <th class="py-3 px-4">Service Type</th>
+                            <th class="py-3 px-4 text-center">Requests</th>
+                            <th class="py-3 px-4 text-center">Share</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        {% for s in service_analysis.top_services %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                            <td class="py-3 px-4 text-center font-bold text-gray-900 dark:text-white">{{ s.rank }}</td>
+                            <td class="py-3 px-4 font-medium text-gray-800 dark:text-gray-200">{{ s.service_name }}</td>
+                            <td class="py-3 px-4 text-center font-semibold text-emerald-600 dark:text-emerald-400">{% if s.count > 0 %}{{ s.count }}{% else %}—{% endif %}</td>
+                            <td class="py-3 px-4 text-center font-semibold text-gray-600 dark:text-gray-300">{% if s.count > 0 %}{{ s.percentage }}%{% else %}—{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -82,38 +202,40 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('activityChart').getContext('2d');
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+        const textColor = isDark ? '#9ca3af' : '#64748b';
 
-        // Grab the data safely from Django
-        const labels = {{ chart_labels|safe }};
-        const receivedData = {{ chart_received|safe }};
-        const resolvedData = {{ chart_resolved|safe }};
-
-        new Chart(ctx, {
+        // 1. Activity Chart
+        const actCtx = document.getElementById('activityChart').getContext('2d');
+        new Chart(actCtx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: {{ charts.activity.labels|safe }},
                 datasets: [
                     {
                         label: 'Tickets Received',
-                        data: receivedData,
-                        borderColor: '#0078d4', // Blue
-                        backgroundColor: 'rgba(0, 120, 212, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4, // Smooth curves
-                        fill: true
+                        data: {{ charts.activity.received|safe }},
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
                     },
                     {
                         label: 'Tickets Resolved',
-                        data: resolvedData,
-                        borderColor: '#22c55e', // Green
-                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4, // Smooth curves
-                        fill: true
+                        data: {{ charts.activity.resolved|safe }},
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2.5,
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
                     }
                 ]
             },
@@ -123,28 +245,115 @@
                 plugins: {
                     legend: {
                         position: 'top',
-                        labels: {
-                            color: '#9ca3af' // Gray-400 for dark mode compatibility
-                        }
+                        labels: { color: textColor, font: { weight: '600', size: 11 } }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: {
-                            color: 'rgba(156, 163, 175, 0.1)' // Very faint grid lines
-                        },
-                        ticks: {
-                            color: '#9ca3af'
-                        }
+                        ticks: { color: textColor, precision: 0 },
+                        grid: { color: gridColor }
                     },
                     x: {
-                        grid: {
-                            display: false // Hide vertical grid lines
-                        },
+                        ticks: { color: textColor },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // 2. Schools Chart
+        const schCtx = document.getElementById('schoolsChart').getContext('2d');
+        new Chart(schCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ charts.schools.labels|safe }},
+                datasets: [{
+                    label: 'Requests',
+                    data: {{ charts.schools.data|safe }},
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { color: textColor, precision: 0 },
+                        grid: { color: gridColor }
+                    },
+                    y: {
                         ticks: {
-                            color: '#9ca3af'
-                        }
+                            color: textColor,
+                            font: { size: 10 },
+                            callback: function(val, idx) {
+                                const l = this.getLabelForValue(val);
+                                return l.length > 20 ? l.substring(0, 18) + '...' : l;
+                            }
+                        },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // 3. Services Chart
+        const srvCtx = document.getElementById('servicesChart').getContext('2d');
+        new Chart(srvCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ charts.services.labels|safe }},
+                datasets: [{
+                    data: {{ charts.services.data|safe }},
+                    backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'],
+                    borderWidth: 2,
+                    borderColor: isDark ? '#1f2937' : '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: textColor, boxWidth: 10, padding: 8, font: { size: 10 } }
+                    }
+                },
+                cutout: '62%'
+            }
+        });
+
+        // 4. Employees Chart
+        const empCtx = document.getElementById('employeesChart').getContext('2d');
+        new Chart(empCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ charts.employees.labels|safe }},
+                datasets: [{
+                    label: 'Rating (out of 5.0)',
+                    data: {{ charts.employees.data|safe }},
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: { color: textColor, stepSize: 1 },
+                        grid: { color: gridColor }
+                    },
+                    x: {
+                        ticks: { color: textColor, font: { size: 11 } },
+                        grid: { display: false }
                     }
                 }
             }

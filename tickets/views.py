@@ -1,4 +1,5 @@
 from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type, calculate_overall_rating, validate_ticket_description_for_ai
+from .analytics_service import get_analytics_report_context
 from django.utils import timezone
 from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP, PerformanceReview
 import math
@@ -760,8 +761,31 @@ def get_activity_chart_data():
 
     return {'labels': labels, 'received': received_data, 'resolved': resolved_data}
 
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def analytics_dashboard(request):
-    return render(request, 'tickets/analytics.html')
+    period = request.GET.get('period', 'all')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    context = get_analytics_report_context(
+        period=period,
+        start_date=start_date,
+        end_date=end_date,
+        user=request.user
+    )
+    return render(request, 'tickets/analytics.html', context)
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def analytics_report_print(request):
+    period = request.GET.get('period', 'all')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    context = get_analytics_report_context(
+        period=period,
+        start_date=start_date,
+        end_date=end_date,
+        user=request.user
+    )
+    return render(request, 'tickets/analytics_report_print.html', context)
 
 def employee_directory(request):
     employees = User.objects.filter(role='MEMBER').exclude(is_superuser=True).exclude(role='ADMIN').order_by('first_name', 'last_name')
