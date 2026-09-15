@@ -1,9 +1,13 @@
 """
 Reusable email utilities for the ICT Helpdesk Ticketing System.
 """
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.conf import settings
 import logging
+import secrets
+import string
 
 logger = logging.getLogger(__name__)
 
@@ -228,6 +232,105 @@ def send_otp_email(recipient_email, code, recipient_name=None):
     except Exception as e:
         logger.error(f"[Email Error] Failed to send OTP email to {recipient_email}: {e}")
         return False, str(e)
+
+
+def generate_temporary_password(prefix="DepEd-", length=6):
+    """
+    Generates a secure, readable temporary password (e.g., 'DepEd-8k3Nm9!').
+    Uses characters excluding visually ambiguous glyphs.
+    """
+    allowed_chars = '23456789abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ'
+    random_part = ''.join(secrets.choice(allowed_chars) for _ in range(length))
+    return f"{prefix}{random_part}!"
+
+
+def send_school_approval_email(school_request, temporary_password, request=None):
+    """
+    Dispatches an official credentials notification email when a school's access request is approved.
+    Renders HTML template with plain text fallback via Brevo SMTP.
+    Returns (success: bool, error_message: str or None).
+    """
+    school = school_request.school
+    ict_name = school_request.ict_name
+    email = school_request.email
+    school_name = school.name
+    school_id = school.school_id
+
+    # Compute absolute school login portal URL
+    if request:
+        login_url = request.build_absolute_uri(reverse('school_login'))
+    else:
+        host = getattr(settings, 'ALLOWED_HOSTS', ['127.0.0.1'])[0]
+        if host == '*' or host == 'testserver':
+            host = '127.0.0.1:8000'
+        login_url = f"http://{host}{reverse('school_login')}"
+
+    subject = f"ICT Helpdesk — School Account Access Approved ({school_name})"
+
+    context = {
+        'ict_name': ict_name,
+        'school_name': school_name,
+        'school_id': school_id,
+        'email': email,
+        'temporary_password': temporary_password,
+        'login_url': login_url,
+    }
+
+    try:
+        html_body = render_to_string('tickets/emails/school_approval_email.html', context)
+    except Exception as template_err:
+        logger.error(f"[Email Error] Failed to render school approval template: {template_err}")
+        html_body = None
+
+    plain_body = (
+        f"ICT Unit Helpdesk — DepEd Division of Valenzuela\n"
+        f"============================================================\n\n"
+        f"Hello, {ict_name}!\n\n"
+        f"We are pleased to inform you that your school access request for\n"
+        f"'{school_name}' has been officially reviewed and approved.\n\n"
+        f"YOUR SCHOOL LOGIN CREDENTIALS:\n"
+        f"  * School Name       : {school_name}\n"
+        f"  * School ID (Login) : {school_id}\n"
+        f"  * Coordinator Email : {email}\n"
+        f"  * Temporary Password: {temporary_password}\n\n"
+        f"Login Portal URL:\n"
+        f"  {login_url}\n\n"
+        f"SECURITY NOTICE:\n"
+        f"For your protection, please update your temporary password immediately\n"
+        f"upon your first login. Keep your School ID and password strictly confidential.\n\n"
+        f"— DepEd Division of Valenzuela, ICT Unit Helpdesk\n"
+    )
+
+    # Check for unconfigured SMTP in local development fallback
+    unconfigured_passwords = {'', 'your-brevo-smtp-key', 'your-actual-app-password', 'your-16-char-app-password'}
+    is_smtp_backend = getattr(settings, 'EMAIL_BACKEND', '').endswith('smtp.EmailBackend')
+    host_password = getattr(settings, 'EMAIL_HOST_PASSWORD', '').strip()
+
+    if getattr(settings, 'DEBUG', False) and is_smtp_backend and host_password in unconfigured_passwords:
+        print("\n" + "=" * 60)
+        print(f" [DEV FALLBACK] Live SMTP credentials not configured yet in .env")
+        print(f" [APPROVAL NOTIFICATION for {email}] School: {school_name} ({school_id})")
+        print(f" [TEMPORARY PASSWORD]: {temporary_password}")
+        print("=" * 60 + "\n")
+        logger.warning(f"[Dev Mode] Simulated school approval email to {email}")
+        return True, None
+
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=plain_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
+        if html_body:
+            msg.attach_alternative(html_body, 'text/html')
+        msg.send(fail_silently=False)
+        logger.info(f"[Email] School approval credentials successfully sent to {email} for school '{school_name}'")
+        return True, None
+    except Exception as e:
+        logger.error(f"[Email Error] Failed to send school approval email to {email}: {e}")
+        return False, str(e)
+
 
 
 

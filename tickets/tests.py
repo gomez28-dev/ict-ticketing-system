@@ -484,4 +484,89 @@ class AnalyticsReportTests(TestCase):
         self.assertContains(response, 'Juan Dela Cruz')
 
 
+class SchoolAccountApprovalWorkflowTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='admin_approver',
+            email='admin_approver@deped.gov.ph',
+            password='password123',
+            first_name='Admin',
+            last_name='Approver',
+            role='ADMIN',
+            is_staff=True,
+        )
+        self.school = School.objects.create(
+            name="Approval Test National High School",
+            school_id="320999",
+            district="District 2",
+        )
+        self.request = SchoolAccountRequest.objects.create(
+            school=self.school,
+            ict_name="Maria Santos",
+            email="maria.santos@gmail.com",
+            contact_number="09123456789",
+            status="PENDING",
+        )
+
+    def test_generate_temporary_password(self):
+        from tickets.email_utils import generate_temporary_password
+        pwd1 = generate_temporary_password()
+        pwd2 = generate_temporary_password()
+        self.assertTrue(pwd1.startswith("DepEd-"))
+        self.assertTrue(pwd1.endswith("!"))
+        self.assertNotEqual(pwd1, pwd2)
+        self.assertEqual(len(pwd1), len("DepEd-") + 6 + 1)
+
+    def test_send_school_approval_email_utility(self):
+        from django.core import mail
+        from tickets.email_utils import send_school_approval_email
+        success, error = send_school_approval_email(self.request, "DepEd-Test123!")
+        self.assertTrue(success)
+        self.assertIsNone(error)
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertEqual(sent.to, ["maria.santos@gmail.com"])
+        self.assertIn("Approval Test National High School", sent.body)
+        self.assertIn("320999", sent.body)
+        self.assertIn("DepEd-Test123!", sent.body)
+        # Check HTML alternative
+        self.assertTrue(any(content_type == 'text/html' for content, content_type in sent.alternatives))
+
+    def test_approve_account_request_success(self):
+        from django.core import mail
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse('approve_account_request', args=[self.request.id]))
+        self.assertRedirects(response, reverse('schools_management'))
+
+        # Request should now be APPROVED (not deleted)
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.status, 'APPROVED')
+
+        # School record updated
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.ict_first_name, "Maria")
+        self.assertEqual(self.school.ict_last_name, "Santos")
+        self.assertEqual(self.school.ict_email, "maria.santos@gmail.com")
+        self.assertEqual(self.school.ict_contact_number, "09123456789")
+
+        # Email dispatched
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("maria.santos@gmail.com", mail.outbox[0].to)
+
+        # School password properly hashed
+        self.assertTrue(self.school.password.startswith('pbkdf2_'))
+
+    def test_approve_account_request_email_failure_warning(self):
+        from unittest.mock import patch
+        self.client.force_login(self.admin)
+        with patch('tickets.views.send_school_approval_email', return_value=(False, "SMTP Timeout")):
+            response = self.client.post(reverse('approve_account_request', args=[self.request.id]), follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'notification email failed to send')
+            self.assertContains(response, 'Generated temporary password is:')
+            self.request.refresh_from_db()
+            self.assertEqual(self.request.status, 'APPROVED')
+
+
+
 

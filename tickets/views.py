@@ -17,7 +17,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
 from django.conf import settings
-from .email_utils import send_new_account_email, send_otp_email, DEFAULT_PASSWORD
+from .email_utils import (
+    send_new_account_email,
+    send_otp_email,
+    send_school_approval_email,
+    generate_temporary_password,
+    DEFAULT_PASSWORD,
+)
 
 User = get_user_model()
 
@@ -77,7 +83,7 @@ def is_email_already_associated(email, exclude_school_id=None, exclude_account_r
     if school_query.exists():
         return True
 
-    request_query = SchoolAccountRequest.objects.filter(email__iexact=normalized_email)
+    request_query = SchoolAccountRequest.objects.filter(email__iexact=normalized_email, status='PENDING')
     if exclude_account_request_id:
         request_query = request_query.exclude(id=exclude_account_request_id)
     return request_query.exists()
@@ -1459,7 +1465,7 @@ def request_access(request):
 
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def approve_account_request(request, request_id):
-    """Admin approves — updates the linked School record with ICT details and sets default password."""
+    """Admin approves — updates the linked School record with ICT details, generates a temporary password, and emails credentials."""
     if request.method == 'POST':
         account_request = get_object_or_404(SchoolAccountRequest, id=request_id, status='PENDING')
         school = account_request.school
@@ -1472,23 +1478,51 @@ def approve_account_request(request, request_id):
             messages.error(request, "This email is already associated with an account")
             return redirect('schools_management')
 
+        # Generate unique temporary default password
+        temp_password = generate_temporary_password()
+
         # Split ict_name into first/last for the School record
         name_parts = account_request.ict_name.strip().split(' ', 1)
         first_name = name_parts[0]
         last_name = name_parts[1] if len(name_parts) > 1 else ''
 
-        # Update the existing School record with provided ICT details
+        # Update the existing School record with provided ICT details and hashed temporary password
         school.ict_first_name = first_name
         school.ict_last_name = last_name
         school.ict_contact_number = account_request.contact_number
         school.ict_email = account_request.email
-        school.set_password('DepEd123!')
+        school.set_password(temp_password)
         school.save()
 
-        # Remove the request
-        account_request.delete()
+        # Update status to APPROVED to maintain an audit trail
+        account_request.status = 'APPROVED'
+        account_request.save()
 
-        messages.success(request, f"Access approved for '{school.name}'. ICT personnel details updated and password set to: DepEd123!")
+        # Dispatch credentials email to school's registered email
+        email_sent, error_msg = send_school_approval_email(
+            school_request=account_request,
+            temporary_password=temp_password,
+            request=request
+        )
+
+        import logging
+        logging.getLogger(__name__).info(
+            f"Admin {request.user.username} approved school account request #{request_id} for '{school.name}'. "
+            f"Email sent: {email_sent}"
+        )
+
+        if email_sent:
+            messages.success(
+                request,
+                f"Access approved for '{school.name}'. Login credentials and temporary password have been emailed to {account_request.email}."
+            )
+        else:
+            messages.warning(
+                request,
+                f"Access approved for '{school.name}', but notification email failed to send (SMTP issue). "
+                f"Generated temporary password is: {temp_password}. Please share this password with the coordinator manually."
+            )
+
     return redirect('schools_management')
 
 

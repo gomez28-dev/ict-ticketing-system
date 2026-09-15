@@ -26,14 +26,22 @@ class Command(BaseCommand):
             default='Test Recipient',
             help='Recipient display name (default: "Test Recipient").',
         )
+        parser.add_argument(
+            '--type',
+            type=str,
+            choices=['otp', 'approval'],
+            default='otp',
+            help='Type of test email to dispatch: "otp" (default) or "approval".',
+        )
 
     def handle(self, *args, **options):
         recipient = options['recipient_email'].strip()
         recipient_name = options['name']
+        email_type = options['type']
         test_code = PasswordResetOTP.generate_code()
 
         self.stdout.write(self.style.MIGRATE_HEADING("=" * 60))
-        self.stdout.write(self.style.MIGRATE_HEADING("  ICT Helpdesk — SMTP Configuration Diagnostic Tool"))
+        self.stdout.write(self.style.MIGRATE_HEADING(f"  ICT Helpdesk — SMTP Configuration Diagnostic Tool ({email_type.upper()} Email)"))
         self.stdout.write(self.style.MIGRATE_HEADING("=" * 60))
 
         # 1. Print Active Email Settings
@@ -76,16 +84,35 @@ class Command(BaseCommand):
                 "  If using live SMTP, delivery will likely fail with authentication errors."
             ))
 
-        self.stdout.write(f"\nAttempting to send test OTP email to: {recipient}...")
-        self.stdout.write(f"Generated test OTP code: {test_code}\n")
-
         # 2. Attempt Send
         try:
-            success, error_msg = send_otp_email(
-                recipient_email=recipient,
-                code=test_code,
-                recipient_name=recipient_name,
-            )
+            if email_type == 'approval':
+                from tickets.email_utils import send_school_approval_email, generate_temporary_password
+                from tickets.models import School, SchoolAccountRequest
+                school = School.objects.first()
+                if not school:
+                    school = School.objects.create(name="Sample Test High School", school_id="320000")
+                temp_pwd = generate_temporary_password()
+
+                self.stdout.write(f"\nAttempting to send test School Approval email to: {recipient}...")
+                self.stdout.write(f"  * School: {school.name} (School ID: {school.school_id})")
+                self.stdout.write(f"  * Generated Temporary Password: {temp_pwd}\n")
+
+                mock_request = SchoolAccountRequest(
+                    school=school,
+                    ict_name=recipient_name,
+                    email=recipient,
+                    contact_number="09123456789",
+                )
+                success, error_msg = send_school_approval_email(mock_request, temp_pwd)
+            else:
+                self.stdout.write(f"\nAttempting to send test OTP email to: {recipient}...")
+                self.stdout.write(f"Generated test OTP code: {test_code}\n")
+                success, error_msg = send_otp_email(
+                    recipient_email=recipient,
+                    code=test_code,
+                    recipient_name=recipient_name,
+                )
 
             # Check if this was a simulated fallback
             unconfigured_passwords = {'', 'your-brevo-smtp-key', 'your-actual-app-password', 'your-16-char-app-password'}
@@ -93,7 +120,7 @@ class Command(BaseCommand):
 
             if success and is_simulated:
                 self.stdout.write(self.style.WARNING(
-                    f"\n[SIMULATED DEV DELIVERY] OTP was printed to console only.\n"
+                    f"\n[SIMULATED DEV DELIVERY] Email content was printed to console only.\n"
                     f"-> No actual email was sent to {recipient} over the internet because\n"
                     f"   EMAIL_HOST_PASSWORD in .env is still set to '{password or '(empty)'}'.\n\n"
                     f"To deliver REAL emails to your Gmail inbox:\n"
@@ -104,7 +131,7 @@ class Command(BaseCommand):
                 ))
             elif success:
                 self.stdout.write(self.style.SUCCESS(
-                    f"\n[SUCCESS] REAL email sent via {host}:{port} to {recipient}!\n"
+                    f"\n[SUCCESS] REAL {email_type.upper()} email sent via {host}:{port} to {recipient}!\n"
                     f"Please check your inbox (and spam/junk folder)."
                 ))
             else:
