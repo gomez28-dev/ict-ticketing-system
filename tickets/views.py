@@ -1531,7 +1531,7 @@ def approve_account_request(request, request_id):
         else:
             messages.warning(
                 request,
-                f"Access approved for '{school.name}', but notification email failed to send (SMTP issue). "
+                f"Access approved for '{school.name}', but notification email failed to send ({error_msg or 'SMTP issue'}). "
                 f"Generated temporary password is: {temp_password}. Please share this password with the coordinator manually."
             )
 
@@ -1580,7 +1580,7 @@ def reject_account_request(request, request_id):
         else:
             messages.warning(
                 request,
-                f"Access request for '{school_name}' has been rejected, but notification email failed to send (SMTP issue)."
+                f"Access request for '{school_name}' has been rejected, but notification email failed to send ({error_msg or 'SMTP issue'})."
             )
 
     return redirect('schools_management')
