@@ -1468,7 +1468,18 @@ def request_access(request):
 def approve_account_request(request, request_id):
     """Admin approves — updates the linked School record with ICT details, generates a temporary password, and emails credentials."""
     if request.method == 'POST':
-        account_request = get_object_or_404(SchoolAccountRequest, id=request_id, status='PENDING')
+        account_request = SchoolAccountRequest.objects.filter(id=request_id).first()
+        if not account_request:
+            messages.warning(request, "This account request no longer exists or has already been removed.")
+            return redirect('schools_management')
+
+        if account_request.status != 'PENDING':
+            messages.info(
+                request,
+                f"This access request for '{account_request.school.name}' has already been processed (Current Status: {account_request.get_status_display()})."
+            )
+            return redirect('schools_management')
+
         school = account_request.school
 
         if is_email_already_associated(
@@ -1531,7 +1542,18 @@ def approve_account_request(request, request_id):
 def reject_account_request(request, request_id):
     """Admin rejects an access request — marks status as REJECTED and emails the coordinator."""
     if request.method == 'POST':
-        account_request = get_object_or_404(SchoolAccountRequest, id=request_id, status='PENDING')
+        account_request = SchoolAccountRequest.objects.filter(id=request_id).first()
+        if not account_request:
+            messages.warning(request, "This access request no longer exists or has already been removed.")
+            return redirect('schools_management')
+
+        if account_request.status != 'PENDING':
+            messages.info(
+                request,
+                f"This access request for '{account_request.school.name}' has already been processed (Current Status: {account_request.get_status_display()})."
+            )
+            return redirect('schools_management')
+
         school_name = account_request.school.name
 
         # Update status to REJECTED to maintain an audit trail

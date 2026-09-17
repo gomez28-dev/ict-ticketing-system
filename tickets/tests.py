@@ -606,6 +606,22 @@ class SchoolAccountApprovalWorkflowTests(TestCase):
             self.request.refresh_from_db()
             self.assertEqual(self.request.status, 'REJECTED')
 
+    def test_approve_already_processed_request_redirects_gracefully(self):
+        self.client.force_login(self.admin)
+        self.request.status = 'APPROVED'
+        self.request.save()
+        response = self.client.post(reverse('approve_account_request', args=[self.request.id]), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'already been processed')
+
+    def test_reject_already_processed_request_redirects_gracefully(self):
+        self.client.force_login(self.admin)
+        self.request.status = 'REJECTED'
+        self.request.save()
+        response = self.client.post(reverse('reject_account_request', args=[self.request.id]), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'already been processed')
+
 
 
 
