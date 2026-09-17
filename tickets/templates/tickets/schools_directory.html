@@ -179,7 +179,7 @@
                                     {% csrf_token %}
                                     <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors whitespace-nowrap">✓ Approve</button>
                                 </form>
-                                <form method="POST" action="{% url 'reject_account_request' req.id %}" onsubmit="return confirm('Reject and delete this access request?');">
+                                <form method="POST" action="{% url 'reject_account_request' req.id %}" onsubmit="return confirm('Reject this access request and notify the coordinator via email?');">
                                     {% csrf_token %}
                                     <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors whitespace-nowrap">✗ Reject</button>
                                 </form>
@@ -237,7 +237,7 @@
                         {% csrf_token %}
                         <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">✓ Approve</button>
                     </form>
-                    <form method="POST" action="{% url 'reject_account_request' req.id %}" onsubmit="return confirm('Reject and delete this access request?');">
+                    <form method="POST" action="{% url 'reject_account_request' req.id %}" onsubmit="return confirm('Reject this access request and notify the coordinator via email?');">
                         {% csrf_token %}
                         <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">✗ Reject</button>
                     </form>

@@ -567,6 +567,45 @@ class SchoolAccountApprovalWorkflowTests(TestCase):
             self.request.refresh_from_db()
             self.assertEqual(self.request.status, 'APPROVED')
 
+    def test_send_school_rejection_email_utility(self):
+        from django.core import mail
+        from tickets.email_utils import send_school_rejection_email
+        success, error = send_school_rejection_email(self.request)
+        self.assertTrue(success)
+        self.assertIsNone(error)
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertEqual(sent.to, ["maria.santos@gmail.com"])
+        self.assertIn("Approval Test National High School", sent.body)
+        self.assertIn("320999", sent.body)
+        self.assertIn("request-access", sent.body)
+        # Check HTML alternative
+        self.assertTrue(any(content_type == 'text/html' for content, content_type in sent.alternatives))
+
+    def test_reject_account_request_success(self):
+        from django.core import mail
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse('reject_account_request', args=[self.request.id]))
+        self.assertRedirects(response, reverse('schools_management'))
+
+        # Request should now be REJECTED (not deleted)
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.status, 'REJECTED')
+
+        # Email dispatched
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("maria.santos@gmail.com", mail.outbox[0].to)
+
+    def test_reject_account_request_email_failure_warning(self):
+        from unittest.mock import patch
+        self.client.force_login(self.admin)
+        with patch('tickets.views.send_school_rejection_email', return_value=(False, "SMTP Timeout")):
+            response = self.client.post(reverse('reject_account_request', args=[self.request.id]), follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'notification email failed to send')
+            self.request.refresh_from_db()
+            self.assertEqual(self.request.status, 'REJECTED')
+
 
 
 

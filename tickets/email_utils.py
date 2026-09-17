@@ -332,5 +332,91 @@ def send_school_approval_email(school_request, temporary_password, request=None)
         return False, str(e)
 
 
+def send_school_rejection_email(school_request, request=None):
+    """
+    Dispatches an official notification email when a school's access request is rejected.
+    Renders HTML template with plain text fallback via SMTP.
+    Returns (success: bool, error_message: str or None).
+    """
+    school = school_request.school
+    ict_name = school_request.ict_name
+    email = school_request.email
+    school_name = school.name
+    school_id = school.school_id
+
+    # Compute absolute request access URL
+    if request:
+        request_access_url = request.build_absolute_uri(reverse('request_access'))
+    else:
+        host = getattr(settings, 'ALLOWED_HOSTS', ['127.0.0.1'])[0]
+        if host == '*' or host == 'testserver':
+            host = '127.0.0.1:8000'
+        request_access_url = f"http://{host}{reverse('request_access')}"
+
+    subject = f"ICT Helpdesk — School Account Access Request Update ({school_name})"
+
+    context = {
+        'ict_name': ict_name,
+        'school_name': school_name,
+        'school_id': school_id,
+        'email': email,
+        'request_access_url': request_access_url,
+    }
+
+    try:
+        html_body = render_to_string('tickets/emails/school_rejection_email.html', context)
+    except Exception as template_err:
+        logger.error(f"[Email Error] Failed to render school rejection template: {template_err}")
+        html_body = None
+
+    plain_body = (
+        f"ICT Unit Helpdesk — DepEd Division of Valenzuela\n"
+        f"============================================================\n\n"
+        f"Hello, {ict_name},\n\n"
+        f"Thank you for submitting an access request to the DepEd Valenzuela\n"
+        f"ICT Ticketing System. After administrative review, we regret to inform you\n"
+        f"that your request for '{school_name}' (School ID: {school_id}) could not be approved at this time.\n\n"
+        f"Common reasons include:\n"
+        f"  * The coordinator details could not be validated against official Division records.\n"
+        f"  * An active coordinator account is already registered for this school.\n"
+        f"  * Information submitted was incomplete or mismatched.\n\n"
+        f"If you are the designated School ICT Coordinator and believe this decision was made\n"
+        f"in error, please re-verify your details and submit a new request at:\n"
+        f"  {request_access_url}\n\n"
+        f"or contact the Division ICT Unit directly.\n\n"
+        f"— DepEd Division of Valenzuela, ICT Unit Helpdesk\n"
+    )
+
+    # Check for unconfigured SMTP in local development fallback
+    unconfigured_passwords = {'', 'your-brevo-smtp-key', 'your-actual-app-password', 'your-16-char-app-password'}
+    is_smtp_backend = getattr(settings, 'EMAIL_BACKEND', '').endswith('smtp.EmailBackend')
+    host_password = getattr(settings, 'EMAIL_HOST_PASSWORD', '').strip()
+
+    if getattr(settings, 'DEBUG', False) and is_smtp_backend and host_password in unconfigured_passwords:
+        print("\n" + "=" * 60)
+        print(f" [DEV FALLBACK] Live SMTP credentials not configured yet in .env")
+        print(f" [REJECTION NOTIFICATION for {email}] School: {school_name} ({school_id})")
+        print("=" * 60 + "\n")
+        logger.warning(f"[Dev Mode] Simulated school rejection email to {email}")
+        return True, None
+
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=plain_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[email],
+        )
+        if html_body:
+            msg.attach_alternative(html_body, 'text/html')
+        msg.send(fail_silently=False)
+        logger.info(f"[Email] School rejection email successfully sent to {email} for school '{school_name}'")
+        return True, None
+    except Exception as e:
+        logger.error(f"[Email Error] Failed to send school rejection email to {email}: {e}")
+        return False, str(e)
+
+
+
 
 

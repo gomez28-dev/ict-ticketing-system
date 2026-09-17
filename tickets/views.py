@@ -21,6 +21,7 @@ from .email_utils import (
     send_new_account_email,
     send_otp_email,
     send_school_approval_email,
+    send_school_rejection_email,
     generate_temporary_password,
     DEFAULT_PASSWORD,
 )
@@ -1528,12 +1529,38 @@ def approve_account_request(request, request_id):
 
 @user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def reject_account_request(request, request_id):
-    """Admin rejects an access request — simply deletes it."""
+    """Admin rejects an access request — marks status as REJECTED and emails the coordinator."""
     if request.method == 'POST':
         account_request = get_object_or_404(SchoolAccountRequest, id=request_id, status='PENDING')
         school_name = account_request.school.name
-        account_request.delete()
-        messages.success(request, f"Access request for '{school_name}' has been rejected and removed.")
+
+        # Update status to REJECTED to maintain an audit trail
+        account_request.status = 'REJECTED'
+        account_request.save()
+
+        # Dispatch rejection email
+        email_sent, error_msg = send_school_rejection_email(
+            school_request=account_request,
+            request=request
+        )
+
+        import logging
+        logging.getLogger(__name__).info(
+            f"Admin {request.user.username} rejected school account request #{request_id} for '{school_name}'. "
+            f"Email sent: {email_sent}"
+        )
+
+        if email_sent:
+            messages.success(
+                request,
+                f"Access request for '{school_name}' has been rejected. Notification email sent to {account_request.email}."
+            )
+        else:
+            messages.warning(
+                request,
+                f"Access request for '{school_name}' has been rejected, but notification email failed to send (SMTP issue)."
+            )
+
     return redirect('schools_management')
 
 

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Account Access Request Update - ICT Helpdesk</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f9; font-family: 'Segoe UI', Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f4f6f9; padding:40px 20px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="580" cellspacing="0" cellpadding="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+                    <!-- Header Banner -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding:32px 40px; text-align:center;">
+                            <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:700; letter-spacing:0.5px;">ICT Unit Helpdesk</h1>
+                            <p style="margin:6px 0 0; color:#93c5fd; font-size:13px;">DepEd Division of Valenzuela</p>
+                        </td>
+                    </tr>
+
+                    <!-- Body Content -->
+                    <tr>
+                        <td style="padding:36px 40px;">
+                            <h2 style="margin:0 0 16px; color:#1e293b; font-size:19px; font-weight:700;">Account Request Status Update</h2>
+                            <p style="margin:0 0 16px; color:#475569; font-size:14px; line-height:1.7;">
+                                Hello, <strong>{{ ict_name }}</strong>,
+                            </p>
+                            <p style="margin:0 0 20px; color:#475569; font-size:14px; line-height:1.7;">
+                                Thank you for submitting an access request to the DepEd Valenzuela ICT Ticketing System. After administrative review, we regret to inform you that your request for <strong>{{ school_name }}</strong> could not be approved at this time.
+                            </p>
+
+                            <!-- Request Summary Details -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
+                                <tr>
+                                    <td style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:20px 24px;">
+                                        <p style="margin:0 0 12px; color:#64748b; font-size:11px; text-transform:uppercase; font-weight:700; letter-spacing:1px;">
+                                            Request Summary
+                                        </p>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
+                                            <tr>
+                                                <td style="color:#64748b; font-size:13px; padding:5px 12px 5px 0; font-weight:600; width:140px;">School Name:</td>
+                                                <td style="color:#1e293b; font-size:13px; font-weight:700;">{{ school_name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color:#64748b; font-size:13px; padding:5px 12px 5px 0; font-weight:600;">School ID:</td>
+                                                <td style="color:#1e293b; font-size:13px; font-weight:700; font-family:monospace;">{{ school_id }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color:#64748b; font-size:13px; padding:5px 12px 5px 0; font-weight:600;">Applicant Name:</td>
+                                                <td style="color:#1e293b; font-size:13px;">{{ ict_name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color:#64748b; font-size:13px; padding:5px 12px 5px 0; font-weight:600;">Submitted Email:</td>
+                                                <td style="color:#1e293b; font-size:13px;">{{ email }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color:#64748b; font-size:13px; padding:5px 12px 5px 0; font-weight:600;">Decision:</td>
+                                                <td style="padding-top:5px;">
+                                                    <span style="display:inline-block; font-size:12px; font-weight:700; color:#b91c1c; background-color:#fee2e2; padding:3px 10px; border-radius:6px; border:1px solid #fca5a5;">
+                                                        Not Approved / Declined
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Informational Guidance Box -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 26px;">
+                                <tr>
+                                    <td style="background-color:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:18px 22px;">
+                                        <p style="margin:0 0 8px; color:#1e40af; font-size:13px; font-weight:700;">
+                                            What may have caused this?
+                                        </p>
+                                        <ul style="margin:0; padding-left:18px; color:#3b82f6; font-size:13px; line-height:1.6;">
+                                            <li style="margin-bottom:6px;"><span style="color:#334155;">The coordinator name or contact details could not be validated against the Division ICT school records.</span></li>
+                                            <li style="margin-bottom:6px;"><span style="color:#334155;">An authorized coordinator account is already active for this school.</span></li>
+                                            <li><span style="color:#334155;">The request was submitted with incomplete or outdated designation information.</span></li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin:0 0 24px; color:#475569; font-size:14px; line-height:1.7;">
+                                If you are the designated School ICT Coordinator and believe this was an error, please verify your details and feel free to submit a new access request, or reach out directly to the Division ICT Unit.
+                            </p>
+
+                            <!-- Action CTA Button -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 10px auto;">
+                                <tr>
+                                    <td align="center" style="border-radius:8px; background-color:#2563eb;">
+                                        <a href="{{ request_access_url }}" target="_blank" style="display:inline-block; padding:13px 32px; color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; letter-spacing:0.3px; border-radius:8px;">
+                                            Submit a New Request &rarr;
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p style="text-align:center; margin:10px 0 0; font-size:11px; color:#94a3b8;">
+                                Direct Link: <a href="{{ request_access_url }}" style="color:#3b82f6; text-decoration:underline;">{{ request_access_url }}</a>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color:#f8fafc; border-top:1px solid #e2e8f0; padding:24px 40px; text-align:center;">
+                            <p style="margin:0 0 6px; color:#64748b; font-size:12px; font-weight:600;">
+                                DepEd Division of Valenzuela &mdash; ICT Unit Helpdesk
+                            </p>
+                            <p style="margin:0; color:#94a3b8; font-size:11px; line-height:1.6;">
+                                Pio Valenzuela St., Brgy. Marulas, Valenzuela City<br>
+                                Telephone: (02) 8293-4507 &bull; Email: helpdesk@deped-valenzuela.gov.ph<br>
+                                <em>This is an automated administrative notification. Please do not reply directly to this email.</em>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

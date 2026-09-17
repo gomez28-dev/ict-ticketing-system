@@ -29,9 +29,9 @@ class Command(BaseCommand):
         parser.add_argument(
             '--type',
             type=str,
-            choices=['otp', 'approval'],
+            choices=['otp', 'approval', 'rejection'],
             default='otp',
-            help='Type of test email to dispatch: "otp" (default) or "approval".',
+            help='Type of test email to dispatch: "otp" (default), "approval", or "rejection".',
         )
 
     def handle(self, *args, **options):
@@ -105,6 +105,23 @@ class Command(BaseCommand):
                     contact_number="09123456789",
                 )
                 success, error_msg = send_school_approval_email(mock_request, temp_pwd)
+            elif email_type == 'rejection':
+                from tickets.email_utils import send_school_rejection_email
+                from tickets.models import School, SchoolAccountRequest
+                school = School.objects.first()
+                if not school:
+                    school = School.objects.create(name="Sample Test High School", school_id="320000")
+
+                self.stdout.write(f"\nAttempting to send test School Rejection email to: {recipient}...")
+                self.stdout.write(f"  * School: {school.name} (School ID: {school.school_id})\n")
+
+                mock_request = SchoolAccountRequest(
+                    school=school,
+                    ict_name=recipient_name,
+                    email=recipient,
+                    contact_number="09123456789",
+                )
+                success, error_msg = send_school_rejection_email(mock_request)
             else:
                 self.stdout.write(f"\nAttempting to send test OTP email to: {recipient}...")
                 self.stdout.write(f"Generated test OTP code: {test_code}\n")
