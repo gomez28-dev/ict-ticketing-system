@@ -30,12 +30,19 @@
     <main class="w-full max-w-[190mm] mx-auto p-4">
         <!-- HEADER -->
         <header class="flex justify-between items-center border-b-2 border-black pb-4 mb-6">
-            <div class="flex items-center">
-                <img src="{% static 'tickets/images/ICT_Logo.png' %}" alt="Logo" class="h-[72px] w-auto mr-4 object-contain">
-                <div>
-                    <p class="text-sm font-bold uppercase">Schools Division Office Valenzuela</p>
-                    <p class="text-lg font-bold uppercase">ICT Helpdesk Receipt</p>
-                </div>
+            <div class="w-28 sm:w-36 flex-shrink-0 flex items-center justify-start">
+                <img src="{% static 'tickets/images/ICT_Logo.png' %}" alt="ICT Helpdesk Logo" class="h-[72px] w-auto object-contain">
+            </div>
+            <div class="flex-1 text-center px-2">
+                <p class="text-xs font-semibold uppercase tracking-widest">Republic of the Philippines</p>
+                <p class="text-sm font-bold uppercase tracking-widest">Department of Education</p>
+                <p class="text-sm font-semibold uppercase tracking-wider">Schools Division Office Valenzuela</p>
+                <p class="text-sm font-semibold uppercase tracking-wider">Information and Communications Technology Unit</p>
+                <h1 class="mt-1 text-lg font-extrabold uppercase tracking-widest">ICT Helpdesk Receipt</h1>
+            </div>
+            <div class="w-28 sm:w-36 flex-shrink-0 text-right flex flex-col items-end justify-center">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 print:text-black">Ticket No.</span>
+                <p class="text-sm sm:text-base font-bold uppercase tracking-wide text-black">{{ ticket.ticket_number }}</p>
             </div>
         </header>
 

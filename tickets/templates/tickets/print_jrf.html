@@ -60,18 +60,19 @@
 
                 <!-- HEADER -->
                 <header class="border-b-2 border-slate-900 print:border-black pb-3 mb-4 print:mb-3 flex items-center justify-between">
-                    <div class="flex items-center flex-1">
-                        <img src="{% static 'tickets/images/ICT_Logo.png' %}" alt="ICT Helpdesk Logo" class="h-[72px] w-auto object-contain mr-4">
-                        <div class="text-center flex-1">
-                            <p class="text-xs font-semibold uppercase tracking-widest">Republic of the Philippines</p>
-                            <p class="text-sm font-bold uppercase tracking-widest">Department of Education</p>
-                            <p class="text-sm font-semibold uppercase tracking-wider">Schools Division Office Valenzuela</p>
-                            <p class="text-sm font-semibold uppercase tracking-wider">Information and Communications Technology Unit</p>
-                            <h1 class="mt-1 text-lg font-extrabold uppercase tracking-widest">Job Request Form (JRF)</h1>
-                        </div>
+                    <div class="w-28 sm:w-36 flex-shrink-0 flex items-center justify-start">
+                        <img src="{% static 'tickets/images/ICT_Logo.png' %}" alt="ICT Helpdesk Logo" class="h-[72px] w-auto object-contain">
                     </div>
-                    <div class="text-right ml-4">
-                        <p class="text-2xl print:text-3xl font-extrabold uppercase">{{ ticket.ticket_number }}</p>
+                    <div class="flex-1 text-center px-2">
+                        <p class="text-xs font-semibold uppercase tracking-widest">Republic of the Philippines</p>
+                        <p class="text-sm font-bold uppercase tracking-widest">Department of Education</p>
+                        <p class="text-sm font-semibold uppercase tracking-wider">Schools Division Office Valenzuela</p>
+                        <p class="text-sm font-semibold uppercase tracking-wider">Information and Communications Technology Unit</p>
+                        <h1 class="mt-1 text-lg font-extrabold uppercase tracking-widest">Job Request Form (JRF)</h1>
+                    </div>
+                    <div class="w-28 sm:w-36 flex-shrink-0 text-right flex flex-col items-end justify-center">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 print:text-black">Ticket No.</span>
+                        <p class="text-sm sm:text-base font-bold uppercase tracking-wide text-slate-900 print:text-black">{{ ticket.ticket_number }}</p>
                     </div>
                 </header>
 
