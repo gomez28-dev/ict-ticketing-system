@@ -20,13 +20,13 @@
     <div class="w-full bg-[#1e293b]/80 border-b border-white/10 py-4 px-6 flex items-center justify-between">
         {% if from_source == 'school' %}
             <a href="{% url 'school_login' %}" class="flex items-center gap-3">
-                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-10 w-auto">
+                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-12 w-auto">
                 <span class="font-bold tracking-wide text-white">ICT UNIT</span>
             </a>
             <a href="{% url 'school_login' %}" class="text-sm font-medium text-blue-400 hover:text-blue-300">Return to Login</a>
         {% else %}
             <a href="{% url 'login' %}" class="flex items-center gap-3">
-                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-10 w-auto">
+                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-12 w-auto">
                 <span class="font-bold tracking-wide text-white">ICT UNIT</span>
             </a>
             <a href="{% url 'login' %}" class="text-sm font-medium text-blue-400 hover:text-blue-300">Return to Login</a>
@@ -145,7 +145,7 @@
     <footer class="w-full bg-[#1e293b]/80 border-t border-white/10 text-gray-400 py-6 mt-auto">
         <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-xs">
             <div class="mb-4 md:mb-0 flex items-center gap-4">
-                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-11 w-auto object-contain">
+                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-14 w-auto object-contain">
                 <div>
                     <p class="font-medium text-gray-300">DepEd Division of Valenzuela - ICT Unit</p>
                     <p>&copy; {% now "Y" %} All rights reserved.</p>

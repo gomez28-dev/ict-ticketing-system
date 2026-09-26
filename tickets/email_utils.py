@@ -36,7 +36,7 @@ def send_new_account_email(user_email, first_name, login_url):
                         <!-- Header -->
                         <tr>
                             <td style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding:32px 40px; text-align:center;">
-                                <img src="https://ict-helpdesk-0mca.onrender.com/static/tickets/images/ICT_Logo.png" alt="ICT Helpdesk Logo" width="56" height="56" style="display:block; margin:0 auto 12px auto; max-width:100%; height:auto;">
+                                <img src="https://ict-helpdesk-0mca.onrender.com/static/tickets/images/ICT_Logo.png" alt="ICT Helpdesk Logo" width="64" height="64" style="display:block; margin:0 auto 12px auto; max-width:100%; height:auto;">
                                 <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:700; letter-spacing:0.5px;">ICT Unit Helpdesk</h1>
                                 <p style="margin:6px 0 0; color:#93c5fd; font-size:13px;">DepEd Division of Valenzuela</p>
                             </td>
@@ -148,7 +148,7 @@ def send_otp_email(recipient_email, code, recipient_name=None):
                         <!-- Header -->
                         <tr>
                             <td style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding:32px 40px; text-align:center;">
-                                <img src="https://ict-helpdesk-0mca.onrender.com/static/tickets/images/ICT_Logo.png" alt="ICT Helpdesk Logo" width="56" height="56" style="display:block; margin:0 auto 12px auto; max-width:100%; height:auto;">
+                                <img src="https://ict-helpdesk-0mca.onrender.com/static/tickets/images/ICT_Logo.png" alt="ICT Helpdesk Logo" width="64" height="64" style="display:block; margin:0 auto 12px auto; max-width:100%; height:auto;">
                                 <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:700; letter-spacing:0.5px;">ICT Unit Helpdesk</h1>
                                 <p style="margin:6px 0 0; color:#93c5fd; font-size:13px;">DepEd Division of Valenzuela</p>
                             </td>
