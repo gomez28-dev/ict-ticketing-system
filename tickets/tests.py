@@ -623,5 +623,37 @@ class SchoolAccountApprovalWorkflowTests(TestCase):
         self.assertContains(response, 'already been processed')
 
 
+class SecurityAndCacheTests(TestCase):
+    def test_login_pages_never_cache_and_ensure_csrf_cookie(self):
+        for route_name in ['admin_login', 'school_login', 'request_access']:
+            response = self.client.get(reverse(route_name))
+            self.assertEqual(response.status_code, 200)
+            cache_control = response.headers.get('Cache-Control', '')
+            self.assertIn('no-cache', cache_control)
+            self.assertIn('no-store', cache_control)
+            # Ensure CSRF cookie is delivered to browser
+            self.assertIn('csrftoken', response.cookies)
+
+    def test_custom_csrf_failure_view_returns_403_and_branded_template(self):
+        from django.test import RequestFactory
+        from tickets.views import csrf_failure
+
+        factory = RequestFactory()
+        
+        # Test admin source path
+        req_admin = factory.post('/login/', HTTP_ORIGIN='http://malicious.example.com')
+        resp_admin = csrf_failure(req_admin, reason="CSRF cookie not set.")
+        self.assertEqual(resp_admin.status_code, 403)
+        self.assertIn(b"Session Security Notice", resp_admin.content)
+        self.assertIn(b"/admin-login/", resp_admin.content)
+
+        # Test school portal path
+        req_school = factory.post('/school-login/', HTTP_ORIGIN='http://malicious.example.com')
+        resp_school = csrf_failure(req_school, reason="CSRF token missing.")
+        self.assertEqual(resp_school.status_code, 403)
+        self.assertIn(b"Session Security Notice", resp_school.content)
+        self.assertIn(b'href="/"', resp_school.content)
+
+
 
 

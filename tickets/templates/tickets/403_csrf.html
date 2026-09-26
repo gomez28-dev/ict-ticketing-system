@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Security Check - ICT Helpdesk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: {% if from_source == 'admin' %}#0f172a{% else %}#f4f7f6{% endif %};
+            {% if from_source == 'admin' %}
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            {% endif %}
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans {% if from_source == 'admin' %}text-gray-200{% else %}text-slate-800{% endif %}">
+    <div class="flex-grow flex items-center justify-center p-4">
+        <div class="{% if from_source == 'admin' %}bg-[#1e293b]/80 border border-white/10 text-white{% else %}bg-white border border-slate-200 text-slate-800{% endif %} p-8 sm:p-10 rounded-2xl shadow-2xl w-full max-w-md text-center">
+            
+            <!-- Hero Brand Logo -->
+            <div class="mb-5 flex justify-center">
+                {% if from_source == 'admin' %}
+                <img src="{% static 'tickets/images/ICT_Logo_Dark.png' %}" alt="ICT Helpdesk Logo" class="h-24 w-auto object-contain">
+                {% else %}
+                <img src="{% static 'tickets/images/ICT_Logo.png' %}" alt="ICT Helpdesk Logo" class="h-24 w-auto object-contain">
+                {% endif %}
+            </div>
+
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full {% if from_source == 'admin' %}bg-amber-500/20 text-amber-400{% else %}bg-amber-100 text-amber-600{% endif %} mb-4 text-2xl font-bold">
+                ⚠️
+            </div>
+
+            <h1 class="text-xl sm:text-2xl font-bold mb-2">Session Security Notice</h1>
+            <p class="text-xs sm:text-sm {% if from_source == 'admin' %}text-gray-300{% else %}text-slate-600{% endif %} leading-relaxed mb-6">
+                Your security token expired or changed. This commonly happens if you logged out in another tab, used the browser's back button, or left the page open.
+            </p>
+
+            <div class="space-y-3">
+                <a href="{{ retry_url }}" class="w-full inline-flex items-center justify-center min-h-[44px] py-2.5 px-6 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md transition-all">
+                    Reload Login Page →
+                </a>
+
+                <div class="text-xs {% if from_source == 'admin' %}text-gray-400{% else %}text-slate-500{% endif %} pt-2">
+                    {% if from_source == 'admin' %}
+                    <a href="{% url 'school_login' %}" class="hover:underline text-blue-400">Go to School Portal</a>
+                    {% else %}
+                    <a href="{% url 'admin_login' %}" class="hover:underline text-blue-600">Go to Staff / Admin Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full py-4 text-center text-xs {% if from_source == 'admin' %}text-gray-500 border-t border-white/10{% else %}text-slate-500 border-t border-slate-200{% endif %} mt-auto">
+        &copy; {% now "Y" %} DepEd Division of Valenzuela — ICT Unit
+    </footer>
+</body>
+</html>

@@ -15,6 +15,8 @@ import json
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import user_passes_test, login_required
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib import messages
 from django.conf import settings
 from .email_utils import (
@@ -169,6 +171,8 @@ def add_employee(request):
 # AUTHENTICATION VIEWS
 # ==========================================
 
+@never_cache
+@ensure_csrf_cookie
 def custom_login(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -229,10 +233,13 @@ def custom_login(request):
 
     return render(request, 'tickets/login.html')
 
+@never_cache
 def custom_logout(request):
     logout(request)
     return redirect('admin_login')
 
+@never_cache
+@ensure_csrf_cookie
 def school_login(request):
     if request.session.get('is_school_authenticated'):
         return redirect('school_dashboard')
@@ -253,6 +260,7 @@ def school_login(request):
 
     return render(request, 'tickets/school_login.html')
 
+@never_cache
 def school_logout(request):
     request.session.flush()
     return redirect('school_login')
@@ -1196,6 +1204,8 @@ def admin_force_reset_password(request, school_id):
         messages.success(request, f"Password for '{school.name}' has been force-reset successfully.")
     return redirect('schools_management')
 
+@never_cache
+@ensure_csrf_cookie
 def forgot_password(request):
     """Step 1: User submits email → OTP is generated and emailed."""
     from_source = request.session.get('forgot_password_from')
@@ -1262,6 +1272,8 @@ def forgot_password(request):
     })
 
 
+@never_cache
+@ensure_csrf_cookie
 def verify_otp(request):
     """Step 2: User enters the 6-digit code from their email."""
     email = request.session.get('otp_email')
@@ -1322,6 +1334,8 @@ def verify_otp(request):
     })
 
 
+@never_cache
+@ensure_csrf_cookie
 def reset_password_confirm(request):
     """Step 3: User sets a new password after OTP verification."""
     school_id = request.session.get('otp_verified_school_id')
@@ -1386,6 +1400,8 @@ def reset_password_confirm(request):
 # VETTED ACCOUNT REQUEST SYSTEM
 # ==========================================
 
+@never_cache
+@ensure_csrf_cookie
 def request_access(request):
     """Public view — schools can request access to the ticketing system."""
     schools = School.objects.all().order_by('name')
@@ -1997,3 +2013,26 @@ def dismiss_password_change(request):
         request.user.save(update_fields=['has_changed_password'])
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'message': 'POST required.'}, status=405)
+
+
+@never_cache
+def csrf_failure(request, reason=""):
+    """
+    Custom user-friendly CSRF failure view that prevents confusing dead-end 403 errors.
+    Provides clear context, automatic fallback recovery, and quick login links.
+    """
+    path = getattr(request, 'path', '') or ''
+    is_school = 'school' in path.lower() or path == '/'
+    from_source = 'school' if is_school else 'admin'
+    retry_url = reverse('school_login') if is_school else reverse('admin_login')
+
+    return render(
+        request,
+        'tickets/403_csrf.html',
+        {
+            'reason': reason,
+            'from_source': from_source,
+            'retry_url': retry_url,
+        },
+        status=403,
+    )

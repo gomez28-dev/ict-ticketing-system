@@ -48,11 +48,28 @@ if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS')
+
+# Always trust localhost and 127.0.0.1 on all common development ports
+for port in ['', ':8000', ':3000', ':5000', ':8080']:
+    for local_host in ['localhost', '127.0.0.1']:
+        http_origin = f'http://{local_host}{port}'
+        if http_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(http_origin)
+
+# Trust all onrender.com subdomains
+if 'https://*.onrender.com' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://*.onrender.com')
+
 for host in ALLOWED_HOSTS:
-    if host not in {'localhost', '127.0.0.1'} and not host.startswith('.'):
+    if host not in {'localhost', '127.0.0.1', 'testserver'} and not host.startswith('.'):
         origin = f'https://{host}'
         if origin not in CSRF_TRUSTED_ORIGINS:
             CSRF_TRUSTED_ORIGINS.append(origin)
+
+# Cookie policies to prevent token dropping across browser redirects
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_FAILURE_VIEW = 'tickets.views.csrf_failure'
 
 
 # Application definition

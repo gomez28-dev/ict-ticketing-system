@@ -7,7 +7,7 @@ def global_ticket_counts(request):
     so views don't have to fetch them manually.
     """
     context = {}
-    if request.user.is_authenticated:
+    if hasattr(request, 'user') and request.user.is_authenticated:
         # Get total pending for admins
         context['pending_count'] = Ticket.objects.filter(status='PENDING').count()
 
