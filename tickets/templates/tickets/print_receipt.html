@@ -22,8 +22,8 @@
 </head>
 <body class="bg-white text-black">
     <!-- Screen-only toolbar -->
-    <div class="no-print sticky top-0 z-10 border-b border-gray-300 bg-gray-100 p-4 flex justify-between">
-        <a href="{% url 'school_ticket_detail' ticket.id %}" class="text-blue-600 hover:underline">&larr; Back to Ticket</a>
+    <div class="no-print sticky top-0 z-10 border-b border-gray-300 bg-gray-100 p-4 flex justify-between items-center">
+        <a href="{% url 'school_ticket_detail' ticket.id %}" onclick="if (window.history.length > 1) { window.history.back(); return false; }" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">&larr; Back to Ticket</a>
         <button onclick="window.print()" class="bg-black text-white px-4 py-2 rounded">Print Receipt</button>
     </div>
 
