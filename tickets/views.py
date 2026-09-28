@@ -492,11 +492,36 @@ def complete_ticket_ajax(request, ticket_id):
         ticket = get_object_or_404(Ticket, id=ticket_id)
         if ticket.status != 'RESOLVED':
             return JsonResponse({'success': False, 'message': 'Only resolved tickets can be completed.'}, status=400)
+        
+        signed_jrf = request.FILES.get('signed_jrf_attachment')
+        if signed_jrf:
+            ticket.signed_jrf_attachment = signed_jrf
+        elif not ticket.signed_jrf_attachment and ticket.resolution_attachment:
+            ticket.signed_jrf_attachment = ticket.resolution_attachment
+
         ticket.status = 'COMPLETED'
+        if not ticket.actual_completion_date:
+            ticket.actual_completion_date = timezone.now()
         ticket._current_user = request.user
         ticket.save()
         return JsonResponse({'success': True, 'message': 'Ticket moved to Completed Documents.'})
     return JsonResponse({'success': False, 'message': 'Invalid request method.'}, status=405)
+
+
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
+def upload_signed_jrf(request, ticket_id):
+    """Allow uploading or replacing a signed physical JRF scan/photo for a completed or resolved ticket."""
+    if request.method == 'POST':
+        ticket = get_object_or_404(Ticket, id=ticket_id)
+        signed_jrf = request.FILES.get('signed_jrf_attachment')
+        if not signed_jrf:
+            messages.error(request, "Please choose a photo or PDF scan of the signed Job Request Form.")
+            return redirect('documents')
+        ticket.signed_jrf_attachment = signed_jrf
+        ticket._current_user = request.user
+        ticket.save()
+        messages.success(request, f"Signed physical JRF document uploaded for ticket {ticket.ticket_number}.")
+    return redirect('documents')
 
 # ==========================================
 # AI TRIAGE WORKFLOW
@@ -882,9 +907,17 @@ def update_ticket_ajax(request, ticket_id):
     if request.method == 'POST':
         try:
             ticket = get_object_or_404(Ticket, id=ticket_id)
-            data = json.loads(request.body or '{}')
             is_admin_user = is_admin_or_superuser(request.user)
             has_changes = False
+
+            # Support both JSON payload and multipart/form-data (for attachments)
+            content_type = request.content_type or ''
+            if 'multipart/form-data' in content_type:
+                data = request.POST
+                files = request.FILES
+            else:
+                data = json.loads(request.body or '{}')
+                files = {}
 
             new_status = data.get('status')
             if new_status:
@@ -898,7 +931,27 @@ def update_ticket_ajax(request, ticket_id):
                         'message': 'Employees must submit resolution notes and an attachment before a ticket can move to Under Review.'
                     }, status=400)
 
-                if new_status == 'RESOLVED':
+                if new_status == 'UNRESOLVED' and ticket.status != 'UNRESOLVED':
+                    unresolved_reason = data.get('unresolved_reason', '').strip()
+                    if not unresolved_reason:
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'An unresolved reason is mandatory when marking a ticket as Unresolved.'
+                        }, status=400)
+
+                    timestamp = timezone.localtime().strftime('%Y-%m-%d %I:%M %p')
+                    user_label = request.user.get_full_name() or request.user.username
+                    reason_note = f"\n[{timestamp}] {user_label} marked as Unresolved: {unresolved_reason}"
+                    ticket.admin_notes = (ticket.admin_notes or '') + reason_note
+
+                    unresolved_file = files.get('unresolved_attachment')
+                    if unresolved_file:
+                        ticket.resolution_attachment = unresolved_file
+
+                    ticket.status = 'UNRESOLVED'
+                    has_changes = True
+
+                elif new_status == 'RESOLVED':
                     if not is_admin_user:
                         return JsonResponse({'success': False, 'message': 'Only admins can resolve tickets.'}, status=403)
                     if ticket.status != 'UNDER_REVIEW':
@@ -906,14 +959,16 @@ def update_ticket_ajax(request, ticket_id):
                             'success': False,
                             'message': 'Only tickets currently under review can be marked as resolved.'
                         }, status=400)
+                    ticket.status = new_status
+                    has_changes = True
 
-                if new_status == 'COMPLETED':
+                elif new_status == 'COMPLETED':
                     return JsonResponse({
                         'success': False,
                         'message': 'Completed status is only available from the Documents tab.'
                     }, status=400)
 
-                if ticket.status != new_status:
+                elif ticket.status != new_status:
                     ticket.status = new_status
                     has_changes = True
 
@@ -1663,12 +1718,47 @@ def admin_delete_school(request, school_id):
     return redirect('schools_management')
 
 
-# ==========================================
-# SETTINGS
-# ==========================================
-
+@login_required
 def settings_view(request):
-    return render(request, 'tickets/settings.html')
+    user = request.user
+
+    if request.method == 'POST' and request.POST.get('action') == 'update_profile':
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        bio = request.POST.get('bio', '').strip()
+
+        # Check unique email if changed
+        if email and email != user.email:
+            if User.objects.filter(email=email).exclude(id=user.id).exists():
+                messages.error(request, f"The email '{email}' is already in use by another account.")
+                return redirect('settings')
+            user.email = email
+
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+        user.bio = bio
+
+        if request.POST.get('remove_profile_picture'):
+            if user.profile_picture:
+                user.profile_picture.delete(save=False)
+            user.profile_picture = None
+        elif request.FILES.get('profile_picture'):
+            if user.profile_picture:
+                user.profile_picture.delete(save=False)
+            user.profile_picture = request.FILES['profile_picture']
+
+        user.save()
+        messages.success(request, "Account profile updated successfully.")
+        return redirect('settings')
+
+    context = {
+        'profile_user': user,
+        'is_admin_user': is_admin_or_superuser(user),
+    }
+    return render(request, 'tickets/settings.html', context)
 
 
 # ==========================================
@@ -1701,6 +1791,9 @@ def submit_performance_review(request, ticket_id):
                                 employee = u
                                 break
                     break
+
+        if not employee and ticket.assignee:
+            employee = ticket.assignee
 
         if not employee:
             messages.error(request, "Could not identify the employee for this ticket.")
@@ -1735,8 +1828,17 @@ def submit_performance_review(request, ticket_id):
             notes=notes,
         )
 
+        # Save signed physical JRF attachment if provided or fallback
+        signed_jrf = request.FILES.get('signed_jrf_attachment')
+        if signed_jrf:
+            ticket.signed_jrf_attachment = signed_jrf
+        elif not ticket.signed_jrf_attachment and ticket.resolution_attachment:
+            ticket.signed_jrf_attachment = ticket.resolution_attachment
+
         # Mark ticket as COMPLETED
         ticket.status = 'COMPLETED'
+        if not ticket.actual_completion_date:
+            ticket.actual_completion_date = timezone.now()
         ticket._current_user = request.user
         ticket.save()
 
@@ -1756,7 +1858,9 @@ def employee_profile(request, user_id):
     profile_user = get_object_or_404(User, id=user_id)
 
     if profile_user.is_superuser or profile_user.role == 'ADMIN':
-        messages.error(request, "This user is an administrator and does not have an employee profile.")
+        if request.user.id == profile_user.id:
+            return redirect('settings')
+        messages.info(request, f"{profile_user.get_full_name() or profile_user.username} is an administrator account.")
         return redirect('employee_directory')
 
     # Access control

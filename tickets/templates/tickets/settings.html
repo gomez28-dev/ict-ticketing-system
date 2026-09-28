@@ -7,6 +7,115 @@
 </div>
 
 <div class="max-w-3xl space-y-6">
+    <!-- ACCOUNT PROFILE CARD -->
+    <div id="profile" class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    {% if profile_user.profile_picture %}
+                    <img src="{{ profile_user.profile_picture.url }}" alt="{{ profile_user.get_full_name }}" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-md">
+                    {% else %}
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-extrabold text-2xl uppercase text-white shadow-md">
+                        {{ profile_user.get_full_name|default:profile_user.username|make_list|first|default:"U" }}
+                    </div>
+                    {% endif %}
+                    <span class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white dark:border-gray-800 {% if profile_user.is_superuser %}bg-emerald-500{% elif profile_user.role == 'ADMIN' %}bg-blue-500{% else %}bg-purple-500{% endif %}"></span>
+                </div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+                        {% if profile_user.is_superuser %}
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">ICT HEAD (Superadmin)</span>
+                        {% elif profile_user.role == 'ADMIN' %}
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">ICT SECRETARY (Admin)</span>
+                        {% else %}
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800">Employee</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">@{{ profile_user.username }} &bull; Member since {{ profile_user.date_joined|date:"M Y" }}</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <button type="button" onclick="toggleEditProfile()" class="min-h-10 px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    Edit Profile
+                </button>
+                <a href="{% url 'change_password' %}" class="min-h-10 px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    Change Password
+                </a>
+            </div>
+        </div>
+
+        <!-- READ-ONLY SUMMARY GRID -->
+        <div id="profileSummaryView" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6">
+            <div class="p-3.5 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400 block mb-1">Email Address</span>
+                <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ profile_user.email|default:"Not specified" }}</span>
+            </div>
+            <div class="p-3.5 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400 block mb-1">Assigned Role</span>
+                <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {% if profile_user.is_superuser %}System Administrator (Full Head Privileges)
+                    {% elif profile_user.role == 'ADMIN' %}Unit Administrator (Secretary)
+                    {% else %}Support Staff
+                    {% endif %}
+                </span>
+            </div>
+            {% if profile_user.bio %}
+            <div class="sm:col-span-2 p-3.5 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400 block mb-1">Bio / Notes</span>
+                <span class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ profile_user.bio }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- EDIT FORM (TOGGLED) -->
+        <form id="profileEditForm" method="POST" enctype="multipart/form-data" class="hidden pt-6 space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_profile">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">First Name</label>
+                    <input type="text" name="first_name" value="{{ profile_user.first_name }}" class="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
+                    <input type="text" name="last_name" value="{{ profile_user.last_name }}" class="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                <input type="email" name="email" value="{{ profile_user.email }}" required class="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Profile Photo</label>
+                <input type="file" name="profile_picture" accept="image/*" class="w-full text-xs text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-300">
+                {% if profile_user.profile_picture %}
+                <label class="inline-flex items-center gap-2 mt-2 text-xs text-red-600 dark:text-red-400 cursor-pointer">
+                    <input type="checkbox" name="remove_profile_picture" value="1">
+                    Remove current profile photo
+                </label>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Bio / Notes</label>
+                <textarea name="bio" rows="2" class="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">{{ profile_user.bio|default:"" }}</textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="toggleEditProfile()" class="min-h-10 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-xs font-semibold rounded-lg transition-colors">Cancel</button>
+                <button type="submit" class="min-h-10 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors">Save Profile</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- APPEARANCE CARD -->
     <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
         <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Appearance</h3>
         
@@ -42,6 +151,18 @@
 </div>
 
 <script>
+    function toggleEditProfile() {
+        const summary = document.getElementById('profileSummaryView');
+        const form = document.getElementById('profileEditForm');
+        if (form.classList.contains('hidden')) {
+            form.classList.remove('hidden');
+            summary.classList.add('hidden');
+        } else {
+            form.classList.add('hidden');
+            summary.classList.remove('hidden');
+        }
+    }
+
     function confirmDeleteAccount() {
         return window.confirm('Are you sure? This cannot be undone.');
     }

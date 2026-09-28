@@ -293,6 +293,43 @@
         </form>
     </div>
 </div>
+
+<!-- Modal: Mandatory Unresolved Reason -->
+<div id="unresolvedReasonModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 w-full h-full sm:h-auto sm:max-w-xl sm:rounded-xl shadow-2xl overflow-y-auto sm:overflow-hidden transition-colors duration-200">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 text-lg">⚠️</span>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">Report Issue (Unresolved)</h2>
+                    <p id="unresolvedTicketNumber" class="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">Ticket</p>
+                </div>
+            </div>
+            <button id="closeUnresolvedModalBtn" type="button" class="text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+
+        <form id="unresolvedReasonForm" method="POST" enctype="multipart/form-data" class="p-6 space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="unresolvedReasonText" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    Reason for Unresolved Status <span class="text-red-500">*</span>
+                </label>
+                <textarea id="unresolvedReasonText" name="unresolved_reason" rows="4" required class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 outline-none bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 text-sm leading-relaxed" placeholder="Explain why this ticket cannot be completed (e.g., missing parts, hardware defect, pending vendor action)..."></textarea>
+            </div>
+            <div>
+                <label for="unresolvedAttachmentInput" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                    Supporting Evidence / Attachment <span class="text-xs text-gray-400 font-normal">(Optional — Photo/PDF/Scan)</span>
+                </label>
+                <input id="unresolvedAttachmentInput" type="file" name="unresolved_attachment" class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 dark:file:bg-orange-900/30 dark:file:text-orange-400">
+            </div>
+            <div id="unresolvedFormError" class="hidden text-sm text-red-600 dark:text-red-400 font-medium"></div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button type="button" id="cancelUnresolvedModalBtn" class="min-h-11 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-sm font-medium rounded-md transition-colors">Cancel</button>
+                <button type="submit" id="submitUnresolvedModalBtn" class="min-h-11 px-5 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-md shadow-sm transition-colors flex items-center justify-center gap-2">Mark as Unresolved</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

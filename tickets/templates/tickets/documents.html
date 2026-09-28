@@ -231,20 +231,25 @@
                             {{ ticket.actual_completion_date|date:"M d, Y"|default:ticket.updated_at|date:"M d, Y" }}
                         </td>
                         <td class="px-6 py-4 text-right sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
-                            {% if request.user.role == 'MEMBER' and not request.user.is_superuser %}
-                            <a href="{% url 'employee_receipt' ticket.id %}" class="min-h-11 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm flex items-center justify-end gap-1 w-full">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                View
-                            </a>
-                            {% else %}
                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3">
-                                <a href="{% url 'employee_receipt' ticket.id %}" class="min-h-11 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm flex items-center justify-center gap-1">
+                                <button type="button"
+                                        onclick="openArchivedModal(this)"
+                                        data-ticket-id="{{ ticket.id }}"
+                                        data-ticket-number="{{ ticket.ticket_number }}"
+                                        data-requester="{{ ticket.first_name }} {{ ticket.last_name }}"
+                                        data-school="{{ ticket.school_name|default:'N/A' }}"
+                                        data-support-type="{{ ticket.get_support_type_display }}"
+                                        data-completed="{{ ticket.actual_completion_date|date:'M d, Y'|default:ticket.updated_at|date:'M d, Y' }}"
+                                        data-description="{{ ticket.description|default:'' }}"
+                                        data-notes="{{ ticket.resolution_notes|default:'' }}"
+                                        data-signed-url="{% if ticket.signed_jrf_attachment %}{{ ticket.signed_jrf_attachment.url }}{% elif ticket.resolution_attachment %}{{ ticket.resolution_attachment.url }}{% endif %}"
+                                        data-print-url="{% url 'employee_receipt' ticket.id %}"
+                                        class="min-h-11 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm flex items-center justify-center gap-1.5 cursor-pointer">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     View
-                                </a>
-                                <span class="text-gray-400 dark:text-gray-500 text-sm">Archived</span>
+                                </button>
+                                <span class="text-gray-400 dark:text-gray-500 text-xs hidden sm:inline">Archived</span>
                             </div>
-                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -265,10 +270,22 @@
                 </div>
                 <hr class="border-gray-100 dark:border-gray-700 mt-2">
                 <div class="grid grid-cols-1 gap-2 mt-2">
-                    <a href="{% url 'employee_receipt' ticket.id %}" class="min-h-11 w-full inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors border border-blue-100 dark:border-blue-800">
+                    <button type="button"
+                            onclick="openArchivedModal(this)"
+                            data-ticket-id="{{ ticket.id }}"
+                            data-ticket-number="{{ ticket.ticket_number }}"
+                            data-requester="{{ ticket.first_name }} {{ ticket.last_name }}"
+                            data-school="{{ ticket.school_name|default:'N/A' }}"
+                            data-support-type="{{ ticket.get_support_type_display }}"
+                            data-completed="{{ ticket.actual_completion_date|date:'M d, Y'|default:ticket.updated_at|date:'M d, Y' }}"
+                            data-description="{{ ticket.description|default:'' }}"
+                            data-notes="{{ ticket.resolution_notes|default:'' }}"
+                            data-signed-url="{% if ticket.signed_jrf_attachment %}{{ ticket.signed_jrf_attachment.url }}{% elif ticket.resolution_attachment %}{{ ticket.resolution_attachment.url }}{% endif %}"
+                            data-print-url="{% url 'employee_receipt' ticket.id %}"
+                            class="min-h-11 w-full inline-flex items-center justify-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-sm bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors border border-blue-100 dark:border-blue-800 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                        View
-                    </a>
+                        View Archived Document
+                    </button>
                 </div>
             </div>
             {% endfor %}
@@ -289,9 +306,14 @@
         <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Performance Review & Complete</h3>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Rate the employee's performance for Ticket <span id="modalTicketNumber" class="font-bold"></span>.</p>
         
-        <form id="reviewForm" method="POST" action="">
+        <form id="reviewForm" method="POST" enctype="multipart/form-data" action="">
             {% csrf_token %}
-            <div class="space-y-5">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1">Signed Physical JRF (Photo / PDF Scan)</label>
+                    <input type="file" name="signed_jrf_attachment" accept="image/*,application/pdf" class="w-full text-xs text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-300">
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Upload the physically signed JRF from the school. If left blank, existing review evidence will be retained.</p>
+                </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Quality of Work (1-5)</label>
                     <input type="range" name="quality" min="1" max="5" value="3" class="w-full accent-blue-600" oninput="this.nextElementSibling.innerText = this.value">
@@ -321,6 +343,91 @@
     </div>
 </div>
 
+<!-- Modal: Interactive Archived Document Viewer -->
+<div id="archivedDocumentModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col border border-gray-200 dark:border-gray-700 overflow-hidden animate-fade-in">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800/80">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-bold text-sm">📁</span>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 id="archivedModalTitle" class="text-lg font-bold text-gray-900 dark:text-white">Ticket Document</h3>
+                        <span id="archivedModalSupportBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">Support</span>
+                    </div>
+                    <p id="archivedModalSubtitle" class="text-xs text-gray-500 dark:text-gray-400">School &bull; Completed on Date</p>
+                </div>
+            </div>
+            <button onclick="closeArchivedModal()" class="text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+
+        <!-- Tab Controls -->
+        <div class="px-6 pt-3 border-b border-gray-200 dark:border-gray-700 flex gap-2 bg-gray-100/60 dark:bg-gray-900/40">
+            <button id="tabBtnSigned" type="button" onclick="switchArchivedTab('signed')" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 flex items-center gap-1.5 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                📷 Scanned Signed JRF
+            </button>
+            <button id="tabBtnDigital" type="button" onclick="switchArchivedTab('digital')" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1.5 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                📄 Digital Form / Summary
+            </button>
+        </div>
+
+        <!-- Body / Content Area -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 bg-gray-50/50 dark:bg-gray-900/20">
+            <!-- TAB 1: Signed Document Content -->
+            <div id="tabContentSigned" class="space-y-4">
+                <div id="signedDocumentViewer" class="min-h-[360px] flex items-center justify-center bg-gray-100 dark:bg-gray-900/60 rounded-xl p-3 border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <!-- Dynamic rendering: img, iframe, or empty state -->
+                </div>
+            </div>
+
+            <!-- TAB 2: Digital Receipt Summary -->
+            <div id="tabContentDigital" class="hidden space-y-4">
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div class="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Requester</span>
+                            <span id="digitalRequester" class="font-bold text-gray-800 dark:text-gray-200">-</span>
+                        </div>
+                        <div class="p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">School / Location</span>
+                            <span id="digitalSchool" class="font-bold text-gray-800 dark:text-gray-200">-</span>
+                        </div>
+                        <div class="sm:col-span-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Issue Description</span>
+                            <p id="digitalDescription" class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">-</p>
+                        </div>
+                        <div class="sm:col-span-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Resolution Summary</span>
+                            <p id="digitalNotes" class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <a id="btnDownloadSigned" href="#" download class="hidden min-h-10 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download Signed Copy
+                </a>
+                <a id="btnOpenDigitalPrint" href="#" class="min-h-10 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Open Official Printable JRF
+                </a>
+            </div>
+            <button onclick="closeArchivedModal()" class="w-full sm:w-auto min-h-10 px-5 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-semibold rounded-lg transition-colors">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
 <style>
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-10px); }
@@ -345,6 +452,99 @@
         // Reset range spans
         const spans = document.querySelectorAll('input[type="range"] + span');
         spans.forEach(span => span.innerText = '3');
+    }
+
+    function openArchivedModal(btn) {
+        const ticketId = btn.getAttribute('data-ticket-id');
+        const ticketNumber = btn.getAttribute('data-ticket-number');
+        const requester = btn.getAttribute('data-requester');
+        const school = btn.getAttribute('data-school');
+        const supportType = btn.getAttribute('data-support-type');
+        const completedDate = btn.getAttribute('data-completed');
+        const description = btn.getAttribute('data-description');
+        const notes = btn.getAttribute('data-notes');
+        const signedUrl = btn.getAttribute('data-signed-url') || '';
+        const printUrl = btn.getAttribute('data-print-url') || '';
+
+        document.getElementById('archivedModalTitle').innerText = ticketNumber;
+        document.getElementById('archivedModalSupportBadge').innerText = supportType || 'Document';
+        document.getElementById('archivedModalSubtitle').innerText = `${school} • Completed ${completedDate}`;
+
+        // Populate Digital Tab fields
+        document.getElementById('digitalRequester').innerText = requester;
+        document.getElementById('digitalSchool').innerText = school;
+        document.getElementById('digitalDescription').innerText = description || 'No description provided.';
+        document.getElementById('digitalNotes').innerText = notes || 'No resolution notes provided.';
+        document.getElementById('btnOpenDigitalPrint').href = printUrl;
+
+        // Render Signed JRF Viewer
+        const viewer = document.getElementById('signedDocumentViewer');
+        const downloadBtn = document.getElementById('btnDownloadSigned');
+
+        if (signedUrl) {
+            downloadBtn.href = signedUrl;
+            downloadBtn.classList.remove('hidden');
+            downloadBtn.classList.add('flex');
+
+            const isPdf = signedUrl.toLowerCase().split('?')[0].endsWith('.pdf');
+            if (isPdf) {
+                viewer.innerHTML = `<iframe src="${signedUrl}" class="w-full h-[520px] rounded-lg border border-gray-200 dark:border-gray-700 bg-white" title="Signed JRF PDF"></iframe>`;
+            } else {
+                viewer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center gap-2 p-2">
+                        <img src="${signedUrl}" alt="Signed JRF" class="max-h-[500px] w-auto max-w-full object-contain rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                        <a href="${signedUrl}" target="_blank" class="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">Open Full Size in New Tab ↗</a>
+                    </div>
+                `;
+            }
+            switchArchivedTab('signed');
+        } else {
+            downloadBtn.classList.add('hidden');
+            downloadBtn.classList.remove('flex');
+            viewer.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8 text-center max-w-md">
+                    <span class="text-4xl mb-3">📄</span>
+                    <h4 class="text-base font-bold text-gray-800 dark:text-gray-200 mb-1">No Physical Signed Copy Attached</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">A physical signed Job Request Form was not uploaded during completion. You can upload a scan or photo now below, or view the digital receipt.</p>
+                    <form method="POST" action="/admin-dashboard/documents/upload-signed-jrf/${ticketId}/" enctype="multipart/form-data" class="w-full flex flex-col gap-2">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <input type="file" name="signed_jrf_attachment" accept="image/*,application/pdf" required class="w-full text-xs text-gray-500 dark:text-gray-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <button type="submit" class="w-full mt-2 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-colors">Upload Signed Document</button>
+                    </form>
+                </div>
+            `;
+            // Default to digital tab if no signed copy is present
+            switchArchivedTab('digital');
+        }
+
+        document.getElementById('archivedDocumentModal').classList.remove('hidden');
+    }
+
+    function closeArchivedModal() {
+        document.getElementById('archivedDocumentModal').classList.add('hidden');
+    }
+
+    function switchArchivedTab(tab) {
+        const btnSigned = document.getElementById('tabBtnSigned');
+        const btnDigital = document.getElementById('tabBtnDigital');
+        const contentSigned = document.getElementById('tabContentSigned');
+        const contentDigital = document.getElementById('tabContentDigital');
+
+        if (tab === 'signed') {
+            btnSigned.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+            btnSigned.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            btnDigital.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+            btnDigital.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            contentSigned.classList.remove('hidden');
+            contentDigital.classList.add('hidden');
+        } else {
+            btnDigital.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+            btnDigital.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            btnSigned.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+            btnSigned.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400');
+            contentDigital.classList.remove('hidden');
+            contentSigned.classList.add('hidden');
+        }
     }
 </script>
 {% endblock %}

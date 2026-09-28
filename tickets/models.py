@@ -213,6 +213,7 @@ class Ticket(models.Model):
     # --- Resolution Details ---
     resolution_notes = models.TextField(blank=True, null=True)
     resolution_attachment = models.FileField(upload_to='resolutions/', null=True, blank=True)
+    signed_jrf_attachment = models.FileField(upload_to='signed_jrfs/', null=True, blank=True, help_text="Scanned or photographed physically signed JRF")
     client_signature = models.TextField(blank=True, null=True, help_text="Base64-encoded client signature image")
 
     # --- AI-Ready Data Fields ---

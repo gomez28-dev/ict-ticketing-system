@@ -655,5 +655,192 @@ class SecurityAndCacheTests(TestCase):
         self.assertIn(b'href="/"', resp_school.content)
 
 
+class KanbanUnresolvedReasonTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='adminuser2',
+            email='adminuser2@example.com',
+            password='pass1234',
+            first_name='Admin',
+            last_name='Two',
+            role='ADMIN',
+            is_staff=True,
+        )
+        self.ticket = Ticket.objects.create(
+            first_name='Juan',
+            last_name='Dela Cruz',
+            school_name='Rizal High',
+            support_type='HARDWARE',
+            description='Defective router in laboratory.',
+            status='IN_PROGRESS',
+            priority='HIGH',
+        )
+
+    def test_unresolved_without_reason_returns_400(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse('update_ticket_ajax', args=[self.ticket.id]),
+            data='{"status": "UNRESOLVED"}',
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        json_data = response.json()
+        self.assertFalse(json_data.get('success'))
+        self.assertIn('unresolved reason is mandatory', json_data.get('message', '').lower())
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, 'IN_PROGRESS')
+
+    def test_unresolved_with_reason_json_succeeds_and_logs_notes(self):
+        self.client.force_login(self.admin)
+        payload = {
+            'status': 'UNRESOLVED',
+            'unresolved_reason': 'Parts unavailable from supplier until next month.',
+        }
+        import json
+        response = self.client.post(
+            reverse('update_ticket_ajax', args=[self.ticket.id]),
+            data=json.dumps(payload),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('success'))
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, 'UNRESOLVED')
+        self.assertIn('Parts unavailable from supplier', self.ticket.admin_notes)
+        self.assertIn('Admin Two', self.ticket.admin_notes)
+
+    def test_unresolved_with_reason_multipart_succeeds_with_attachment(self):
+        self.client.force_login(self.admin)
+        evidence = SimpleUploadedFile("evidence.jpg", b"fake_evidence_image_bytes", content_type="image/jpeg")
+        response = self.client.post(
+            reverse('update_ticket_ajax', args=[self.ticket.id]),
+            data={
+                'status': 'UNRESOLVED',
+                'unresolved_reason': 'Waiting for client school approval signature.',
+                'unresolved_attachment': evidence,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json().get('success'))
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, 'UNRESOLVED')
+        self.assertTrue(self.ticket.resolution_attachment)
+        self.assertIn('Waiting for client school approval', self.ticket.admin_notes)
+
+
+class AdminProfileSettingsTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='sysadmin',
+            email='sysadmin@deped.gov.ph',
+            password='pass1234',
+            first_name='System',
+            last_name='Admin',
+            role='ADMIN',
+            is_staff=True,
+            bio='DepEd Division ICT Head',
+        )
+        self.employee = User.objects.create_user(
+            username='empuser',
+            email='empuser@deped.gov.ph',
+            password='pass1234',
+            first_name='Tech',
+            last_name='Specialist',
+            role='MEMBER',
+        )
+
+    def test_settings_view_shows_admin_profile_context(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('settings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['profile_user'], self.admin)
+        self.assertTrue(response.context['is_admin_user'])
+        self.assertContains(response, 'DepEd Division ICT Head')
+
+    def test_settings_update_profile_updates_info(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse('settings'), {
+            'action': 'update_profile',
+            'first_name': 'Chief',
+            'last_name': 'Officer',
+            'email': 'chiefofficer@deped.gov.ph',
+            'bio': 'Updated official bio details',
+        }, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.first_name, 'Chief')
+        self.assertEqual(self.admin.last_name, 'Officer')
+        self.assertEqual(self.admin.email, 'chiefofficer@deped.gov.ph')
+        self.assertEqual(self.admin.bio, 'Updated official bio details')
+        self.assertContains(response, 'Account profile updated successfully')
+
+    def test_admin_visiting_own_employee_profile_redirects_to_settings(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('employee_profile', args=[self.admin.id]))
+        self.assertRedirects(response, reverse('settings'))
+
+
+@override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
+class SignedPhysicalJRFTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='approver',
+            email='approver@deped.gov.ph',
+            password='pass1234',
+            role='ADMIN',
+            is_staff=True,
+        )
+        self.employee = User.objects.create_user(
+            username='worker',
+            email='worker@deped.gov.ph',
+            password='pass1234',
+            role='MEMBER',
+        )
+        self.ticket = Ticket.objects.create(
+            first_name='Principal',
+            last_name='Santos',
+            school_name='Central Elementary',
+            support_type='NETWORK',
+            description='Fiber cable re-termination needed.',
+            status='UNDER_REVIEW',
+            assignee=self.employee,
+        )
+
+    def test_upload_signed_jrf_saves_attachment_and_redirects(self):
+        self.client.force_login(self.admin)
+        pdf_file = SimpleUploadedFile("signed_jrf_sample.pdf", b"%PDF-1.4 sample content", content_type="application/pdf")
+        response = self.client.post(
+            reverse('upload_signed_jrf', args=[self.ticket.id]),
+            {'signed_jrf_attachment': pdf_file},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.ticket.refresh_from_db()
+        self.assertTrue(self.ticket.signed_jrf_attachment)
+        self.assertIn('signed_jrfs', self.ticket.signed_jrf_attachment.name)
+        self.assertContains(response, 'Signed physical JRF document uploaded')
+
+    def test_submit_performance_review_saves_signed_jrf_attachment(self):
+        self.client.force_login(self.admin)
+        img_file = SimpleUploadedFile("signed_scan.png", b"fake_png_data", content_type="image/png")
+        response = self.client.post(
+            reverse('submit_performance_review', args=[self.ticket.id]),
+            {
+                'rating_quality': 5,
+                'rating_timeliness': 5,
+                'rating_communication': 5,
+                'review_notes': 'Great job on the fiber cable.',
+                'signed_jrf_attachment': img_file,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, 'COMPLETED')
+        self.assertTrue(self.ticket.signed_jrf_attachment)
+        self.assertIsNotNone(self.ticket.actual_completion_date)
+
+
+
 
 

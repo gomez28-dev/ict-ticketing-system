@@ -86,6 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const reviewTicketNumber = document.getElementById('reviewSubmissionTicketNumber');
     const submitReviewBtn = document.getElementById('submitReviewModalBtn');
 
+    let pendingUnresolvedMove = null;
+    const unresolvedModal = document.getElementById('unresolvedReasonModal');
+    const unresolvedForm = document.getElementById('unresolvedReasonForm');
+    const unresolvedError = document.getElementById('unresolvedFormError');
+    const unresolvedTicketNumber = document.getElementById('unresolvedTicketNumber');
+    const submitUnresolvedBtn = document.getElementById('submitUnresolvedModalBtn');
+
     const closeTicketModal = () => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
@@ -118,6 +125,53 @@ document.addEventListener('DOMContentLoaded', () => {
         reviewError.classList.add('hidden');
         reviewModal.classList.add('hidden');
         reviewModal.classList.remove('flex');
+    };
+
+    const openUnresolvedModal = ({ ticketId, ticketNumber, itemEl = null, fromZone = null, oldIndex = null, targetZone = null, isFromModal = false }) => {
+        pendingUnresolvedMove = {
+            ticketId,
+            ticketNumber,
+            itemEl,
+            fromZone,
+            oldIndex,
+            targetZone: targetZone || document.querySelector('.kanban-zone[data-status="UNRESOLVED"]'),
+            isFromModal
+        };
+        if (unresolvedTicketNumber) {
+            unresolvedTicketNumber.innerText = ticketNumber || 'Ticket';
+        }
+        if (unresolvedForm) {
+            unresolvedForm.reset();
+        }
+        if (unresolvedError) {
+            unresolvedError.innerText = '';
+            unresolvedError.classList.add('hidden');
+        }
+        if (unresolvedModal) {
+            unresolvedModal.classList.remove('hidden');
+            unresolvedModal.classList.add('flex');
+        }
+    };
+
+    const closeUnresolvedModal = () => {
+        if (pendingUnresolvedMove) {
+            // Revert card to original column if this was a drag-and-drop move
+            if (pendingUnresolvedMove.itemEl && pendingUnresolvedMove.fromZone && pendingUnresolvedMove.oldIndex !== null && pendingUnresolvedMove.oldIndex !== undefined) {
+                moveCardToIndex(pendingUnresolvedMove.itemEl, pendingUnresolvedMove.fromZone, pendingUnresolvedMove.oldIndex);
+            }
+            pendingUnresolvedMove = null;
+        }
+        if (unresolvedForm) {
+            unresolvedForm.reset();
+        }
+        if (unresolvedError) {
+            unresolvedError.innerText = '';
+            unresolvedError.classList.add('hidden');
+        }
+        if (unresolvedModal) {
+            unresolvedModal.classList.add('hidden');
+            unresolvedModal.classList.remove('flex');
+        }
     };
 
     cards.forEach(card => {
@@ -200,6 +254,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closeReviewModalBtn').addEventListener('click', closeReviewModal);
     document.getElementById('cancelReviewModalBtn').addEventListener('click', closeReviewModal);
 
+    const closeUnresolvedBtn = document.getElementById('closeUnresolvedModalBtn');
+    if (closeUnresolvedBtn) {
+        closeUnresolvedBtn.addEventListener('click', closeUnresolvedModal);
+    }
+    const cancelUnresolvedBtn = document.getElementById('cancelUnresolvedModalBtn');
+    if (cancelUnresolvedBtn) {
+        cancelUnresolvedBtn.addEventListener('click', closeUnresolvedModal);
+    }
+
     saveBtn.addEventListener('click', () => {
         if (!currentTicketId) return;
 
@@ -214,6 +277,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     ticketNumber: currentCardElement ? currentCardElement.getAttribute('data-number') : '',
                     itemEl: currentCardElement,
                     targetZone: document.querySelector('.kanban-zone[data-status="UNDER_REVIEW"]')
+                });
+            }
+            return;
+        }
+
+        if (newStatus === 'UNRESOLVED') {
+            closeTicketModal();
+            if (currentStatus !== 'UNRESOLVED') {
+                openUnresolvedModal({
+                    ticketId: currentTicketId,
+                    ticketNumber: currentCardElement ? currentCardElement.getAttribute('data-number') : '',
+                    itemEl: currentCardElement,
+                    targetZone: document.querySelector('.kanban-zone[data-status="UNRESOLVED"]'),
+                    isFromModal: true
                 });
             }
             return;
@@ -252,6 +329,67 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    if (unresolvedForm) {
+        unresolvedForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            if (!pendingUnresolvedMove) {
+                closeUnresolvedModal();
+                return;
+            }
+
+            const reason = document.getElementById('unresolvedReasonText').value.trim();
+            if (!reason) {
+                unresolvedError.innerText = 'Please provide an explanation for marking this ticket as unresolved.';
+                unresolvedError.classList.remove('hidden');
+                return;
+            }
+
+            unresolvedError.innerText = '';
+            unresolvedError.classList.add('hidden');
+            submitUnresolvedBtn.disabled = true;
+            submitUnresolvedBtn.innerText = 'Submitting...';
+
+            const formData = new FormData(unresolvedForm);
+            formData.append('status', 'UNRESOLVED');
+
+            fetch(`/admin-dashboard/ticket/update/${pendingUnresolvedMove.ticketId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(async (response) => {
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Unable to mark ticket as unresolved.');
+                }
+                return data;
+            })
+            .then(data => {
+                const cardEl = pendingUnresolvedMove.itemEl || document.querySelector(`.ticket-card[data-id="${pendingUnresolvedMove.ticketId}"]`);
+                const targetZone = pendingUnresolvedMove.targetZone || document.querySelector('.kanban-zone[data-status="UNRESOLVED"]');
+                if (cardEl && targetZone) {
+                    targetZone.appendChild(cardEl);
+                    cardEl.setAttribute('data-status', 'UNRESOLVED');
+                }
+                pendingUnresolvedMove = null;
+                closeUnresolvedModal();
+                window.location.reload();
+            })
+            .catch(error => {
+                unresolvedError.innerText = error.message;
+                unresolvedError.classList.remove('hidden');
+            })
+            .finally(() => {
+                submitUnresolvedBtn.disabled = false;
+                submitUnresolvedBtn.innerText = 'Mark as Unresolved';
+            });
+        });
+    }
 
     reviewForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -331,6 +469,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             ticketId,
                             ticketNumber: itemEl.getAttribute('data-number'),
                             itemEl,
+                            targetZone: evt.to
+                        });
+                        return;
+                    }
+
+                    if (newStatus === 'UNRESOLVED') {
+                        moveCardToIndex(itemEl, evt.from, evt.oldIndex);
+                        openUnresolvedModal({
+                            ticketId,
+                            ticketNumber: itemEl.getAttribute('data-number'),
+                            itemEl,
+                            fromZone: evt.from,
+                            oldIndex: evt.oldIndex,
                             targetZone: evt.to
                         });
                         return;

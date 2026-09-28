@@ -38,6 +38,8 @@ urlpatterns = [
     path('admin-dashboard/documents/', views.documents_view, name='documents'),
     path('admin-dashboard/documents/complete/<int:ticket_id>/', views.complete_ticket_ajax,
          name='complete_ticket_ajax'),
+    path('admin-dashboard/documents/upload-signed-jrf/<int:ticket_id>/', views.upload_signed_jrf,
+         name='upload_signed_jrf'),
 
     path('admin-dashboard/backlog/', views.backlog_view, name='backlog'),
     path('admin-dashboard/employees/', views.employee_directory, name='employee_directory'),
