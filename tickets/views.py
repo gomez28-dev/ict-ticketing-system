@@ -2140,3 +2140,26 @@ def csrf_failure(request, reason=""):
         },
         status=403,
     )
+
+
+@never_cache
+def health_check(request):
+    """Diagnostic health check to verify database connection."""
+    from django.db import connection
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1;")
+            cursor.fetchone()
+        from .models import School
+        school_count = School.objects.count()
+        return JsonResponse({
+            'status': 'healthy',
+            'database': 'connected',
+            'school_count': school_count,
+        })
+    except Exception as exc:
+        return JsonResponse({
+            'status': 'unhealthy',
+            'database': 'disconnected',
+            'error': str(exc),
+        }, status=500)

@@ -634,6 +634,13 @@ class SecurityAndCacheTests(TestCase):
             # Ensure CSRF cookie is delivered to browser
             self.assertIn('csrftoken', response.cookies)
 
+    def test_health_check_endpoint(self):
+        response = self.client.get(reverse('health_check'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get('status'), 'healthy')
+        self.assertEqual(data.get('database'), 'connected')
+
     def test_custom_csrf_failure_view_returns_403_and_branded_template(self):
         from django.test import RequestFactory
         from tickets.views import csrf_failure

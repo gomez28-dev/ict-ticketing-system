@@ -8,6 +8,7 @@ from django.views.static import serve
 urlpatterns = [
     # Default Root URL -> School Login
     path('', views.school_login, name='school_login'),
+    path('healthz/', views.health_check, name='health_check'),
     path('admin/', admin.site.urls),
 
     path('terms-of-service/', views.terms, name='terms'),
