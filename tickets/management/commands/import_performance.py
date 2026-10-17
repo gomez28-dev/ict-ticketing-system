@@ -240,10 +240,10 @@ class Command(BaseCommand):
                 user = user_cache.get(emp_name.upper())
                 if not user:
                     first, last = parse_name(emp_name)
-                    try:
-                        user = User.objects.get(first_name__iexact=first, last_name__iexact=last)
+                    user = User.objects.filter(first_name__iexact=first, last_name__iexact=last).first()
+                    if user:
                         user_cache[emp_name.upper()] = user
-                    except (User.DoesNotExist, User.MultipleObjectsReturned):
+                    else:
                         self.stdout.write(self.style.WARNING(
                             f"  ! No user for '{emp_name}' -- skipping ticket."
                         ))
@@ -256,26 +256,31 @@ class Command(BaseCommand):
                 # Build descriptive admin_notes for the employee matching query
                 user_full_name = f"{user.first_name} {user.last_name}"
 
-                ticket, created = Ticket.objects.get_or_create(
+                existing_ticket = Ticket.objects.filter(
                     title=f"{task_type} - {school}",
                     school_name=school,
                     assignee=user,
                     status='COMPLETED',
-                    defaults={
-                        'description': f"Completed {task_type} at {school}, {district}.",
-                        'support_type': support_type,
-                        'school_district': district,
-                        'first_name': user.first_name,
-                        'last_name': user.last_name,
-                        'admin_notes': f"Assigned to: {user_full_name}",
-                        'actual_completion_date': timezone.now(),
-                    }
-                )
-                if created:
+                ).first()
+
+                if existing_ticket:
+                    tickets_skipped += 1
+                else:
+                    ticket = Ticket.objects.create(
+                        title=f"{task_type} - {school}",
+                        description=f"Completed {task_type} at {school}, {district}.",
+                        status='COMPLETED',
+                        support_type=support_type,
+                        school_name=school,
+                        school_district=district,
+                        first_name=user.first_name,
+                        last_name=user.last_name,
+                        assignee=user,
+                        admin_notes=f"Assigned to: {user_full_name}",
+                        actual_completion_date=timezone.now(),
+                    )
                     tickets_created += 1
                     self.stdout.write(f"  > {ticket.ticket_number} -> {user_full_name} | {task_type} @ {school}")
-                else:
-                    tickets_skipped += 1
 
         self.stdout.write(self.style.SUCCESS(
             f"\n  Tickets created: {tickets_created} | Skipped: {tickets_skipped}"
