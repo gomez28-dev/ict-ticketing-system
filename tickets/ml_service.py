@@ -111,7 +111,7 @@ def recommend_staff(school_name, support_type):
         expertise_raw = [e.strip() for e in user.expertise.split(',') if e.strip()] if user.expertise else []
         expertise_normalized = [e.replace(' ', '_') for e in expertise_raw]
 
-        staff_entry = {'name': full_name, 'id': user.id}
+        staff_entry = {'name': full_name, 'id': user.id, 'rating': user.overall_rating or 0.0}
         all_staff.append(staff_entry)
 
         if mapped_type in expertise_normalized or 'ALL' in expertise_normalized or 'MANAGEMENT' in expertise_normalized:
@@ -119,16 +119,22 @@ def recommend_staff(school_name, support_type):
 
     # 3. Fallback just in case no exact match is found
     if not eligible_staff:
-        eligible_staff = all_staff if all_staff else [{'name': 'Any available staff', 'id': None}]
+        eligible_staff = all_staff if all_staff else [{'name': 'Any available staff', 'id': None, 'rating': 0.0}]
 
-    # 4. Safely choose a random staff member from our filtered list
-    selected_staff = random.choice(eligible_staff)
+    # 4. Rank eligible staff deterministically: lowest active load first, highest rating descending, alphabetical name
+    for staff in eligible_staff:
+        if staff.get('id'):
+            staff['active_load'] = Ticket.objects.filter(
+                admin_notes__icontains=staff['name']
+            ).exclude(status__in=['RESOLVED', 'COMPLETED', 'DECLINED']).count()
+        else:
+            staff['active_load'] = 0
+
+    eligible_staff.sort(key=lambda s: (s['active_load'], -s.get('rating', 0.0), s['name']))
+    selected_staff = eligible_staff[0]
+    current_load = selected_staff['active_load']
 
     # 5. Generate the AI reason to display on the UI
-    current_load = Ticket.objects.filter(
-        admin_notes__icontains=selected_staff['name']
-    ).exclude(status__in=['RESOLVED', 'COMPLETED']).count()
-
     reason = f"Matches expertise for '{support_type}'. Currently handling {current_load} active tickets."
 
     return {
@@ -158,15 +164,9 @@ def predict_risk(support_type, priority):
 def calculate_overall_rating(quality, efficiency, timeliness):
     """
     Calculates an overall performance rating from individual scores.
-    Score to percentage map: 5 → 100%, 4 → 80%, 3 → 60%, 2 → 40%
-    Formula: overall = (quality_pct × 5 × 0.40) + (efficiency_pct × 5 × 0.30) + (timeliness_pct × 5 × 0.30)
+    Formula: overall = (quality * 0.40) + (efficiency * 0.30) + (timeliness * 0.30)
+    Supports scores 1.0 to 5.0 and accepts float ratings directly.
     Returns the overall float value rounded to 2 decimal places.
     """
-    score_to_pct = {5: 1.0, 4: 0.8, 3: 0.6, 2: 0.4}
-
-    quality_pct = score_to_pct.get(quality, 0.6)
-    efficiency_pct = score_to_pct.get(efficiency, 0.6)
-    timeliness_pct = score_to_pct.get(timeliness, 0.6)
-
-    overall = (quality_pct * 5 * 0.40) + (efficiency_pct * 5 * 0.30) + (timeliness_pct * 5 * 0.30)
-    return round(overall, 2)
+    overall = (float(quality) * 0.40) + (float(efficiency) * 0.30) + (float(timeliness) * 0.30)
+    return round(max(1.0, min(5.0, overall)), 2)

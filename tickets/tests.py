@@ -454,7 +454,7 @@ class AnalyticsReportTests(TestCase):
     def test_analytics_dashboard_requires_admin(self):
         # Unauthenticated redirects to dashboard login
         response = self.client.get(reverse('analytics'))
-        self.assertRedirects(response, f"{reverse('dashboard')}?next={reverse('analytics')}")
+        self.assertRedirects(response, f"{reverse('dashboard')}?next={reverse('analytics')}", fetch_redirect_response=False)
 
         # Member user redirects to dashboard
         self.client.force_login(self.member)
@@ -846,6 +846,85 @@ class SignedPhysicalJRFTests(TestCase):
         self.assertEqual(self.ticket.status, 'COMPLETED')
         self.assertTrue(self.ticket.signed_jrf_attachment)
         self.assertIsNotNone(self.ticket.actual_completion_date)
+
+
+class PreDefenseHardeningTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='admin_predefense',
+            email='admin_predefense@deped.gov.ph',
+            password='pass1234',
+            role='ADMIN',
+            is_staff=True,
+        )
+        self.ticket = Ticket.objects.create(
+            first_name='Principal',
+            last_name='Reyes',
+            school_name='Valenzuela West Elementary',
+            support_type='HARDWARE',
+            description='Defective computer monitors in ICT lab.',
+            status='IN_PROGRESS',
+            priority='LOW',
+        )
+
+    def test_password_reset_otp_str_without_school(self):
+        otp = PasswordResetOTP.objects.create(
+            user=self.admin,
+            code='654321',
+        )
+        otp_str = str(otp)
+        self.assertIn('admin_predefense@deped.gov.ph', otp_str)
+        self.assertIn('654321', otp_str)
+        self.assertIn('[Valid]', otp_str)
+
+    def test_update_ticket_priority_choices_valid(self):
+        self.client.force_login(self.admin)
+        import json
+        response = self.client.post(
+            reverse('update_ticket_ajax', args=[self.ticket.id]),
+            data=json.dumps({'priority': 'HIGH'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.priority, 'HIGH')
+
+    def test_calculate_overall_rating_supports_score_one_and_floats(self):
+        from .ml_service import calculate_overall_rating
+        rating_min = calculate_overall_rating(1, 1, 1)
+        self.assertEqual(rating_min, 1.0)
+        rating_float = calculate_overall_rating(4.5, 3.5, 4.0)
+        expected = round((4.5 * 0.40) + (3.5 * 0.30) + (4.0 * 0.30), 2)
+        self.assertEqual(rating_float, expected)
+
+    def test_dashboard_requires_login(self):
+        response = self.client.get(reverse('dashboard'))
+        self.assertRedirects(response, f"{reverse('admin_login')}?next={reverse('dashboard')}")
+
+    def test_recommend_staff_deterministic(self):
+        from .ml_service import recommend_staff
+        u1 = User.objects.create_user(
+            username='tech_a',
+            email='tech_a@deped.gov.ph',
+            first_name='Alpha',
+            last_name='Tech',
+            role='MEMBER',
+            expertise='HARDWARE',
+            overall_rating=4.5,
+        )
+        u2 = User.objects.create_user(
+            username='tech_b',
+            email='tech_b@deped.gov.ph',
+            first_name='Beta',
+            last_name='Tech',
+            role='MEMBER',
+            expertise='HARDWARE',
+            overall_rating=4.8,
+        )
+        rec = recommend_staff('Valenzuela West Elementary', 'HARDWARE')
+        # Both have 0 active load, but u2 (Beta Tech) has higher rating (4.8 > 4.5)
+        self.assertEqual(rec['recommended_name'], 'Beta Tech')
+
 
 
 

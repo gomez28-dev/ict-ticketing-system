@@ -110,7 +110,8 @@ class PasswordResetOTP(models.Model):
 
     def __str__(self):
         status = "Valid" if self.is_valid else ("Used" if self.is_used else "Expired")
-        return f"OTP for {self.school.name}: {self.code} [{status}]"
+        target = self.school.name if self.school else (self.user.email if self.user else "Unknown")
+        return f"OTP for {target}: {self.code} [{status}]"
 
 
 class SchoolAccountRequest(models.Model):
@@ -282,6 +283,7 @@ class Ticket(models.Model):
 
 class PerformanceReview(models.Model):
     SCORE_CHOICES = (
+        (1, '1 - Poor'),
         (2, '2 - Below Average'),
         (3, '3 - Average'),
         (4, '4 - Good'),

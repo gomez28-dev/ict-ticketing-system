@@ -35,9 +35,13 @@
                     <!-- Stars injected by JS -->
                 </div>
                 <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
-                    {% for skill in profile_user.expertise|default:"No expertise listed"|slice:":5" %}
-                        <span class="px-2.5 py-1 text-xs font-semibold rounded-md bg-black/20 backdrop-blur-sm border border-white/10 shadow-inner">{{ skill }}</span>
-                    {% endfor %}
+                    {% if profile_user.expertise_list %}
+                        {% for skill in profile_user.expertise_list|slice:":5" %}
+                            <span class="px-2.5 py-1 text-xs font-semibold rounded-md bg-black/20 backdrop-blur-sm border border-white/10 shadow-inner">{{ skill }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-md bg-black/20 backdrop-blur-sm border border-white/10 shadow-inner">No expertise listed</span>
+                    {% endif %}
                 </div>
             </div>
             {% if is_admin_user %}

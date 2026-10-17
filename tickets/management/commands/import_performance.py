@@ -40,7 +40,7 @@ def parse_name(full_name):
     Parse 'MARVIN M. CRUZ' into (first_name, last_name).
     Strategy: first token = first name, last token = last name.
     Middle initials/tokens are discarded.
-    Handles special cases like 'ROLANDO JR. O. DE CASTRO'.
+    Handles special cases like 'ROLANDO JR. O. DE CASTRO' and 'EDELFONSO D. ORIG I'.
     """
     parts = full_name.strip().split()
     if not parts:
@@ -49,17 +49,29 @@ def parse_name(full_name):
         return parts[0].title(), ''
 
     first = parts[0].title()
-    # Handle 'JR.' as part of first name
     idx = 1
+    # Handle 'JR.' as part of first name
     if idx < len(parts) and parts[idx].upper().rstrip('.') in ('JR', 'SR', 'II', 'III', 'IV'):
         first = f"{first} {parts[idx].title()}"
         idx += 1
 
-    last = ' '.join(parts[-1:]).title()
+    # Check if last token is a Roman numeral / suffix like 'I', 'II', 'III', 'IV', 'V', 'JR', 'SR'
+    has_trailing_suffix = len(parts) > 2 and parts[-1].upper().rstrip('.') in ('I', 'II', 'III', 'IV', 'V', 'JR', 'SR')
+    if has_trailing_suffix:
+        suffix = parts[-1].upper() if parts[-1].upper() in ('I', 'II', 'III', 'IV', 'V') else parts[-1].title()
+        last = f"{parts[-2].title()} {suffix}"
+        start_check = len(parts) - 3
+    else:
+        last = parts[-1].title()
+        start_check = len(parts) - 2
+
     # Handle compound last names like 'DE CASTRO', 'DE GUZMAN', 'DE JESUS'
-    for i in range(len(parts) - 2, idx - 1, -1):
+    for i in range(start_check, idx - 1, -1):
         if parts[i].upper() in ('DE', 'DEL', 'DELA', 'SAN', 'VAN', 'LOS'):
-            last = ' '.join(p.title() for p in parts[i:])
+            compound_parts = [p.title() for p in parts[i:start_check + 1]]
+            if has_trailing_suffix:
+                compound_parts.append(suffix)
+            last = ' '.join(compound_parts)
             break
 
     return first, last
@@ -70,6 +82,8 @@ def make_username(first, last):
     base = f"{first}.{last}".lower().replace(' ', '')
     # Remove non-alphanumeric except dots
     base = re.sub(r'[^a-z0-9.]', '', base)
+    # Collapse multiple consecutive dots into a single dot and strip ends
+    base = re.sub(r'\.+', '.', base).strip('.')
     return base or 'employee'
 
 
@@ -140,7 +154,12 @@ class Command(BaseCommand):
                         first_name__iexact=first, last_name__iexact=last
                     ).first()
 
-                if not user:
+                if user:
+                    clean_uname = make_username(user.first_name, user.last_name)
+                    if user.username != clean_uname and '..' in user.username and not User.objects.filter(username=clean_uname).exclude(id=user.id).exists():
+                        user.username = clean_uname
+                        user.save(update_fields=['username'])
+                else:
                     username = make_username(first, last)
                     # Ensure unique username
                     base_username = username
@@ -237,21 +256,26 @@ class Command(BaseCommand):
                 # Build descriptive admin_notes for the employee matching query
                 user_full_name = f"{user.first_name} {user.last_name}"
 
-                ticket = Ticket.objects.create(
+                ticket, created = Ticket.objects.get_or_create(
                     title=f"{task_type} - {school}",
-                    description=f"Completed {task_type} at {school}, {district}.",
-                    status='COMPLETED',
-                    support_type=support_type,
                     school_name=school,
-                    school_district=district,
-                    first_name=user.first_name,
-                    last_name=user.last_name,
                     assignee=user,
-                    admin_notes=f"Assigned to: {user_full_name}",
-                    actual_completion_date=timezone.now(),
+                    status='COMPLETED',
+                    defaults={
+                        'description': f"Completed {task_type} at {school}, {district}.",
+                        'support_type': support_type,
+                        'school_district': district,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'admin_notes': f"Assigned to: {user_full_name}",
+                        'actual_completion_date': timezone.now(),
+                    }
                 )
-                tickets_created += 1
-                self.stdout.write(f"  > {ticket.ticket_number} -> {user_full_name} | {task_type} @ {school}")
+                if created:
+                    tickets_created += 1
+                    self.stdout.write(f"  > {ticket.ticket_number} -> {user_full_name} | {task_type} @ {school}")
+                else:
+                    tickets_skipped += 1
 
         self.stdout.write(self.style.SUCCESS(
             f"\n  Tickets created: {tickets_created} | Skipped: {tickets_skipped}"

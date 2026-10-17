@@ -163,7 +163,7 @@ def add_employee(request):
                 import logging
                 logging.getLogger(__name__).error(f"Failed to send welcome email: {e}")
 
-            return redirect('teams')
+            return redirect('employee_directory')
 
     return render(request, 'tickets/employee_form.html', {'error': error})
 
@@ -384,6 +384,7 @@ def school_ticket_detail(request, ticket_id):
 # MAIN KANBAN & DASHBOARD VIEWS
 # ==========================================
 
+@login_required(login_url='admin_login')
 def dashboard(request):
     all_tickets = Ticket.objects.all().order_by('-created_at')
 
@@ -393,7 +394,7 @@ def dashboard(request):
     context = {
         'tickets': all_tickets,
         'total_tickets': all_tickets.count(),
-        'resolved_tickets': all_tickets.filter(status='RESOLVED').count(),
+        'resolved_tickets': all_tickets.filter(status__in=['RESOLVED', 'COMPLETED']).count(),
         'staff_data': get_staff_data(),
         'graph_data': chart_data,
     }
@@ -827,6 +828,7 @@ def analytics_report_print(request):
     )
     return render(request, 'tickets/analytics_report_print.html', context)
 
+@login_required(login_url='admin_login')
 def employee_directory(request):
     employees = User.objects.filter(role='MEMBER').exclude(is_superuser=True).exclude(role='ADMIN').order_by('first_name', 'last_name')
 
@@ -869,6 +871,7 @@ def employee_directory(request):
 # UTILITY VIEWS
 # ==========================================
 
+@login_required(login_url='admin_login')
 def backlog_view(request):
     audit_logs = TicketAuditLog.objects.all().order_by('-timestamp')
     context = {
@@ -876,6 +879,7 @@ def backlog_view(request):
     }
     return render(request, 'tickets/audit_trail.html', context)
 
+@login_required(login_url='admin_login')
 def move_from_backlog(request, ticket_id):
     if request.method == 'POST':
         ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -892,6 +896,7 @@ def privacy(request):
     from_source = request.GET.get('from', 'admin')
     return render(request, 'tickets/privacy.html', {'from_source': from_source})
 
+@login_required(login_url='admin_login')
 def search_tickets(request):
     query = request.GET.get('q', '')
     results = []
@@ -976,7 +981,7 @@ def update_ticket_ajax(request, ticket_id):
             if new_priority is not None:
                 if not is_admin_user:
                     return JsonResponse({'success': False, 'message': 'Only admins can change ticket priority.'}, status=403)
-                valid_priorities = {choice[0] for choice in Ticket.PRIORITY_CHOICES}
+                valid_priorities = {choice[0] for choice in Ticket.Priority.choices}
                 if new_priority not in valid_priorities:
                     return JsonResponse({'success': False, 'message': 'Invalid priority value.'}, status=400)
                 if ticket.priority != new_priority:
@@ -1799,22 +1804,25 @@ def submit_performance_review(request, ticket_id):
             messages.error(request, "Could not identify the employee for this ticket.")
             return redirect('documents')
 
-        # Calculate new scores using rolling average
-        if employee.total_reviews > 0:
-            employee.quality_score = (employee.quality_score + quality) / 2
-            employee.efficiency_score = (employee.efficiency_score + efficiency) / 2
-            employee.timeliness_score = (employee.timeliness_score + timeliness) / 2
+        # Calculate new scores using cumulative moving average
+        n = employee.total_reviews or 0
+        if n > 0:
+            new_total = n + 1
+            employee.quality_score = ((employee.quality_score * n) + quality) / new_total
+            employee.efficiency_score = ((employee.efficiency_score * n) + efficiency) / new_total
+            employee.timeliness_score = ((employee.timeliness_score * n) + timeliness) / new_total
         else:
             employee.quality_score = float(quality)
             employee.efficiency_score = float(efficiency)
             employee.timeliness_score = float(timeliness)
 
         employee.overall_rating = calculate_overall_rating(
-            int(round(employee.quality_score)),
-            int(round(employee.efficiency_score)),
-            int(round(employee.timeliness_score))
+            employee.quality_score,
+            employee.efficiency_score,
+            employee.timeliness_score
         )
-        employee.total_reviews += 1
+        employee.total_reviews = (employee.total_reviews or 0) + 1
+        employee.total_tasks_done = (employee.total_tasks_done or 0) + 1
         employee.save()
 
         # Create the review record
@@ -1869,6 +1877,8 @@ def employee_profile(request, user_id):
     if not (is_self or is_admin_user):
         messages.error(request, "You do not have permission to view this profile.")
         return redirect('dashboard')
+
+    profile_user.expertise_list = [s.strip() for s in profile_user.expertise.split(',') if s.strip()] if profile_user.expertise else []
 
     # Get ALL resolved/completed tickets for this employee (full task history)
     user_full_name = f"{profile_user.first_name} {profile_user.last_name}".strip()
@@ -2032,22 +2042,25 @@ def api_save_review(request):
     if not employee:
         return JsonResponse({'success': False, 'message': 'Could not identify the assigned employee for this ticket.'})
 
-    # Update employee scores (rolling average)
-    if employee.total_reviews > 0:
-        employee.quality_score = (employee.quality_score + quality) / 2
-        employee.efficiency_score = (employee.efficiency_score + efficiency) / 2
-        employee.timeliness_score = (employee.timeliness_score + timeliness) / 2
+    # Update employee scores (cumulative moving average)
+    n = employee.total_reviews or 0
+    if n > 0:
+        new_total = n + 1
+        employee.quality_score = ((employee.quality_score * n) + quality) / new_total
+        employee.efficiency_score = ((employee.efficiency_score * n) + efficiency) / new_total
+        employee.timeliness_score = ((employee.timeliness_score * n) + timeliness) / new_total
     else:
         employee.quality_score = float(quality)
         employee.efficiency_score = float(efficiency)
         employee.timeliness_score = float(timeliness)
 
     employee.overall_rating = calculate_overall_rating(
-        int(round(employee.quality_score)),
-        int(round(employee.efficiency_score)),
-        int(round(employee.timeliness_score))
+        employee.quality_score,
+        employee.efficiency_score,
+        employee.timeliness_score
     )
-    employee.total_reviews += 1
+    employee.total_reviews = (employee.total_reviews or 0) + 1
+    employee.total_tasks_done = (employee.total_tasks_done or 0) + 1
     employee.save()
 
     # Create the review record
