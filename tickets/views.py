@@ -497,11 +497,41 @@ def reject_unresolved(request, ticket_id):
 def documents_view(request):
     under_review_tickets = Ticket.objects.filter(status='UNDER_REVIEW').order_by('-updated_at')
     resolved_tickets = Ticket.objects.filter(status='RESOLVED').order_by('-updated_at')
-    completed_tickets = Ticket.objects.filter(status='COMPLETED').order_by('-updated_at')
+    completed_qs = Ticket.objects.filter(status='COMPLETED').order_by('-updated_at')
+
+    # R1.3: Search filtering on completed documents
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        completed_qs = completed_qs.filter(
+            Q(ticket_number__icontains=search_query) |
+            Q(school_name__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
+    # R1.3: Server-side pagination (25 rows per page)
+    paginator = Paginator(completed_qs, 25)
+    page_number = request.GET.get('page', 1)
+    try:
+        completed_page = paginator.get_page(page_number)
+    except Exception:
+        completed_page = paginator.get_page(1)
+
+    # Preserve all other query parameters in request.GET across pages
+    params = request.GET.copy()
+    if 'page' in params:
+        del params['page']
+    extra_query = params.urlencode()
+
     context = {
         'under_review_tickets': under_review_tickets,
         'resolved_tickets': resolved_tickets,
-        'completed_tickets': completed_tickets
+        'completed_tickets': completed_page,
+        'paginator': paginator,
+        'is_paginated': completed_page.has_other_pages(),
+        'search_query': search_query,
+        'extra_query': extra_query,
     }
     return render(request, 'tickets/documents.html', context)
 

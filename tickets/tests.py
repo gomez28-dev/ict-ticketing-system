@@ -1171,3 +1171,84 @@ class Phase2FunctionalImprovementTests(TestCase):
         self.assertRedirects(resp, reverse('settings'))
         settings_obj = UserSettings.objects.get(user=self.admin)
         self.assertTrue(settings_obj.email_notifications)
+
+
+class Phase3PerformanceAndUsabilityTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            username='admin_p3',
+            email='admin_p3@deped.gov.ph',
+            password='Password123!',
+            role='ADMIN',
+            is_staff=True,
+            is_superuser=True
+        )
+        self.school = School.objects.create(
+            name="Phase 3 Test School",
+            school_id="SCH-P3-001"
+        )
+        # Create 30 completed tickets to test pagination (25 items/page)
+        tickets = []
+        for i in range(30):
+            tickets.append(Ticket(
+                ticket_number=f'TKT-P3-{i:03d}',
+                school_name=self.school.name,
+                support_type='SOFTWARE',
+                description=f'Test completed ticket {i}',
+                status='COMPLETED'
+            ))
+        Ticket.objects.bulk_create(tickets)
+
+    def test_documents_pagination_25_rows_per_page(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse('documents'))
+        self.assertEqual(resp.status_code, 200)
+
+        completed_tickets = resp.context['completed_tickets']
+        self.assertEqual(len(completed_tickets), 25)
+        self.assertTrue(resp.context['is_paginated'])
+        self.assertGreaterEqual(resp.context['paginator'].count, 30)
+
+        # Page 2 has the remaining 5
+        resp_p2 = self.client.get(f"{reverse('documents')}?page=2")
+        self.assertEqual(resp_p2.status_code, 200)
+        completed_p2 = resp_p2.context['completed_tickets']
+        self.assertEqual(len(completed_p2), 5)
+
+    def test_documents_search_and_pagination(self):
+        self.client.force_login(self.admin)
+        # Create a uniquely searchable completed ticket
+        unique_ticket = Ticket.objects.create(
+            ticket_number='TKT-UNIQUE-999',
+            school_name='Unique Elementary School',
+            support_type='HARDWARE',
+            description='Unique specialized hardware issue',
+            status='COMPLETED'
+        )
+
+        resp = self.client.get(f"{reverse('documents')}?search=Unique")
+        self.assertEqual(resp.status_code, 200)
+        completed_tickets = resp.context['completed_tickets']
+        self.assertEqual(len(completed_tickets), 1)
+        self.assertEqual(completed_tickets[0].ticket_number, 'TKT-UNIQUE-999')
+
+    def test_contact_number_validation_c1_7_r3_6(self):
+        from .forms import validate_ph_mobile
+        from django.core.exceptions import ValidationError
+
+        # Valid 11-digit numbers starting with 09 pass
+        self.assertEqual(validate_ph_mobile('09123456789'), '09123456789')
+        self.assertEqual(validate_ph_mobile(' 09987654321 '), '09987654321')
+
+        # Invalid prefixes or lengths raise ValidationError
+        with self.assertRaises(ValidationError):
+            validate_ph_mobile('08123456789')  # Non-09 prefix
+
+        with self.assertRaises(ValidationError):
+            validate_ph_mobile('0912345678')  # 10 digits
+
+        with self.assertRaises(ValidationError):
+            validate_ph_mobile('091234567890')  # 12 digits
+
+        with self.assertRaises(ValidationError):
+            validate_ph_mobile('0912345ABCD')  # Non-numeric

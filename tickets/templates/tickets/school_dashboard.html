@@ -8,6 +8,16 @@
     <title>School Portal Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+                function toggleDarkMode() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
         tailwind.config = {
             darkMode: 'class',
         }
@@ -73,6 +83,61 @@
     </style>
     <!-- SweetAlert2 (R3.2 / R3.3) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.all.min.js" integrity="sha384-F8SYeBSrTVPFojwQeAD1UQo0dI5CKJOzc992kU0M/q72tnFcDlxHwbkiw8GLrXd8" crossorigin="anonymous"></script>
+    <!-- Tom Select (R3.5) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css" integrity="sha384-dC18+guBm9Lk5IBQfkKIOw2YSxXWMsiuPfIOZNPilutZQn6MgBvcx+vejNQYlrbc" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js" integrity="sha384-cnROoUgVILyibe3J0zhzWoJ9p2WmdnK7j/BOTSWqVDbC1pVw2d+i6Q/1ESKJKCYf" crossorigin="anonymous"></script>
+
+    <style>
+        /* R3.7: Scrollable Table Containers with Sticky Headers */
+        .table-scroll-container {
+            max-height: 65vh;
+            overflow-y: auto;
+            overflow-x: auto;
+            position: relative;
+        }
+        .table-scroll-container thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #f9fafb !important;
+        }
+        html.dark .table-scroll-container thead th {
+            background-color: #1f2937 !important;
+        }
+        @media print {
+            .table-scroll-container {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+        }
+
+        /* R3.5: Tom Select Dark Mode Support */
+        html.dark .ts-control {
+            background-color: #374151 !important;
+            border-color: #4b5563 !important;
+            color: #f3f4f6 !important;
+        }
+        html.dark .ts-control input {
+            color: #f3f4f6 !important;
+        }
+        html.dark .ts-dropdown {
+            background-color: #1f2937 !important;
+            border-color: #374151 !important;
+            color: #f3f4f6 !important;
+        }
+        html.dark .ts-dropdown .option {
+            color: #f3f4f6 !important;
+        }
+        html.dark .ts-dropdown .active {
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+        }
+        html.dark .ts-dropdown .optgroup-header {
+            background-color: #111827 !important;
+            color: #9ca3af !important;
+        }
+    </style>
+
 </head>
 
 <body
@@ -94,6 +159,11 @@
                 <span
                     class="text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">ID:
                     {{ school.school_id }}</span>
+                <!-- Dark Mode Toggle (R3.4) -->
+                <button type="button" onclick="toggleDarkMode()" class="h-10 w-10 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors cursor-pointer" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+                    <svg class="w-5 h-5 hidden dark:block text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg class="w-5 h-5 block dark:hidden text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
                 <a href="{% url 'school_logout' %}"
                     class="min-h-11 inline-flex items-center text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors">Logout</a>
             </div>
@@ -164,6 +234,7 @@
             </div>
 
             <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-md transition-colors duration-200">
+                <div class="table-scroll-container overflow-x-auto">
                 <table class="hidden md:table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700 transition-colors">
                         <tr>
@@ -876,6 +947,102 @@
             }, 0);
         }, false);
     </script>
+
+    <!-- Floating Back to Top Button (R3.8) -->
+    <button id="backToTopBtn" type="button"
+            class="fixed bottom-6 right-6 z-40 hidden p-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 print:hidden cursor-pointer"
+            title="Back to Top" aria-label="Back to top">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+    </button>
+
+    <script>
+        // R3.8: Floating Back to Top Button visibility & smooth scroll
+        (function () {
+            const btn = document.getElementById('backToTopBtn');
+            if (!btn) return;
+            const mainContainer = document.querySelector('main > div.overflow-y-auto');
+
+            function checkScroll() {
+                const scrollY = window.scrollY || (document.documentElement && document.documentElement.scrollTop) || 0;
+                const containerY = mainContainer ? mainContainer.scrollTop : 0;
+                if (scrollY > 300 || containerY > 300) {
+                    btn.classList.remove('hidden');
+                } else {
+                    btn.classList.add('hidden');
+                }
+            }
+
+            window.addEventListener('scroll', checkScroll, { passive: true });
+            if (mainContainer) {
+                mainContainer.addEventListener('scroll', checkScroll, { passive: true });
+            }
+
+            btn.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (mainContainer) {
+                    mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        })();
+
+        // R3.5: Tom Select Searchable Combo Box Initialization
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof TomSelect !== 'undefined') {
+                document.querySelectorAll('select.searchable-select, select[data-searchable="true"]').forEach(function (el) {
+                    if (!el.tomselect) {
+                        new TomSelect(el, {
+                            create: false,
+                            allowEmptyOption: true,
+                            maxOptions: 500,
+                            onChange: function (value) {
+                                el.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        // R3.6: Pre-fill "09" and enforce 11-digit numeric masking
+        document.addEventListener('DOMContentLoaded', function () {
+            const contactInputs = document.querySelectorAll('input[type="tel"], input[name*="contact"]');
+            contactInputs.forEach(function (input) {
+                input.setAttribute('inputmode', 'numeric');
+                input.setAttribute('maxlength', '11');
+                input.setAttribute('pattern', '09[0-9]{9}');
+
+                if (!input.value || input.value.trim() === '') {
+                    input.value = '09';
+                }
+
+                input.addEventListener('input', function () {
+                    let val = input.value.replace(/\D/g, '');
+                    if (val.length === 0) {
+                        val = '09';
+                    } else if (!val.startsWith('09')) {
+                        if (val.startsWith('9')) {
+                            val = '0' + val;
+                        } else if (!val.startsWith('0')) {
+                            val = '09' + val;
+                        } else {
+                            val = '09' + val.substring(1);
+                        }
+                    }
+                    if (val.length > 11) {
+                        val = val.substring(0, 11);
+                    }
+                    input.value = val;
+                });
+
+                input.addEventListener('focus', function () {
+                    if (!input.value || input.value.trim() === '') {
+                        input.value = '09';
+                    }
+                });
+            });
+        });
+    </script>
+
 </body>
 
 </html>
