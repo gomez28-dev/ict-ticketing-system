@@ -61,6 +61,8 @@ urlpatterns = [
     path('admin-dashboard/my-tickets/resolve/<int:ticket_id>/', views.resolve_assignment, name='resolve_assignment'),
     path('admin-dashboard/my-tickets/unresolve/<int:ticket_id>/', views.unresolve_assignment, name='unresolve_assignment'),
     path('admin-dashboard/my-tickets/submit-review/<int:ticket_id>/', views.submit_for_review, name='submit_for_review'),
+    path('admin-dashboard/my-tickets/acknowledge/<int:ticket_id>/', views.acknowledge_ticket, name='acknowledge_ticket'),
+    path('admin-dashboard/my-tickets/transfer/<int:ticket_id>/', views.transfer_ticket, name='transfer_ticket'),
 
     # Employee Receipt Path
     path('admin-dashboard/my-tickets/receipt/<int:ticket_id>/', views.employee_receipt_view, name='employee_receipt'),
@@ -76,6 +78,7 @@ urlpatterns = [
     path('admin-dashboard/request/<int:ticket_id>/', views.ticket_triage_view, name='ticket_triage'),
     path('admin-dashboard/request/reject-unresolved/<int:ticket_id>/', views.reject_unresolved, name='reject_unresolved'),
     path('school-dashboard/delete-account/', views.delete_school_account, name='delete_school_account'),
+    path('school-dashboard/change-password/', views.school_change_password, name='school_change_password'),
 
     # Performance Review (Phase 4)
     path('admin-dashboard/documents/review/<int:ticket_id>/', views.submit_performance_review, name='submit_performance_review'),

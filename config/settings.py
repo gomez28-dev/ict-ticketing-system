@@ -93,9 +93,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tickets.middleware.ForcePasswordChangeMiddleware',
 ]
 
 # ==========================================
+# SYSTEM FEATURE FLAGS (R1.6)
+ALLOW_SCHOOL_PASSWORD_CHANGE = True
+
 # SECURITY SETTINGS
 # ==========================================
 if not DEBUG:
