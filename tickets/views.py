@@ -1,7 +1,7 @@
 from .ml_service import predict_ticket_duration, recommend_staff, predict_risk, get_mapped_support_type, calculate_overall_rating, validate_ticket_description_for_ai
 from .analytics_service import get_analytics_report_context
 from django.utils import timezone
-from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP, PerformanceReview
+from .models import Ticket, School, TicketAuditLog, SchoolAccountRequest, PasswordResetOTP, PerformanceReview, UserSettings
 import math
 from datetime import date, timedelta
 from .forms import PublicTicketForm, SubmitForReviewForm, TicketAssignmentForm, validate_ph_mobile
@@ -1135,7 +1135,13 @@ def school_print_ticket(request, ticket_id):
 @login_required
 def employee_ticket_review(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    return render(request, 'tickets/employee_ticket_review.html', {'ticket': ticket})
+    is_admin = is_admin_or_superuser(request.user)
+    available_agents = User.objects.filter(is_active=True).exclude(id=ticket.assignee_id if ticket.assignee_id else 0).order_by('first_name', 'last_name')
+    return render(request, 'tickets/employee_ticket_review.html', {
+        'ticket': ticket,
+        'is_admin': is_admin,
+        'available_agents': available_agents,
+    })
 
 @login_required
 def accept_assignment(request, ticket_id):
@@ -1794,42 +1800,51 @@ def admin_delete_school(request, school_id):
 @login_required
 def settings_view(request):
     user = request.user
+    user_settings, _ = UserSettings.objects.get_or_create(user=user)
 
-    if request.method == 'POST' and request.POST.get('action') == 'update_profile':
-        first_name = request.POST.get('first_name', '').strip()
-        last_name = request.POST.get('last_name', '').strip()
-        email = request.POST.get('email', '').strip()
-        bio = request.POST.get('bio', '').strip()
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'update_notifications':
+            user_settings.email_notifications = (request.POST.get('email_notifications') == '1' or request.POST.get('email_notifications') == 'on')
+            user_settings.save()
+            messages.success(request, "Notification preferences updated successfully.")
+            return redirect('settings')
+        elif action == 'update_profile':
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            bio = request.POST.get('bio', '').strip()
 
-        # Check unique email if changed
-        if email and email != user.email:
-            if User.objects.filter(email=email).exclude(id=user.id).exists():
-                messages.error(request, f"The email '{email}' is already in use by another account.")
-                return redirect('settings')
-            user.email = email
+            # Check unique email if changed
+            if email and email != user.email:
+                if User.objects.filter(email=email).exclude(id=user.id).exists():
+                    messages.error(request, f"The email '{email}' is already in use by another account.")
+                    return redirect('settings')
+                user.email = email
 
-        if first_name:
-            user.first_name = first_name
-        if last_name:
-            user.last_name = last_name
-        user.bio = bio
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            user.bio = bio
 
-        if request.POST.get('remove_profile_picture'):
-            if user.profile_picture:
-                user.profile_picture.delete(save=False)
-            user.profile_picture = None
-        elif request.FILES.get('profile_picture'):
-            if user.profile_picture:
-                user.profile_picture.delete(save=False)
-            user.profile_picture = request.FILES['profile_picture']
+            if request.POST.get('remove_profile_picture'):
+                if user.profile_picture:
+                    user.profile_picture.delete(save=False)
+                user.profile_picture = None
+            elif request.FILES.get('profile_picture'):
+                if user.profile_picture:
+                    user.profile_picture.delete(save=False)
+                user.profile_picture = request.FILES['profile_picture']
 
-        user.save()
-        messages.success(request, "Account profile updated successfully.")
-        return redirect('settings')
+            user.save()
+            messages.success(request, "Account profile updated successfully.")
+            return redirect('settings')
 
     context = {
         'profile_user': user,
         'is_admin_user': is_admin_or_superuser(user),
+        'user_settings': user_settings,
     }
     return render(request, 'tickets/settings.html', context)
 
@@ -2246,3 +2261,179 @@ def health_check(request):
             'database': 'disconnected',
             'error': str(exc),
         }, status=500)
+
+# ==========================================
+# PHASE 2: TICKET ACKNOWLEDGMENT & TRANSFER & SCHOOL PASSWORD
+# ==========================================
+
+@login_required
+def acknowledge_ticket(request, ticket_id):
+    """
+    R2.3: Agent Ticket Acknowledgment.
+    Allows the assigned agent or Admin to confirm receipt of an assigned ticket
+    with an operational status note (e.g. for checking or needs verification).
+    """
+    if request.method != 'POST':
+        return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    is_admin = is_admin_or_superuser(request.user)
+
+    if not is_admin and ticket.assignee != request.user:
+        messages.error(request, 'Only the assigned agent or an administrator can acknowledge this ticket.')
+        return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+    ack_note_type = request.POST.get('ack_note_type', 'For checking').strip()
+    custom_notes = request.POST.get('ack_notes', '').strip()
+
+    note_label = f"Acknowledged - {ack_note_type}"
+    if custom_notes:
+        note_label += f": {custom_notes}"
+
+    timestamp = timezone.localtime().strftime('%Y-%m-%d %I:%M %p')
+    user_label = request.user.get_full_name() or request.user.username
+    formatted_ack = f"\n[{timestamp}] {user_label} {note_label}"
+
+    old_status = ticket.status
+    target_status = 'IN_PROGRESS' if ticket.status in ['SCHEDULED', 'PENDING_ACCEPTANCE'] else ticket.status
+
+    with transaction.atomic():
+        updated = Ticket.objects.filter(pk=ticket.pk, status=old_status).update(
+            status=target_status,
+            admin_notes=(ticket.admin_notes or '') + formatted_ack,
+            updated_at=timezone.now()
+        )
+        if not updated:
+            messages.error(request, 'Ticket status was modified concurrently.')
+            return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+        TicketAuditLog.objects.create(
+            ticket=ticket,
+            changed_by=request.user,
+            action='Ticket Acknowledged',
+            old_value=dict(Ticket.Status.choices).get(old_status, old_status),
+            new_value=f"{dict(Ticket.Status.choices).get(target_status, target_status)} ({note_label})"
+        )
+
+    messages.success(request, f'Ticket acknowledged successfully ({note_label}).')
+    return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+
+@login_required
+def transfer_ticket(request, ticket_id):
+    """
+    R2.2: Transfer assigned ticket to another agent to balance workload.
+    Authorized for assigned agent or Admin/Superadmin.
+    Does NOT increment total_tasks_done.
+    """
+    if request.method != 'POST':
+        return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    is_admin = is_admin_or_superuser(request.user)
+
+    if not is_admin and ticket.assignee != request.user:
+        messages.error(request, 'Only the assigned agent or an administrator can transfer this ticket.')
+        return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+    if ticket.status in ['COMPLETED', 'DECLINED']:
+        messages.error(request, 'Completed or declined tickets cannot be transferred.')
+        return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+    target_agent_id = request.POST.get('target_agent_id')
+    transfer_reason = request.POST.get('transfer_reason', '').strip()
+
+    if not target_agent_id:
+        messages.error(request, 'Please select a target agent to transfer the ticket to.')
+        return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+    if not transfer_reason:
+        messages.error(request, 'A reason is required to transfer this ticket.')
+        return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+    target_agent = get_object_or_404(User, id=target_agent_id, is_active=True)
+
+    if ticket.assignee == target_agent:
+        messages.error(request, 'Ticket is already assigned to this agent.')
+        return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+    old_agent_name = (ticket.assignee.get_full_name() or ticket.assignee.username) if ticket.assignee else 'Unassigned'
+    new_agent_name = target_agent.get_full_name() or target_agent.username
+
+    timestamp = timezone.localtime().strftime('%Y-%m-%d %I:%M %p')
+    transfer_note = f"\n[{timestamp}] Transferred from {old_agent_name} to {new_agent_name}. Reason: {transfer_reason}"
+
+    # Replace or set Assigned to in admin_notes
+    current_notes = ticket.admin_notes or ''
+    if 'Assigned to:' in current_notes:
+        lines = current_notes.split('\n')
+        updated_lines = []
+        for line in lines:
+            if line.startswith('Assigned to:'):
+                updated_lines.append(f"Assigned to: {new_agent_name}")
+            else:
+                updated_lines.append(line)
+        new_notes = '\n'.join(updated_lines) + transfer_note
+    else:
+        new_notes = f"Assigned to: {new_agent_name}\n" + current_notes + transfer_note
+
+    with transaction.atomic():
+        ticket.assignee = target_agent
+        ticket.assigned_at = timezone.now()
+        ticket.admin_notes = new_notes.strip()
+        ticket._current_user = request.user
+        ticket.save()
+
+        TicketAuditLog.objects.create(
+            ticket=ticket,
+            changed_by=request.user,
+            action='Ticket Transferred',
+            old_value=old_agent_name,
+            new_value=f"{new_agent_name} (Reason: {transfer_reason})"
+        )
+
+    messages.success(request, f"Ticket successfully transferred to {new_agent_name}.")
+    return redirect('employee_ticket_review', ticket_id=ticket_id)
+
+
+def school_change_password(request):
+    """
+    R1.6: Authenticated school self-service password change.
+    Gated behind settings.ALLOW_SCHOOL_PASSWORD_CHANGE.
+    """
+    if not request.session.get('is_school_authenticated'):
+        return redirect('school_login')
+
+    from django.conf import settings
+    if not getattr(settings, 'ALLOW_SCHOOL_PASSWORD_CHANGE', False):
+        messages.error(request, 'School password change is currently disabled by system administrator.')
+        return redirect('school_dashboard')
+
+    if request.method == 'POST':
+        school_name = request.session.get('school_name')
+        school = get_object_or_404(School, name=school_name)
+
+        current_password = request.POST.get('current_password', '')
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if not school.check_password(current_password):
+            messages.error(request, 'Current password is incorrect.')
+            return redirect('school_dashboard')
+
+        if not new_password or len(new_password) < 8:
+            messages.error(request, 'New password must be at least 8 characters long.')
+            return redirect('school_dashboard')
+
+        if new_password != confirm_password:
+            messages.error(request, 'New password and confirmation password do not match.')
+            return redirect('school_dashboard')
+
+        school.set_password(new_password)
+        school.save()
+
+        messages.success(request, 'Your password has been changed successfully.')
+        return redirect('school_dashboard')
+
+    return redirect('school_dashboard')
+

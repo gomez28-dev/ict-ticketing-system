@@ -97,6 +97,9 @@ MIDDLEWARE = [
 ]
 
 # ==========================================
+# SYSTEM FEATURE FLAGS (R1.6)
+ALLOW_SCHOOL_PASSWORD_CHANGE = True
+
 # SECURITY SETTINGS
 # ==========================================
 if not DEBUG:

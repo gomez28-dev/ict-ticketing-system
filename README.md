@@ -211,3 +211,16 @@ python manage.py runserver
 | Port 8000 already in use | Run `python manage.py runserver 8080` to use a different port |
 | Module not found errors | Make sure the virtual environment is activated (`(.venv)` in prompt) |
 | `import_schools` fails | Ensure `schools.xlsx` is in the project root directory |
+
+---
+
+## System Configuration & Settings Reference
+
+The Admin Settings module (`/admin-dashboard/settings/`) provides the following operational controls:
+
+1. **User Profile Management**: Update account details (name, email, bio) and profile avatar.
+2. **Appearance**: Persistent Dark Mode toggle stored in browser local storage.
+3. **Notification Preferences**: Toggle email notification delivery for ticket events.
+4. **User Management (Admins Only)**: Direct portal for registering and onboarding new ICT Unit administrators, secretaries, and personnel.
+5. **Standardized Service Categories**: Request categories (DCP, Internet & Networking, Software & Systems, Hardware & Peripherals, Technical Consultation) are fixed and centrally governed to guarantee the predictive accuracy of the Machine Learning duration and priority estimation engine.
+6. **Account Deletion**: Self-service deletion protected by confirmation modals.

@@ -71,6 +71,8 @@
             display: flex;
         }
     </style>
+    <!-- SweetAlert2 (R3.2 / R3.3) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.all.min.js" integrity="sha384-F8SYeBSrTVPFojwQeAD1UQo0dI5CKJOzc992kU0M/q72tnFcDlxHwbkiw8GLrXd8" crossorigin="anonymous"></script>
 </head>
 
 <body
@@ -427,7 +429,8 @@
                 <h3 class="text-lg font-medium text-red-800 dark:text-red-300 mb-2">Delete Account</h3>
                 <p class="text-sm text-red-700 dark:text-red-400 mb-4">This permanently deletes the school account.</p>
                 <form method="POST" action="{% url 'delete_school_account' %}"
-                    onsubmit="return confirmDeleteSchoolAccount();">
+                    data-confirm="Are you sure you want to permanently delete this school account? This action cannot be undone."
+                    data-confirm-title="Confirm School Account Deletion">
                     {% csrf_token %}
                     <button type="submit"
                         class="w-full sm:w-auto min-h-11 bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 font-medium transition-colors">
@@ -452,6 +455,39 @@
                             class="translate-x-0 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
                     </button>
                 </div>
+            </div>
+
+            <!-- Change Password Card (R1.6) -->
+            <div class="mt-6 bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 transition-colors duration-200 border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">Account Security</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Update your school account password.</p>
+                <form method="POST" action="{% url 'school_change_password' %}" class="space-y-4 max-w-md"
+                      data-confirm="Are you sure you want to change your school account password?"
+                      data-confirm-title="Confirm Password Change">
+                    {% csrf_token %}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
+                        <input type="password" name="current_password" required
+                               class="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                               placeholder="••••••••">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                        <input type="password" name="new_password" required minlength="8"
+                               class="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                               placeholder="At least 8 characters">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
+                        <input type="password" name="confirm_password" required minlength="8"
+                               class="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+                               placeholder="Confirm new password">
+                    </div>
+                    <button type="submit"
+                            class="min-h-11 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm transition-colors shadow-sm">
+                        Update Password
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -732,6 +768,114 @@
             </div>
         </div>
     </div>
+
+    <!-- SweetAlert2 Flash Messages & Universal Confirmation (R3.2 / R3.3) -->
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const isDark = document.documentElement.classList.contains('dark');
+            {% for message in messages %}
+            Swal.fire({
+                icon: '{% if message.tags == "error" %}error{% elif message.tags == "success" %}success{% elif message.tags == "warning" %}warning{% else %}info{% endif %}',
+                title: '{% if message.tags == "error" %}Error{% elif message.tags == "success" %}Success{% elif message.tags == "warning" %}Warning{% else %}Notice{% endif %}',
+                text: '{{ message|escapejs }}',
+                confirmButtonColor: '#2563eb',
+                background: isDark ? '#1f2937' : '#ffffff',
+                color: isDark ? '#f3f4f6' : '#1f2937'
+            });
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+
+    <script>
+        // R3.2 / R3.3: Universal confirmation handler via SweetAlert2
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!form || form.tagName !== 'FORM') return;
+            const confirmMessage = form.dataset.confirm;
+            if (!confirmMessage) return;
+
+            if (form.dataset.confirmed === 'true') {
+                return;
+            }
+
+            // HTML5 validation safeguard first
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                e.preventDefault();
+                return;
+            }
+
+            e.preventDefault();
+            const submitter = e.submitter;
+            const isDark = document.documentElement.classList.contains('dark');
+            const confirmTitle = form.dataset.confirmTitle || 'Are you sure?';
+            const confirmBtn = form.dataset.confirmBtn || 'Yes, proceed';
+
+            Swal.fire({
+                title: confirmTitle,
+                text: confirmMessage,
+                icon: form.dataset.confirmIcon || 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: confirmBtn,
+                cancelButtonText: 'Cancel',
+                background: isDark ? '#1f2937' : '#ffffff',
+                color: isDark ? '#f3f4f6' : '#1f2937'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.dataset.confirmed = 'true';
+                    if (submitter && submitter.name) {
+                        let hiddenInput = form.querySelector(`input[type="hidden"][name="${submitter.name}"]`);
+                        if (!hiddenInput) {
+                            hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = submitter.name;
+                            form.appendChild(hiddenInput);
+                        }
+                        hiddenInput.value = submitter.value;
+                    }
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit(submitter);
+                    } else {
+                        form.submit();
+                    }
+                }
+            });
+        }, false);
+
+        // R1.2: Client-side single-click submit lock
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!form || form.tagName !== 'FORM') return;
+            if (form.method && form.method.toUpperCase() !== 'POST') return;
+
+            if (!form.checkValidity()) {
+                return;
+            }
+
+            if (form.dataset.confirm && !form.dataset.confirmed) {
+                return;
+            }
+
+            if (form.dataset.submitting === 'true') {
+                e.preventDefault();
+                return;
+            }
+
+            form.dataset.submitting = 'true';
+
+            setTimeout(function () {
+                const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+                submitButtons.forEach(function (btn) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                });
+            }, 0);
+        }, false);
+    </script>
 </body>
 
 </html>

@@ -115,6 +115,22 @@
 
         <div class="px-8 py-5 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 flex justify-end gap-4 items-center">
 
+            {% if is_admin or ticket.assignee == request.user %}
+                {% if ticket.status in 'SCHEDULED,IN_PROGRESS,PENDING_ACCEPTANCE' %}
+                <button type="button" onclick="document.getElementById('modal-acknowledge').classList.remove('hidden')" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Acknowledge
+                </button>
+                {% endif %}
+                {% if ticket.status != 'COMPLETED' and ticket.status != 'DECLINED' %}
+                <button type="button" onclick="document.getElementById('modal-transfer').classList.remove('hidden')" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    Transfer
+                </button>
+                {% endif %}
+            {% endif %}
+
+
             <a href="{% if request.user.role == 'ADMIN' or request.user.is_superuser %}{% url 'documents' %}{% else %}{% url 'my_tickets' %}{% endif %}" class="px-6 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg font-bold shadow-sm transition-colors cursor-pointer">
                 Back to List
             </a>
@@ -124,7 +140,7 @@
                     Decline Ticket
                 </button>
 
-                <form method="POST" action="{% url 'accept_assignment' ticket.id %}" class="m-0 p-0">
+                <form method="POST" action="{% url 'accept_assignment' ticket.id %}" class="m-0 p-0" data-confirm="Accept this ticket assignment?" data-confirm-title="Accept Ticket">
                     {% csrf_token %}
                     <button type="submit" class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -222,7 +238,7 @@
             <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 <p>Ensure you have reviewed the evidence. You can also provide final feedback to the school below.</p>
             </div>
-            <form method="POST" action="{% url 'resolve_assignment' ticket.id %}" class="mt-4">
+            <form method="POST" action="{% url 'resolve_assignment' ticket.id %}" class="mt-4" data-confirm="Mark this ticket as resolved?" data-confirm-title="Resolve Ticket">
                 {% csrf_token %}
                 <textarea name="admin_feedback" rows="3" class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm p-3 mb-4 text-sm focus:ring-green-500 focus:border-green-500" placeholder="Optional: Provide feedback or clarifications for the school..."></textarea>
                 <div class="flex items-center justify-center gap-3">
@@ -242,7 +258,7 @@
             <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 <p>Please provide a reason for declining this ticket. The Admin will review this reason before re-assigning it.</p>
             </div>
-            <form method="POST" action="{% url 'decline_assignment' ticket.id %}" class="mt-4">
+            <form method="POST" action="{% url 'decline_assignment' ticket.id %}" class="mt-4" data-confirm="Are you sure you want to decline this ticket?" data-confirm-title="Decline Ticket">
                 {% csrf_token %}
                 <textarea name="decline_reason" rows="4" required class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm p-3 mb-4 focus:ring-red-500 focus:border-red-500" placeholder="State the reason here..."></textarea>
                 <div class="flex items-center justify-end gap-3 px-4 py-3 border-t dark:border-gray-700">

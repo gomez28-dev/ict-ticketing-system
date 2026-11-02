@@ -138,10 +138,61 @@
         </p>
     </div>
 
+        <!-- NOTIFICATIONS PREFERENCES CARD (R1.5) -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">Notification Preferences</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Choose whether to receive system notifications via email.</p>
+        
+        <form method="POST" action="{% url 'settings' %}" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_notifications">
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600">
+                <div>
+                    <label for="email_notifications" class="font-semibold text-gray-800 dark:text-white text-sm cursor-pointer">Email Notifications</label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Receive email alerts when ticket statuses change or tasks are assigned.</p>
+                </div>
+                <input type="checkbox" id="email_notifications" name="email_notifications" value="1" {% if user_settings.email_notifications %}checked{% endif %} class="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 cursor-pointer">
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="min-h-10 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors">
+                    Save Notification Preferences
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if is_admin_user %}
+    <!-- USER MANAGEMENT CARD (R1.5) -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-1">User Management</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Register and manage ICT Unit administrators, secretaries, and personnel.</p>
+            </div>
+            <a href="{% url 'add_employee' %}" class="min-h-10 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                Add Administrator / Personnel
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- REQUEST CATEGORIES CONFIGURATION NOTE (R1.5) -->
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-1">Ticket Request Categories</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">System classification standard for division service requests.</p>
+        <div class="p-4 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-100 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-300 space-y-2">
+            <p><strong>Standard Service Categories:</strong> DCP (DepEd Computerization Program), Internet &amp; Networking, Software &amp; Systems, Hardware &amp; Peripherals, Technical Consultation.</p>
+            <p class="text-gray-500 dark:text-gray-400 italic"><span class="font-semibold text-blue-600 dark:text-blue-400">Notice:</span> Categories are standardized to guarantee the predictive accuracy of the Machine Learning workload and duration estimation engine. Custom additions are centrally governed to preserve model integrity.</p>
+        </div>
+    </div>
+
     <div class="bg-red-50 dark:bg-red-900/20 p-6 rounded-xl border border-red-100 dark:border-red-800">
         <h3 class="text-lg font-bold text-red-800 dark:text-red-300 mb-2">Delete Account</h3>
         <p class="text-sm text-red-700 dark:text-red-400 mb-4">This permanently deletes your account and cannot be undone.</p>
-        <form method="POST" action="{% url 'delete_user_account' %}" onsubmit="return confirmDeleteAccount();">
+        <form method="POST" action="{% url 'delete_user_account' %}"
+              data-confirm="Are you sure you want to permanently delete your account? This action cannot be undone."
+              data-confirm-title="Confirm Account Deletion">
             {% csrf_token %}
             <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors">
                 Delete Account

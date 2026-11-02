@@ -28,3 +28,4 @@ class ForcePasswordChangeMiddleware:
                 return redirect('change_password')
 
         return self.get_response(request)
+

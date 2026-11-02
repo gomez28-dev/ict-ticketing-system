@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Ticket, School, PasswordResetOTP, SchoolAccountRequest, TicketAuditLog
+from .models import Ticket, School, PasswordResetOTP, SchoolAccountRequest, TicketAuditLog, UserSettings
 from .ml_service import validate_ticket_description_for_ai
 
 
@@ -1008,3 +1008,166 @@ class PreDefenseHardeningTests(TestCase):
         self.assertEqual(self.ticket.status, 'UNDER_REVIEW')
         self.assertTrue(TicketAuditLog.objects.filter(ticket=self.ticket, action='Status Changed').exists())
 
+
+
+class Phase2FunctionalImprovementTests(TestCase):
+    def setUp(self):
+        self.school = School.objects.create(
+            name="Phase 2 Test School",
+            school_id="SCH-9999",
+            password="pbkdf2_sha256$870000$test$hashedpassword"
+        )
+        self.school.set_password("CorrectOldPass123!")
+        self.school.save()
+
+        self.admin = User.objects.create_user(
+            username='admin_p2',
+            email='admin_p2@deped.gov.ph',
+            password='Password123!',
+            role='ADMIN',
+            is_staff=True,
+            is_superuser=True
+        )
+        self.agent1 = User.objects.create_user(
+            username='agent1_p2',
+            email='agent1_p2@deped.gov.ph',
+            password='Password123!',
+            first_name='Agent',
+            last_name='One',
+            role='MEMBER',
+            total_tasks_done=5
+        )
+        self.agent2 = User.objects.create_user(
+            username='agent2_p2',
+            email='agent2_p2@deped.gov.ph',
+            password='Password123!',
+            first_name='Agent',
+            last_name='Two',
+            role='MEMBER',
+            total_tasks_done=3
+        )
+        self.ticket = Ticket.objects.create(
+            ticket_number='TKT-P2-001',
+            school_name=self.school.name,
+            support_type='SOFTWARE',
+            description='Test Phase 2 ticket',
+            status='SCHEDULED',
+            assignee=self.agent1,
+            admin_notes='Assigned to: Agent One'
+        )
+
+    def test_acknowledge_ticket_success(self):
+        self.client.force_login(self.agent1)
+        resp = self.client.post(
+            reverse('acknowledge_ticket', kwargs={'ticket_id': self.ticket.id}),
+            {'ack_note_type': 'For checking', 'ack_notes': 'Checking local switch'}
+        )
+        self.assertRedirects(resp, reverse('employee_ticket_review', kwargs={'ticket_id': self.ticket.id}))
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, 'IN_PROGRESS')
+        self.assertIn('Acknowledged - For checking: Checking local switch', self.ticket.admin_notes)
+        self.assertTrue(TicketAuditLog.objects.filter(ticket=self.ticket, action='Ticket Acknowledged').exists())
+
+    def test_acknowledge_ticket_unauthorized(self):
+        self.client.force_login(self.agent2)
+        resp = self.client.post(
+            reverse('acknowledge_ticket', kwargs={'ticket_id': self.ticket.id}),
+            {'ack_note_type': 'For checking'}
+        )
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, 'SCHEDULED')
+        self.assertFalse(TicketAuditLog.objects.filter(ticket=self.ticket, action='Ticket Acknowledged').exists())
+
+    def test_transfer_ticket_success_and_preserves_total_tasks_done(self):
+        self.client.force_login(self.agent1)
+        resp = self.client.post(
+            reverse('transfer_ticket', kwargs={'ticket_id': self.ticket.id}),
+            {
+                'target_agent_id': self.agent2.id,
+                'transfer_reason': 'Rebalancing network maintenance load'
+            }
+        )
+        self.assertRedirects(resp, reverse('employee_ticket_review', kwargs={'ticket_id': self.ticket.id}))
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.assignee, self.agent2)
+        self.assertIn('Assigned to: Agent Two', self.ticket.admin_notes)
+        self.assertIn('Rebalancing network maintenance load', self.ticket.admin_notes)
+
+        # Check total_tasks_done is NOT modified
+        self.agent1.refresh_from_db()
+        self.agent2.refresh_from_db()
+        self.assertEqual(self.agent1.total_tasks_done, 5)
+        self.assertEqual(self.agent2.total_tasks_done, 3)
+
+        # Check audit log
+        audit = TicketAuditLog.objects.filter(ticket=self.ticket, action='Ticket Transferred').first()
+        self.assertIsNotNone(audit)
+        self.assertIn('Agent One', audit.old_value)
+        self.assertIn('Agent Two', audit.new_value)
+
+    def test_transfer_ticket_completed_blocked(self):
+        self.client.force_login(self.agent1)
+        self.ticket.status = 'COMPLETED'
+        self.ticket.save()
+
+        resp = self.client.post(
+            reverse('transfer_ticket', kwargs={'ticket_id': self.ticket.id}),
+            {'target_agent_id': self.agent2.id, 'transfer_reason': 'Too late'}
+        )
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.assignee, self.agent1)
+
+    def test_school_change_password_flow(self):
+        # 1. Unauthenticated redirects to school_login
+        resp_unauth = self.client.post(reverse('school_change_password'), {
+            'current_password': 'CorrectOldPass123!',
+            'new_password': 'BrandNewPass888!',
+            'confirm_password': 'BrandNewPass888!'
+        })
+        self.assertRedirects(resp_unauth, reverse('school_login'))
+
+        # 2. Authenticated school session
+        session = self.client.session
+        session['is_school_authenticated'] = True
+        session['school_name'] = self.school.name
+        session.save()
+
+        # Wrong current password fails
+        resp_wrong = self.client.post(reverse('school_change_password'), {
+            'current_password': 'WrongPassword!',
+            'new_password': 'BrandNewPass888!',
+            'confirm_password': 'BrandNewPass888!'
+        })
+        self.assertRedirects(resp_wrong, reverse('school_dashboard'))
+        self.school.refresh_from_db()
+        self.assertTrue(self.school.check_password('CorrectOldPass123!'))
+
+        # Password mismatch fails
+        resp_mismatch = self.client.post(reverse('school_change_password'), {
+            'current_password': 'CorrectOldPass123!',
+            'new_password': 'BrandNewPass888!',
+            'confirm_password': 'DifferentPass888!'
+        })
+        self.assertRedirects(resp_mismatch, reverse('school_dashboard'))
+        self.school.refresh_from_db()
+        self.assertTrue(self.school.check_password('CorrectOldPass123!'))
+
+        # Correct flow succeeds
+        resp_success = self.client.post(reverse('school_change_password'), {
+            'current_password': 'CorrectOldPass123!',
+            'new_password': 'BrandNewPass888!',
+            'confirm_password': 'BrandNewPass888!'
+        })
+        self.assertRedirects(resp_success, reverse('school_dashboard'))
+        self.school.refresh_from_db()
+        self.assertTrue(self.school.check_password('BrandNewPass888!'))
+
+    def test_settings_update_notifications(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(reverse('settings'), {
+            'action': 'update_notifications',
+            'email_notifications': '1'
+        })
+        self.assertRedirects(resp, reverse('settings'))
+        settings_obj = UserSettings.objects.get(user=self.admin)
+        self.assertTrue(settings_obj.email_notifications)

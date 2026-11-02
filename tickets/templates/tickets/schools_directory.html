@@ -72,7 +72,7 @@
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                                     Force Reset
                                 </button>
-                                <form method="POST" action="{% url 'admin_delete_school' school.id %}" onsubmit="return confirmDeleteSchool();">
+                                <form method="POST" action="{% url 'admin_delete_school' school.id %}" data-confirm="Are you sure you want to remove this school account? The school record will remain in the directory." data-confirm-title="Confirm School Account Removal">
                                     {% csrf_token %}
                                     <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors whitespace-nowrap">
                                         Delete Account
@@ -121,7 +121,7 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                         Reset
                     </button>
-                    <form method="POST" action="{% url 'admin_delete_school' school.id %}" onsubmit="return confirmDeleteSchool();">
+                    <form method="POST" action="{% url 'admin_delete_school' school.id %}" data-confirm="Are you sure you want to remove this school account? The school record will remain in the directory." data-confirm-title="Confirm School Account Removal">
                         {% csrf_token %}
                         <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
                             Delete
@@ -175,11 +175,11 @@
                         </td>
                         <td class="px-6 py-4 text-right sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
                             <div class="flex items-center justify-end gap-2">
-                                <form method="POST" action="{% url 'approve_account_request' req.id %}" onsubmit="if(!confirm('Approve this request and create the school account?')) return false; this.querySelector('button[type=submit]').disabled=true; return true;">
+                                <form method="POST" action="{% url 'approve_account_request' req.id %}" data-confirm="Approve this request and create the school account?" data-confirm-title="Approve Request">
                                     {% csrf_token %}
                                     <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors whitespace-nowrap">✓ Approve</button>
                                 </form>
-                                <form method="POST" action="{% url 'reject_account_request' req.id %}" onsubmit="if(!confirm('Reject this access request and notify the coordinator via email?')) return false; this.querySelector('button[type=submit]').disabled=true; return true;">
+                                <form method="POST" action="{% url 'reject_account_request' req.id %}" data-confirm="Reject this access request and notify the coordinator via email?" data-confirm-title="Reject Request">
                                     {% csrf_token %}
                                     <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors whitespace-nowrap">✗ Reject</button>
                                 </form>
@@ -233,11 +233,11 @@
                 </div>
                 <hr class="border-gray-100 dark:border-gray-700 mt-2">
                 <div class="grid grid-cols-2 gap-2 mt-2">
-                    <form method="POST" action="{% url 'approve_account_request' req.id %}" onsubmit="if(!confirm('Approve this request and create the school account?')) return false; this.querySelector('button[type=submit]').disabled=true; return true;">
+                    <form method="POST" action="{% url 'approve_account_request' req.id %}" data-confirm="Approve this request and create the school account?" data-confirm-title="Approve Request">
                         {% csrf_token %}
                         <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">✓ Approve</button>
                     </form>
-                    <form method="POST" action="{% url 'reject_account_request' req.id %}" onsubmit="if(!confirm('Reject this access request and notify the coordinator via email?')) return false; this.querySelector('button[type=submit]').disabled=true; return true;">
+                    <form method="POST" action="{% url 'reject_account_request' req.id %}" data-confirm="Reject this access request and notify the coordinator via email?" data-confirm-title="Reject Request">
                         {% csrf_token %}
                         <button type="submit" class="min-h-11 w-full inline-flex items-center justify-center gap-1 px-3 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">✗ Reject</button>
                     </form>
@@ -279,7 +279,7 @@
                 </div>
             </div>
 
-            <form id="forceResetForm" method="POST" action="">
+            <form id="forceResetForm" method="POST" action="" data-confirm="Are you sure you want to force reset the password for this school?" data-confirm-title="Confirm Password Reset">
                 {% csrf_token %}
                 <div class="px-4 py-4 sm:p-6">
                     <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">New Password</label>

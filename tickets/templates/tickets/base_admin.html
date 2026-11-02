@@ -31,6 +31,8 @@
         /* Prevent transitions on initial load */
         .preload, .preload * { transition: none !important; }
     </style>
+    <!-- SweetAlert2 (R3.2 / R3.3) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.all.min.js" integrity="sha384-F8SYeBSrTVPFojwQeAD1UQo0dI5CKJOzc992kU0M/q72tnFcDlxHwbkiw8GLrXd8" crossorigin="anonymous"></script>
 </head>
 <body class="preload bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 font-sans flex h-screen overflow-hidden overflow-x-hidden transition-colors duration-200">
 
@@ -302,6 +304,85 @@
             }
         }
     
+        
+    <!-- SweetAlert2 Flash Messages & Universal Confirmation (R3.2 / R3.3) -->
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const isDark = document.documentElement.classList.contains('dark');
+            {% for message in messages %}
+            Swal.fire({
+                icon: '{% if message.tags == "error" %}error{% elif message.tags == "success" %}success{% elif message.tags == "warning" %}warning{% else %}info{% endif %}',
+                title: '{% if message.tags == "error" %}Error{% elif message.tags == "success" %}Success{% elif message.tags == "warning" %}Warning{% else %}Notice{% endif %}',
+                text: '{{ message|escapejs }}',
+                confirmButtonColor: '#2563eb',
+                background: isDark ? '#1f2937' : '#ffffff',
+                color: isDark ? '#f3f4f6' : '#1f2937'
+            });
+            {% endfor %}
+        });
+    </script>
+    {% endif %}
+
+    <script>
+        // R3.2 / R3.3: Universal confirmation handler via SweetAlert2
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!form || form.tagName !== 'FORM') return;
+            const confirmMessage = form.dataset.confirm;
+            if (!confirmMessage) return;
+
+            if (form.dataset.confirmed === 'true') {
+                return;
+            }
+
+            // HTML5 validation safeguard first
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                e.preventDefault();
+                return;
+            }
+
+            e.preventDefault();
+            const submitter = e.submitter;
+            const isDark = document.documentElement.classList.contains('dark');
+            const confirmTitle = form.dataset.confirmTitle || 'Are you sure?';
+            const confirmBtn = form.dataset.confirmBtn || 'Yes, proceed';
+
+            Swal.fire({
+                title: confirmTitle,
+                text: confirmMessage,
+                icon: form.dataset.confirmIcon || 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: confirmBtn,
+                cancelButtonText: 'Cancel',
+                background: isDark ? '#1f2937' : '#ffffff',
+                color: isDark ? '#f3f4f6' : '#1f2937'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.dataset.confirmed = 'true';
+                    if (submitter && submitter.name) {
+                        let hiddenInput = form.querySelector(`input[type="hidden"][name="${submitter.name}"]`);
+                        if (!hiddenInput) {
+                            hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = submitter.name;
+                            form.appendChild(hiddenInput);
+                        }
+                        hiddenInput.value = submitter.value;
+                    }
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit(submitter);
+                    } else {
+                        form.submit();
+                    }
+                }
+            });
+        }, false);
+    </script>
+
         // R1.2: Client-side single-click submit lock
         document.addEventListener('submit', function (e) {
             const form = e.target;
