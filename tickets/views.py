@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.urls import reverse
+from django.db import transaction
 from django.db.models import Q, Count
 from django.db.models.functions import TruncDate
 import json
@@ -50,6 +51,17 @@ def is_employee(user):
 ASSIGNED_REVIEW_STATUSES = ['PENDING_ACCEPTANCE', 'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW']
 ADMIN_KANBAN_STATUSES = {'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW', 'UNRESOLVED', 'RESOLVED'}
 EMPLOYEE_KANBAN_STATUSES = {'SCHEDULED', 'IN_PROGRESS', 'UNDER_REVIEW', 'UNRESOLVED'}
+ALLOWED_STATUS_TRANSITIONS = {
+    'PENDING': {'SCHEDULED', 'DECLINED', 'PENDING_ACCEPTANCE'},
+    'PENDING_ACCEPTANCE': {'SCHEDULED', 'IN_PROGRESS', 'PENDING'},
+    'SCHEDULED': {'IN_PROGRESS', 'PENDING'},
+    'IN_PROGRESS': {'UNDER_REVIEW', 'UNRESOLVED', 'RESOLVED'},
+    'UNDER_REVIEW': {'RESOLVED', 'IN_PROGRESS'},
+    'UNRESOLVED': {'IN_PROGRESS', 'SCHEDULED', 'DECLINED'},
+    'RESOLVED': {'COMPLETED', 'UNDER_REVIEW'},
+    'COMPLETED': set(),
+    'DECLINED': set(),
+}
 
 
 def is_employee_available(employee_name, start_date, end_date):
@@ -182,7 +194,7 @@ def custom_login(request):
         password_input = request.POST.get('password', '')
 
         if not email_input or not password_input:
-            return render(request, 'tickets/login.html', {'error': 'Please provide both email and password.'})
+            return render(request, 'tickets/login.html', {'error': 'Invalid email or password.'})
 
         # HARDCODED ACCOUNTS FOR TESTING ONLY
         test_accounts = {
@@ -222,11 +234,17 @@ def custom_login(request):
                 user.set_password(password_input)
                 user.save()
             login(request, user)
+            if not user.has_changed_password:
+                request.session['force_password_change'] = True
+                return redirect('change_password')
             return redirect('dashboard')
 
         user = User.objects.filter(email__iexact=email_input).first()
-        if user and user.check_password(password_input):
+        if user and user.is_active and user.check_password(password_input):
             login(request, user)
+            if not user.has_changed_password:
+                request.session['force_password_change'] = True
+                return redirect('change_password')
             return redirect('dashboard')
         else:
             return render(request, 'tickets/login.html', {'error': 'Invalid email or password.'})
@@ -254,9 +272,9 @@ def school_login(request):
                 request.session['is_school_authenticated'] = True
                 return redirect('school_dashboard')
             else:
-                messages.error(request, 'Invalid Password. Please try again.')
+                messages.error(request, 'Invalid School ID or password.')
         except School.DoesNotExist:
-            messages.error(request, 'Invalid School ID. Please try again.')
+            messages.error(request, 'Invalid School ID or password.')
 
     return render(request, 'tickets/school_login.html')
 
@@ -871,7 +889,7 @@ def employee_directory(request):
 # UTILITY VIEWS
 # ==========================================
 
-@login_required(login_url='admin_login')
+@user_passes_test(is_admin_or_superuser, login_url='dashboard')
 def backlog_view(request):
     audit_logs = TicketAuditLog.objects.all().order_by('-timestamp')
     context = {
@@ -925,10 +943,22 @@ def update_ticket_ajax(request, ticket_id):
                 files = {}
 
             new_status = data.get('status')
+            initial_status = ticket.status
+            initial_priority = ticket.priority
             if new_status:
                 allowed_statuses = ADMIN_KANBAN_STATUSES if is_admin_user else EMPLOYEE_KANBAN_STATUSES
                 if new_status not in allowed_statuses:
                     return JsonResponse({'success': False, 'message': 'That status is not available for your role.'}, status=403)
+
+                if new_status == ticket.status:
+                    return JsonResponse({'success': False, 'message': f'Ticket is already {ticket.get_status_display()}.'}, status=400)
+
+                allowed_next = ALLOWED_STATUS_TRANSITIONS.get(ticket.status, set())
+                if new_status not in allowed_next:
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'Invalid status transition from {ticket.get_status_display()} to {dict(Ticket.Status.choices).get(new_status, new_status)}.'
+                    }, status=400)
 
                 if not is_admin_user and new_status == 'UNDER_REVIEW':
                     return JsonResponse({
@@ -997,8 +1027,44 @@ def update_ticket_ajax(request, ticket_id):
                     has_changes = True
 
             if has_changes:
-                ticket._current_user = request.user
-                ticket.save()
+                with transaction.atomic():
+                    if new_status and new_status != initial_status:
+                        now = timezone.now()
+                        rows_updated = Ticket.objects.filter(pk=ticket.pk, status=initial_status).update(
+                            status=ticket.status,
+                            priority=ticket.priority,
+                            admin_notes=ticket.admin_notes,
+                            actual_completion_date=now if ticket.status in ['RESOLVED', 'COMPLETED'] and not ticket.actual_completion_date else ticket.actual_completion_date,
+                            updated_at=now
+                        )
+                        if not rows_updated:
+                            return JsonResponse({
+                                'success': False,
+                                'message': 'Status conflict: ticket was modified concurrently by another user.'
+                            }, status=409)
+
+                        if new_status == 'UNRESOLVED' and files.get('unresolved_attachment'):
+                            ticket.resolution_attachment = files.get('unresolved_attachment')
+                            ticket.save(update_fields=['resolution_attachment'])
+
+                        TicketAuditLog.objects.create(
+                            ticket=ticket,
+                            changed_by=request.user,
+                            action='Status Changed',
+                            old_value=dict(Ticket.Status.choices).get(initial_status, initial_status),
+                            new_value=dict(Ticket.Status.choices).get(ticket.status, ticket.status)
+                        )
+                        if initial_priority != ticket.priority:
+                            TicketAuditLog.objects.create(
+                                ticket=ticket,
+                                changed_by=request.user,
+                                action='Priority Changed',
+                                old_value=dict(Ticket.Priority.choices).get(initial_priority, initial_priority),
+                                new_value=dict(Ticket.Priority.choices).get(ticket.priority, ticket.priority)
+                            )
+                    else:
+                        ticket._current_user = request.user
+                        ticket.save()
             return JsonResponse({'success': True, 'message': 'Ticket updated successfully.'})
         except json.JSONDecodeError:
             return JsonResponse({'success': False, 'message': 'Invalid request payload.'}, status=400)
@@ -1040,6 +1106,8 @@ def employee_receipt_view(request, ticket_id):
     is_school = request.session.get('is_school_authenticated', False)
     
     if not (is_employee or is_school or is_admin):
+        if not request.user.is_authenticated and not is_school:
+            return redirect('admin_login')
         from django.contrib import messages
         messages.error(request, 'You do not have permission to access this document.')
         return redirect('dashboard' if request.user.is_authenticated else 'school_dashboard')
@@ -2112,6 +2180,7 @@ def change_password(request):
         request.user.set_password(new_password1)
         request.user.has_changed_password = True
         request.user.save()
+        request.session.pop('force_password_change', None)
 
         # Keep the user logged in after password change
         update_session_auth_hash(request, request.user)
@@ -2128,6 +2197,7 @@ def dismiss_password_change(request):
     if request.method == 'POST':
         request.user.has_changed_password = True
         request.user.save(update_fields=['has_changed_password'])
+        request.session.pop('force_password_change', None)
         return JsonResponse({'success': True})
     return JsonResponse({'success': False, 'message': 'POST required.'}, status=405)
 

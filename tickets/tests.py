@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Ticket, School, PasswordResetOTP, SchoolAccountRequest
+from .models import Ticket, School, PasswordResetOTP, SchoolAccountRequest, TicketAuditLog
 from .ml_service import validate_ticket_description_for_ai
 
 
@@ -925,8 +925,86 @@ class PreDefenseHardeningTests(TestCase):
         # Both have 0 active load, but u2 (Beta Tech) has higher rating (4.8 > 4.5)
         self.assertEqual(rec['recommended_name'], 'Beta Tech')
 
+    def test_school_login_generic_error_message(self):
+        # 1. Non-existent school ID
+        resp_nonexistent = self.client.post(reverse('school_login'), {'school_id': 'NONEXISTENT', 'password': 'wrong'})
+        messages_nonexistent = list(resp_nonexistent.context['messages']) if resp_nonexistent.context else []
+        self.assertTrue(any('Invalid School ID or password.' in str(m) for m in messages_nonexistent))
 
+        # 2. Existing school with wrong password
+        school = School.objects.create(name='Test School Generic', school_id='SCH-GEN-01')
+        school.set_password('CorrectPass123!')
+        school.save()
+        resp_wrongpass = self.client.post(reverse('school_login'), {'school_id': 'SCH-GEN-01', 'password': 'wrong'})
+        messages_wrongpass = list(resp_wrongpass.context['messages']) if resp_wrongpass.context else []
+        self.assertTrue(any('Invalid School ID or password.' in str(m) for m in messages_wrongpass))
 
+    def test_admin_login_generic_error_message(self):
+        # Non-existent user
+        resp1 = self.client.post(reverse('admin_login'), {'email': 'nobody@example.com', 'password': 'pass'})
+        self.assertContains(resp1, 'Invalid email or password.')
 
+        # Existing user wrong password
+        resp2 = self.client.post(reverse('admin_login'), {'email': self.admin.email, 'password': 'wrongpassword'})
+        self.assertContains(resp2, 'Invalid email or password.')
 
+    def test_backlog_restricted_to_admin_only(self):
+        # Anonymous redirects to admin_login
+        resp_anon = self.client.get(reverse('backlog'))
+        self.assertEqual(resp_anon.status_code, 302)
+
+        # Standard employee redirected to dashboard
+        emp = User.objects.create_user(
+            username='emp_test_backlog',
+            email='emp_test_backlog@deped.gov.ph',
+            password='pass',
+            role='MEMBER'
+        )
+        self.client.force_login(emp)
+        resp_emp = self.client.get(reverse('backlog'))
+        self.assertRedirects(resp_emp, f"{reverse('dashboard')}?next={reverse('backlog')}")
+
+        # Admin gets 200
+        self.client.force_login(self.admin)
+        resp_admin = self.client.get(reverse('backlog'))
+        self.assertEqual(resp_admin.status_code, 200)
+
+    def test_employee_receipt_unauthenticated_redirect(self):
+        resp = self.client.get(reverse('employee_receipt', kwargs={'ticket_id': self.ticket.id}))
+        self.assertRedirects(resp, reverse('admin_login'))
+
+    def test_status_transition_guard_blocks_invalid_and_duplicate(self):
+        import json
+        self.client.force_login(self.admin)
+        self.ticket.status = 'IN_PROGRESS'
+        self.ticket.save()
+
+        # 1. Duplicate status transition blocked
+        resp_dup = self.client.post(
+            reverse('update_ticket_ajax', kwargs={'ticket_id': self.ticket.id}),
+            data=json.dumps({'status': 'IN_PROGRESS'}),
+            content_type='application/json'
+        )
+        self.assertEqual(resp_dup.status_code, 400)
+        self.assertIn('already', resp_dup.json().get('message', '').lower())
+
+        # 2. Backward / invalid transition blocked (e.g. IN_PROGRESS -> PENDING or SCHEDULED)
+        resp_inv = self.client.post(
+            reverse('update_ticket_ajax', kwargs={'ticket_id': self.ticket.id}),
+            data=json.dumps({'status': 'SCHEDULED'}),
+            content_type='application/json'
+        )
+        self.assertEqual(resp_inv.status_code, 400)
+        self.assertIn('status transition', resp_inv.json().get('message', '').lower())
+
+        # 3. Valid transition succeeds and creates TicketAuditLog
+        resp_valid = self.client.post(
+            reverse('update_ticket_ajax', kwargs={'ticket_id': self.ticket.id}),
+            data=json.dumps({'status': 'UNDER_REVIEW'}),
+            content_type='application/json'
+        )
+        self.assertEqual(resp_valid.status_code, 200)
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, 'UNDER_REVIEW')
+        self.assertTrue(TicketAuditLog.objects.filter(ticket=self.ticket, action='Status Changed').exists())
 

@@ -181,6 +181,36 @@
                 modal.classList.toggle('hidden');
             }
         }
+
+        // R1.2: Client-side single-click submit lock
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (!form || form.tagName !== 'FORM') return;
+            if (form.method && form.method.toUpperCase() !== 'POST') return;
+
+            if (!form.checkValidity()) {
+                return;
+            }
+
+            if (form.dataset.confirm && !form.dataset.confirmed) {
+                return;
+            }
+
+            if (form.dataset.submitting === 'true') {
+                e.preventDefault();
+                return;
+            }
+
+            form.dataset.submitting = 'true';
+
+            setTimeout(function () {
+                const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+                submitButtons.forEach(function (btn) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                });
+            }, 0);
+        }, false);
     </script>
     
     {% block extra_js %}{% endblock %}
