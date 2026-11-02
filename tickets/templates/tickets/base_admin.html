@@ -34,7 +34,7 @@
     <!-- SweetAlert2 (R3.2 / R3.3) -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/dist/sweetalert2.all.min.js" integrity="sha384-F8SYeBSrTVPFojwQeAD1UQo0dI5CKJOzc992kU0M/q72tnFcDlxHwbkiw8GLrXd8" crossorigin="anonymous"></script>
     <!-- Tom Select (R3.5) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css" integrity="sha384-dC18+guBm9Lk5IBQfkKIOw2YSxXWMsiuPfIOZNPilutZQn6MgBvcx+vejNQYlrbc" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css" integrity="sha384-86bgzEpZNdMv4V0h2BgSxQUadlX29O0I89TbSGZ4gFkGtpN8U+KAGcuDbqMdbl/M" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js" integrity="sha384-cnROoUgVILyibe3J0zhzWoJ9p2WmdnK7j/BOTSWqVDbC1pVw2d+i6Q/1ESKJKCYf" crossorigin="anonymous"></script>
 
     <style>
@@ -363,7 +363,7 @@
                 modal.classList.toggle('hidden');
             }
         }
-    
+    </script>
         
     <!-- SweetAlert2 Flash Messages & Universal Confirmation (R3.2 / R3.3) -->
     {% if messages %}
@@ -441,7 +441,6 @@
                 }
             });
         }, false);
-    </script>
 
         // R1.2: Client-side single-click submit lock
         document.addEventListener('submit', function (e) {
