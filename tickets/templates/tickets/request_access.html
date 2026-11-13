@@ -494,43 +494,7 @@
         }
     </script>
 
-    <!-- Floating Back to Top Button (R3.8) -->
-    <button id="backToTopBtn" type="button"
-            class="fixed bottom-6 right-6 z-40 hidden p-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 print:hidden cursor-pointer"
-            title="Back to Top" aria-label="Back to top">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-    </button>
-
     <script>
-        // R3.8: Floating Back to Top Button visibility & smooth scroll
-        (function () {
-            const btn = document.getElementById('backToTopBtn');
-            if (!btn) return;
-            const mainContainer = document.querySelector('main > div.overflow-y-auto');
-
-            function checkScroll() {
-                const scrollY = window.scrollY || (document.documentElement && document.documentElement.scrollTop) || 0;
-                const containerY = mainContainer ? mainContainer.scrollTop : 0;
-                if (scrollY > 300 || containerY > 300) {
-                    btn.classList.remove('hidden');
-                } else {
-                    btn.classList.add('hidden');
-                }
-            }
-
-            window.addEventListener('scroll', checkScroll, { passive: true });
-            if (mainContainer) {
-                mainContainer.addEventListener('scroll', checkScroll, { passive: true });
-            }
-
-            btn.addEventListener('click', function () {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                if (mainContainer) {
-                    mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            });
-        })();
-
         // R3.5: Tom Select Searchable Combo Box Initialization
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof TomSelect !== 'undefined') {
