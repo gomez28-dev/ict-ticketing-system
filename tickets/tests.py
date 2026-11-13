@@ -1087,7 +1087,7 @@ class Phase2FunctionalImprovementTests(TestCase):
                 'transfer_reason': 'Rebalancing network maintenance load'
             }
         )
-        self.assertRedirects(resp, reverse('employee_ticket_review', kwargs={'ticket_id': self.ticket.id}))
+        self.assertRedirects(resp, reverse('my_tickets'))
         self.ticket.refresh_from_db()
         self.assertEqual(self.ticket.assignee, self.agent2)
         self.assertIn('Assigned to: Agent Two', self.ticket.admin_notes)
@@ -1104,6 +1104,31 @@ class Phase2FunctionalImprovementTests(TestCase):
         self.assertIsNotNone(audit)
         self.assertIn('Agent One', audit.old_value)
         self.assertIn('Agent Two', audit.new_value)
+
+    def test_transfer_ticket_to_superuser_blocked(self):
+        self.client.force_login(self.agent1)
+        admin_user = User.objects.create_superuser('admin_target', 'adm@example.com', 'adminpass', role='ADMIN')
+        resp = self.client.post(
+            reverse('transfer_ticket', kwargs={'ticket_id': self.ticket.id}),
+            {'target_agent_id': admin_user.id, 'transfer_reason': 'Invalid transfer to admin'}
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.assignee, self.agent1)
+
+    def test_transfer_ticket_by_admin_redirects_to_documents(self):
+        admin_user = User.objects.create_superuser('admin_exec', 'exec@example.com', 'adminpass', role='ADMIN')
+        self.client.force_login(admin_user)
+        resp = self.client.post(
+            reverse('transfer_ticket', kwargs={'ticket_id': self.ticket.id}),
+            {
+                'target_agent_id': self.agent2.id,
+                'transfer_reason': 'Admin reassigning ticket'
+            }
+        )
+        self.assertRedirects(resp, reverse('documents'))
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.assignee, self.agent2)
 
     def test_transfer_ticket_completed_blocked(self):
         self.client.force_login(self.agent1)

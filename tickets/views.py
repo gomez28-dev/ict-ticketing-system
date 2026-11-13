@@ -1166,7 +1166,12 @@ def school_print_ticket(request, ticket_id):
 def employee_ticket_review(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     is_admin = is_admin_or_superuser(request.user)
-    available_agents = User.objects.filter(is_active=True).exclude(id=ticket.assignee_id if ticket.assignee_id else 0).order_by('first_name', 'last_name')
+    excluded_ids = [i for i in [ticket.assignee_id, request.user.id] if i]
+    available_agents = User.objects.filter(
+        is_active=True,
+        is_superuser=False,
+        role='MEMBER'
+    ).exclude(id__in=excluded_ids).order_by('first_name', 'last_name')
     return render(request, 'tickets/employee_ticket_review.html', {
         'ticket': ticket,
         'is_admin': is_admin,
@@ -2381,10 +2386,10 @@ def transfer_ticket(request, ticket_id):
         messages.error(request, 'A reason is required to transfer this ticket.')
         return redirect('employee_ticket_review', ticket_id=ticket_id)
 
-    target_agent = get_object_or_404(User, id=target_agent_id, is_active=True)
+    target_agent = get_object_or_404(User, id=target_agent_id, is_active=True, is_superuser=False, role='MEMBER')
 
-    if ticket.assignee == target_agent:
-        messages.error(request, 'Ticket is already assigned to this agent.')
+    if ticket.assignee_id == target_agent.id or target_agent.id == request.user.id:
+        messages.error(request, 'Cannot transfer ticket to the current assignee or yourself.')
         return redirect('employee_ticket_review', ticket_id=ticket_id)
 
     old_agent_name = (ticket.assignee.get_full_name() or ticket.assignee.username) if ticket.assignee else 'Unassigned'
@@ -2423,7 +2428,9 @@ def transfer_ticket(request, ticket_id):
         )
 
     messages.success(request, f"Ticket successfully transferred to {new_agent_name}.")
-    return redirect('employee_ticket_review', ticket_id=ticket_id)
+    if is_admin:
+        return redirect('documents')
+    return redirect('my_tickets')
 
 
 def school_change_password(request):
